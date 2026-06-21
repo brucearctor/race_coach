@@ -1,0 +1,62 @@
+name: race_coach
+description: "Real-time race coaching app with BLE telemetry and audio coaching."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # BLE
+  flutter_reactive_ble: ^5.3.1
+
+  # GPS (phone fallback)
+  geolocator: ^13.0.2
+
+  # Permissions
+  permission_handler: ^11.3.1
+
+  # Audio coaching
+  flutter_tts: ^4.2.0
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Maps
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
+  # Charts
+  fl_chart: ^0.70.2
+
+  # Local storage
+  path_provider: ^2.1.5
+
+  # Models / serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # UI
+  google_fonts: ^6.2.1
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Code generation
+  build_runner: ^2.4.14
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
+  riverpod_generator: ^2.6.4
+
+flutter:
+  uses-material-design: true
