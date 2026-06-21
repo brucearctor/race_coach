@@ -66,5 +66,18 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Race Coach uses Bluetooth to connect to your RaceBox GPS and OBD-II devices for real-time telemetry.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Race Coach uses Bluetooth to connect to your RaceBox GPS and OBD-II devices.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Race Coach uses your location to track your position on the race track.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Race Coach uses your location to continue tracking during race sessions even when the app is in the background.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>location</string>
+	</array>
 </dict>
 </plist>
