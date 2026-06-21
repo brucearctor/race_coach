@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package racecoach.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.race2.racecoach.v1";
+option go_package = "github.com/brucearctor/racecoach/gen/go/racecoach/v1";
+
+// ---------------------------------------------------------------------------
+// Core telemetry frame — the normalized unit of data from any source.
+// ---------------------------------------------------------------------------
+
+// A single telemetry sample from any data source. Each source fills the
+// sub-messages it can provide; absent sub-messages mean the source doesn't
+// produce that type of data (e.g., OBD has no GPS).
+message TelemetryFrame {
+  // When the measurement was actually taken (device clock).
+  // For sources without a clock (e.g., OBD), this is unset.
+  google.protobuf.Timestamp device_timestamp = 1;
+
+  // When the phone received the data. Always set.
+  google.protobuf.Timestamp arrival_timestamp = 2;
+
+  // Data sub-messages — each source populates what it can.
+  GpsData gps = 3;
+  MotionData motion = 4;
+  EngineData engine = 5;
+  FuelData fuel = 6;
+
+  // Source identification.
+  SourceType source_type = 10;
+  string source_device_id = 11;
+
+  // Original bytes from the device for replay / re-parsing.
+  bytes raw_payload = 15;
+}
+
+// ---------------------------------------------------------------------------
+// Data sub-messages
+// ---------------------------------------------------------------------------
+
+// GPS position, speed, and quality data.
+message GpsData {
+  double latitude = 1;
+  double longitude = 2;
+  float speed_kmh = 3;
+  float heading_degrees = 4;
+  float altitude_meters = 5;
+  uint32 satellites = 6;
+  float hdop = 7;
+}
+
+// Inertial / motion data (accelerometer, gyroscope).
+message MotionData {
+  float g_force_lateral = 1;      // Positive = right turn
+  float g_force_longitudinal = 2; // Positive = acceleration
+  float g_force_vertical = 3;     // Positive = upward
+  float yaw_rate_dps = 4;         // Degrees per second (if available)
+  float pitch_rate_dps = 5;
+  float roll_rate_dps = 6;
+}
+
+// Engine / ECU data (from OBD-II or CAN bus).
+message EngineData {
+  float rpm = 1;
+  float throttle_pct = 2;
+  float coolant_temp_c = 3;
+  float intake_temp_c = 4;
+  float engine_load_pct = 5;
+  float timing_advance_deg = 6;
+  float maf_gps = 7; // Mass air flow (grams per second)
+}
+
+// Fuel system data (from OBD-II).
+message FuelData {
+  float short_fuel_trim_1_pct = 1;
+  float short_fuel_trim_2_pct = 2;
+  float long_fuel_trim_1_pct = 3;
+  float long_fuel_trim_2_pct = 4;
+  float fuel_level_pct = 5;
+}
+
+// ---------------------------------------------------------------------------
+// Data source identification
+// ---------------------------------------------------------------------------
+
+enum SourceType {
+  SOURCE_TYPE_UNSPECIFIED = 0;
+  SOURCE_TYPE_RACEBOX_MINI = 1;
+  SOURCE_TYPE_VBOX = 2;
+  SOURCE_TYPE_OBD_BLE = 3;
+  SOURCE_TYPE_PHONE_GPS = 4;
+  SOURCE_TYPE_PHONE_IMU = 5;
+  SOURCE_TYPE_AIM = 6;
+  SOURCE_TYPE_GOPRO = 7;
+}

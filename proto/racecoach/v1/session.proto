@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package racecoach.v1;
+
+import "google/protobuf/timestamp.proto";
+import "racecoach/v1/telemetry.proto";
+
+option java_package = "com.race2.racecoach.v1";
+option go_package = "github.com/brucearctor/racecoach/gen/go/racecoach/v1";
+
+// ---------------------------------------------------------------------------
+// Session, Lap, and Track definitions
+// ---------------------------------------------------------------------------
+
+// A complete driving session (one outing at a track).
+message Session {
+  string session_id = 1;
+  string track_name = 2;
+  google.protobuf.Timestamp start_time = 3;
+  google.protobuf.Timestamp end_time = 4;
+  repeated Lap laps = 5;
+  SessionConfig config = 6;
+  repeated SourceType active_sources = 7;
+}
+
+// A single lap within a session.
+message Lap {
+  uint32 lap_number = 1;
+  float lap_time_seconds = 2;
+  repeated TelemetryFrame telemetry = 3;
+  bool is_reference = 4;
+  repeated float sector_times_seconds = 5;
+  google.protobuf.Timestamp start_time = 6;
+}
+
+// Configuration for a session (set before or during recording).
+message SessionConfig {
+  // Finish line definition (two GPS points forming a line segment).
+  GpsData finish_line_point_a = 1;
+  GpsData finish_line_point_b = 2;
+
+  // Sector split points (optional).
+  repeated SectorLine sector_lines = 3;
+
+  // Preferences.
+  SpeedUnit speed_unit = 4;
+  TemperatureUnit temp_unit = 5;
+  bool audio_coaching_enabled = 6;
+}
+
+// A sector split line (two GPS points forming a line segment).
+message SectorLine {
+  uint32 sector_number = 1;
+  GpsData point_a = 2;
+  GpsData point_b = 3;
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum SpeedUnit {
+  SPEED_UNIT_UNSPECIFIED = 0;
+  SPEED_UNIT_MPH = 1;
+  SPEED_UNIT_KMH = 2;
+}
+
+enum TemperatureUnit {
+  TEMPERATURE_UNIT_UNSPECIFIED = 0;
+  TEMPERATURE_UNIT_CELSIUS = 1;
+  TEMPERATURE_UNIT_FAHRENHEIT = 2;
+}

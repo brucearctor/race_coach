@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package racecoach.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option java_package = "com.race2.racecoach.v1";
+option go_package = "github.com/brucearctor/racecoach/gen/go/racecoach/v1";
+
+// ---------------------------------------------------------------------------
+// Coaching cues and configuration
+// ---------------------------------------------------------------------------
+
+// A coaching cue to be spoken to the driver.
+message CoachingCue {
+  CoachingCueType type = 1;
+  string message = 2;
+  CuePriority priority = 3;
+  google.protobuf.Timestamp timestamp = 4;
+
+  // Optional: which sector/corner this cue relates to.
+  uint32 sector_number = 5;
+
+  // Optional: the delta that triggered this cue (e.g., +0.3s slower).
+  float delta_seconds = 6;
+}
+
+enum CoachingCueType {
+  COACHING_CUE_TYPE_UNSPECIFIED = 0;
+  COACHING_CUE_TYPE_BRAKING = 1;
+  COACHING_CUE_TYPE_THROTTLE = 2;
+  COACHING_CUE_TYPE_LINE = 3;
+  COACHING_CUE_TYPE_SPEED = 4;
+  COACHING_CUE_TYPE_SECTOR_TIME = 5;
+  COACHING_CUE_TYPE_LAP_TIME = 6;
+  COACHING_CUE_TYPE_G_FORCE = 7;
+  COACHING_CUE_TYPE_GENERAL = 8;
+}
+
+enum CuePriority {
+  CUE_PRIORITY_UNSPECIFIED = 0;
+  CUE_PRIORITY_LOW = 1;
+  CUE_PRIORITY_MEDIUM = 2;
+  CUE_PRIORITY_HIGH = 3;
+  CUE_PRIORITY_CRITICAL = 4;
+}
