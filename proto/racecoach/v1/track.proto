@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package racecoach.v1;
+
+import "racecoach/v1/telemetry.proto";
+
+option java_package = "com.race2.racecoach.v1";
+option go_package = "github.com/brucearctor/racecoach/gen/go/racecoach/v1";
+
+// ---------------------------------------------------------------------------
+// Track library definitions
+// ---------------------------------------------------------------------------
+
+// A racetrack facility, potentially with multiple configurations.
+message Track {
+  string track_id = 1;
+  string name = 2;
+  string country = 3;
+  string region = 4;
+
+  // Center of the facility for proximity auto-detection.
+  GpsData center = 5;
+
+  // Radius in meters for geofence-based auto-detection.
+  float auto_detect_radius_meters = 6;
+
+  // Available course configurations.
+  repeated TrackConfiguration configurations = 7;
+}
+
+// A specific course layout within a track facility.
+message TrackConfiguration {
+  string config_id = 1;
+  string name = 2;
+  float length_meters = 3;
+  Direction direction = 4;
+
+  // Start/finish line (two GPS points forming a line segment).
+  GpsData finish_line_a = 5;
+  GpsData finish_line_b = 6;
+
+  // Sector split lines.
+  repeated SectorSplit sectors = 7;
+
+  // Track centerline polyline for map overlay.
+  repeated GpsData centerline = 8;
+
+  // Named corners / turn landmarks.
+  repeated Corner corners = 9;
+}
+
+// A sector split line defined by two GPS points.
+message SectorSplit {
+  uint32 sector_number = 1;
+  string name = 2;
+  GpsData point_a = 3;
+  GpsData point_b = 4;
+}
+
+// A named corner or turn on the track.
+message Corner {
+  uint32 number = 1;
+  string name = 2;
+  GpsData apex = 3;
+  GpsData entry = 4;
+  GpsData exit = 5;
+}
+
+// Track direction.
+enum Direction {
+  DIRECTION_UNSPECIFIED = 0;
+  DIRECTION_CLOCKWISE = 1;
+  DIRECTION_COUNTER_CLOCKWISE = 2;
+}
+
+// Index of all available tracks (for sync).
+message TrackLibraryManifest {
+  repeated TrackSummary tracks = 1;
+  uint64 version = 2;
+}
+
+// Lightweight summary for the manifest index.
+message TrackSummary {
+  string track_id = 1;
+  string name = 2;
+  string country = 3;
+  string region = 4;
+  GpsData center = 5;
+  repeated string configuration_names = 6;
+  uint64 version = 7;
+}
