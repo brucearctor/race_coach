@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
-import 'package:race_coach/features/racebox/data/racebox_providers.dart';
+import 'package:race_coach/features/telemetry/data/telemetry_bus.dart';
 
 /// 2D circular g-force display showing lateral (X) vs longitudinal (Y) forces.
 ///
@@ -29,10 +29,10 @@ class _GForceWidgetState extends ConsumerState<GForceWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(raceBoxDataProvider);
+    final telemetryState = ref.watch(telemetryBusProvider);
 
     // Add current position to trail.
-    _trail.add((data.lateralG, data.longitudinalG));
+    _trail.add((telemetryState.lateralG, telemetryState.longitudinalG));
     if (_trail.length > _maxTrailLength) {
       _trail.removeAt(0);
     }
@@ -51,8 +51,8 @@ class _GForceWidgetState extends ConsumerState<GForceWidget> {
             return CustomPaint(
               size: Size(constraints.maxWidth, constraints.maxHeight),
               painter: _GForcePainter(
-                lateralG: data.lateralG,
-                longitudinalG: data.longitudinalG,
+                lateralG: telemetryState.lateralG,
+                longitudinalG: telemetryState.longitudinalG,
                 trail: List.from(_trail),
                 maxG: 2.0,
               ),

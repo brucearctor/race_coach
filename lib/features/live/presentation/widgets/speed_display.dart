@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
-import 'package:race_coach/features/racebox/data/racebox_providers.dart';
+import 'package:race_coach/features/telemetry/data/telemetry_bus.dart';
 
 /// Large, prominent speed readout with color-coded display.
 ///
@@ -24,8 +24,8 @@ class _SpeedDisplayState extends ConsumerState<SpeedDisplay> {
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(raceBoxDataProvider);
-    final speedMph = data.speedMph;
+    final telemetryState = ref.watch(telemetryBusProvider);
+    final speedMph = telemetryState.speedMph;
     final speedInt = speedMph.round();
 
     // Track maximum speed in session.

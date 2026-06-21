@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
-import 'package:race_coach/features/racebox/data/racebox_providers.dart';
-import 'package:race_coach/features/racebox/domain/racebox_data.dart';
+import 'package:race_coach/features/telemetry/data/telemetry_bus.dart';
+import 'package:race_coach/features/telemetry/domain/telemetry_state.dart';
 
 // ── Track Point ────────────────────────────────────────────────────────
 
@@ -33,13 +33,14 @@ class TrackMapNotifier extends StateNotifier<List<TrackPoint>> {
   static const int maxPoints = 5000;
 
   /// Add a new telemetry sample to the track.
-  void addPoint(RaceBoxData data) {
-    if (!data.hasValidFix) return;
+  void addPoint(TelemetryState telemetry) {
+    if (!telemetry.hasGps) return;
 
+    final gps = telemetry.gps!;
     final point = TrackPoint(
-      position: LatLng(data.latitude, data.longitude),
-      speedMph: data.speedMph,
-      timestamp: data.timestamp,
+      position: LatLng(gps.latitude, gps.longitude),
+      speedMph: telemetry.speedMph,
+      timestamp: DateTime.now(),
     );
 
     final newList = [...state, point];
@@ -107,10 +108,10 @@ class _TrackMapWidgetState extends ConsumerState<TrackMapWidget>
   @override
   Widget build(BuildContext context) {
     final trackPoints = ref.watch(trackMapProvider);
-    final raceBoxData = ref.watch(raceBoxDataProvider);
+    final telemetryState = ref.watch(telemetryBusProvider);
 
     // No GPS data yet.
-    if (trackPoints.isEmpty || !raceBoxData.hasValidFix) {
+    if (trackPoints.isEmpty || !telemetryState.hasGps) {
       return Container(
         decoration: BoxDecoration(
           color: AppColors.card,
@@ -142,7 +143,7 @@ class _TrackMapWidgetState extends ConsumerState<TrackMapWidget>
     }
 
     final currentPosition =
-        LatLng(raceBoxData.latitude, raceBoxData.longitude);
+        LatLng(telemetryState.gps!.latitude, telemetryState.gps!.longitude);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
