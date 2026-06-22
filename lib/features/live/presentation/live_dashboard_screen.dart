@@ -18,7 +18,6 @@ import 'package:race_coach/features/live/presentation/widgets/speed_display.dart
 import 'package:race_coach/features/live/presentation/widgets/g_force_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/lap_timer_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/track_map_widget.dart';
-import 'package:race_coach/features/settings/presentation/settings_screen.dart';
 
 /// Main live dashboard screen – the primary view while on track.
 ///
@@ -113,13 +112,7 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
           IconButton(
             icon: const Icon(Icons.settings_rounded),
             tooltip: 'Settings',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const SettingsScreen(),
-                ),
-              );
-            },
+            onPressed: () => context.push(AppRoutes.settings),
           ),
         ],
       ),
@@ -150,7 +143,8 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
             const SizedBox(height: 12),
 
             // ── Middle row: G-force + Lap timer ────────────────
-            IntrinsicHeight(
+            SizedBox(
+              height: 200,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

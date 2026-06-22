@@ -48,3 +48,7 @@ app.*.map.json
 **/google-services.json
 **/GoogleService-Info.plist
 lib/firebase_options.dart
+
+# Release keystore and signing
+android/key.properties
+android/app/release-keystore.jks

@@ -23,15 +23,28 @@ class _SpeedDisplayState extends ConsumerState<SpeedDisplay> {
   double _maxSpeed = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listenManual(telemetryBusProvider, (previous, next) {
+        final speedMph = next.speedMph;
+        // Reset max speed when device disconnects (speed drops to zero).
+        if (speedMph == 0 && (previous?.speedMph ?? 0) > 0) {
+          _maxSpeed = 0;
+        }
+        if (speedMph > _maxSpeed) {
+          _maxSpeed = speedMph;
+        }
+        setState(() {});
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final telemetryState = ref.watch(telemetryBusProvider);
     final speedMph = telemetryState.speedMph;
     final speedInt = speedMph.round();
-
-    // Track maximum speed in session.
-    if (speedMph > _maxSpeed) {
-      _maxSpeed = speedMph;
-    }
 
     final speedColor = _colorForSpeed(speedMph);
 

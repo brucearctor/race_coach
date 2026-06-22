@@ -2,10 +2,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/features/racebox/domain/racebox_data.dart';
 
-/// Provides the latest [RaceBoxData] telemetry sample.
+/// Primary state holder for current RaceBox data.
 ///
-/// For now this is a simple [StateProvider] that starts with an empty sample.
-/// The BLE service will update this as data arrives.
+/// NOTE: This is also available as a stream via [raceBoxDataStreamProvider]
+/// in racebox_service.dart. Widgets that need reactive updates should prefer
+/// the stream provider. This StateProvider is used by the adapter bridge
+/// for imperative updates. TODO: Consolidate to single source of truth.
 final raceBoxDataProvider = StateProvider<RaceBoxData>(
   (ref) => RaceBoxData.empty(),
 );

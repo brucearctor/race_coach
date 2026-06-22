@@ -66,40 +66,24 @@ class RaceBoxAdapter {
   }
 }
 
-// =============================================================================
-// Riverpod bridge provider
-// =============================================================================
-
-/// A provider that watches [raceBoxDataStreamProvider] and automatically pumps
-/// each new sample through [RaceBoxAdapter] into the [TelemetryBus].
+/// A provider that listens to [raceBoxDataStreamProvider] and automatically
+/// pumps each new sample through [RaceBoxAdapter] into the [TelemetryBus].
 ///
 /// Simply reading (or watching) this provider from a top-level widget is
-/// enough to activate the bridge.  The returned value is the most recent
-/// [TelemetryFrame] that was pushed, or `null` if no data has arrived.
-final raceBoxTelemetryBridgeProvider = Provider<TelemetryFrame?>((ref) {
-  final raceBoxAsync = ref.watch(raceBoxDataStreamProvider);
-
-  return raceBoxAsync.whenOrNull<TelemetryFrame?>(
-    data: (raceBoxData) {
+/// enough to activate the bridge.
+final raceBoxTelemetryBridgeProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<RaceBoxData>>(raceBoxDataStreamProvider, (prev, next) {
+    next.whenData((raceBoxData) {
       // Don't push the initial empty sentinel through the bus.
       if (raceBoxData.timestamp.millisecondsSinceEpoch == 0) {
-        return null;
+        return;
       }
 
-      // Also sync the state provider so other consumers stay in sync.
-      Future.microtask(() {
-        ref.read(raceBoxDataProvider.notifier).state = raceBoxData;
-      });
+      // Sync the state provider so other consumers stay in sync.
+      ref.read(raceBoxDataProvider.notifier).state = raceBoxData;
 
       final frame = RaceBoxAdapter.fromRaceBoxData(raceBoxData);
-
-      // Schedule the bus update for after the current build phase to avoid
-      // modifying provider state during a build.
-      Future.microtask(() {
-        ref.read(telemetryBusProvider.notifier).updateFrame(frame);
-      });
-
-      return frame;
-    },
-  );
+      ref.read(telemetryBusProvider.notifier).updateFrame(frame);
+    });
+  });
 });

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -166,10 +167,10 @@ class _AuthButtonWidgetState extends ConsumerState<AuthButtonWidget> {
 
   // ── Signed-in: user profile tile ───────────────────────────────────────
 
-  Widget _buildSignedInTile(dynamic user) {
-    final photoUrl = user.photoURL as String?;
-    final displayName = user.displayName as String? ?? 'User';
-    final email = user.email as String? ?? '';
+  Widget _buildSignedInTile(firebase_auth.User user) {
+    final photoUrl = user.photoURL;
+    final displayName = user.displayName ?? 'User';
+    final email = user.email ?? '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
