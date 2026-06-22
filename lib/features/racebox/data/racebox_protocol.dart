@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 
@@ -157,8 +155,7 @@ class RaceBoxProtocol {
       final second = data[p + 10];
       final timestamp = DateTime.utc(year, month, day, hour, minute, second);
 
-      // Fix status
-      final fixStatus = data[p + 20];
+      // Fix status (byte p+20, available if needed in the future).
 
       // Satellites
       final satellites = data[p + 23];
@@ -243,11 +240,6 @@ class RaceBoxProtocol {
   static int _getUint16(List<int> data, int offset) {
     final bytes = Uint8List.fromList(data.sublist(offset, offset + 2));
     return ByteData.sublistView(bytes).getUint16(0, Endian.little);
-  }
-
-  static int _getUint32(List<int> data, int offset) {
-    final bytes = Uint8List.fromList(data.sublist(offset, offset + 4));
-    return ByteData.sublistView(bytes).getUint32(0, Endian.little);
   }
 
   static int _getInt32(List<int> data, int offset) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/coaching/data/audio_coach.dart';
+import 'package:race_coach/features/track/presentation/track_selector_widget.dart';
 
 // ── Settings State ─────────────────────────────────────────────────────
 
@@ -281,6 +282,16 @@ class SettingsScreen extends ConsumerWidget {
               Icons.phone_android_rounded,
               color: AppColors.textSecondary,
             ),
+          ),
+
+          const Divider(indent: 16, endIndent: 16),
+
+          // ── Track Section ────────────────────────────────────
+          _SectionHeader(title: 'Track'),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TrackSelectorWidget(),
           ),
 
           const Divider(indent: 16, endIndent: 16),
