@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
+import 'package:race_coach/features/auth/presentation/auth_button_widget.dart';
 import 'package:race_coach/features/coaching/data/audio_coach.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/track/presentation/track_selector_widget.dart';
@@ -114,6 +115,13 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: 8),
         children: [
+          // ── Account Section ──────────────────────────────────
+          _SectionHeader(title: 'Account'),
+
+          const AuthButtonWidget(),
+
+          const Divider(indent: 16, endIndent: 16),
+
           // ── Units Section ─────────────────────────────────────
           _SectionHeader(title: 'Units'),
 

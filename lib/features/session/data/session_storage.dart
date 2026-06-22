@@ -131,7 +131,7 @@ class SessionStorage {
       );
     } else {
       // Best-effort parse from directory name.
-      date = _parseDateFromId(sessionId);
+      date = parseDateFromId(sessionId);
     }
 
     // Find the best (fastest) completed lap.
@@ -157,7 +157,7 @@ class SessionStorage {
 
   /// Attempt to parse the date from a session id like
   /// `2026-06-22_thunderhill_east-bypass`.
-  static DateTime _parseDateFromId(String sessionId) {
+  static DateTime parseDateFromId(String sessionId) {
     try {
       final datePart = sessionId.substring(0, 10); // "2026-06-22"
       return DateTime.parse(datePart);
