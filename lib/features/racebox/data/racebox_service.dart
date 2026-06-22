@@ -25,6 +25,9 @@ class RaceBoxService {
   /// Buffer for reassembling packets that may span multiple BLE notifications.
   final List<int> _packetBuffer = [];
 
+  /// Counter for throttling debug output (prints every 25th frame).
+  int _parseCount = 0;
+
   /// The device ID currently connected, or `null`.
   String? _connectedDeviceId;
 
@@ -79,9 +82,7 @@ class RaceBoxService {
 
   /// Handles raw BLE notification data, buffering and parsing packets.
   void _onDataReceived(List<int> data) {
-    debugPrint('[RaceBox] BLE notification: ${data.length} bytes, first 10: ${data.take(10).toList()}');
     _packetBuffer.addAll(data);
-    debugPrint('[RaceBox] Buffer now ${_packetBuffer.length} bytes');
 
     // Try to extract complete packets from the buffer.
     while (_packetBuffer.length >= RaceBoxProtocol.minGpsPacketLength) {
@@ -90,14 +91,12 @@ class RaceBoxService {
 
       if (headerIndex < 0) {
         // No header found — discard everything.
-        debugPrint('[RaceBox] No header found, discarding ${_packetBuffer.length} bytes');
         _packetBuffer.clear();
         break;
       }
 
       // Discard bytes before the header.
       if (headerIndex > 0) {
-        debugPrint('[RaceBox] Discarding $headerIndex bytes before header');
         _packetBuffer.removeRange(0, headerIndex);
       }
 
@@ -109,11 +108,8 @@ class RaceBoxService {
       final payloadLength =
           _packetBuffer[4] | (_packetBuffer[5] << 8);
       final totalPacketLength = 6 + payloadLength + 2; // header(2) + class(1) + id(1) + len(2) + payload + checksum(2)
-      debugPrint('[RaceBox] class=0x${_packetBuffer[2].toRadixString(16)} id=0x${_packetBuffer[3].toRadixString(16)} payloadLen=$payloadLength totalLen=$totalPacketLength bufLen=${_packetBuffer.length}');
 
       if (_packetBuffer.length < totalPacketLength) {
-        // Incomplete packet — wait for more data.
-        debugPrint('[RaceBox] Incomplete packet, waiting for more data');
         break;
       }
 
@@ -124,7 +120,10 @@ class RaceBoxService {
       // Parse it.
       final parsed = RaceBoxProtocol.parsePacket(packet);
       if (parsed != null) {
-        debugPrint('[RaceBox] ✅ Parsed: lat=${parsed.latitude.toStringAsFixed(5)} lon=${parsed.longitude.toStringAsFixed(5)} speed=${parsed.speedKmh.toStringAsFixed(1)} km/h sats=${parsed.satellites}');
+        _parseCount++;
+        if (_parseCount % 25 == 1) {
+          debugPrint('[RaceBox] ✅ frame #$_parseCount: ${parsed.speedKmh.toStringAsFixed(1)} km/h, ${parsed.satellites} sats');
+        }
         _dataController.add(parsed);
       } else {
         debugPrint('[RaceBox] ❌ Parse returned null for ${packet.length}-byte packet, type=0x${packet[2].toRadixString(16)}');

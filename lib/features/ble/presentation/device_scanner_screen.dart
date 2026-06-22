@@ -7,6 +7,7 @@ import 'package:race_coach/core/permissions/permission_service.dart';
 import 'package:race_coach/features/ble/data/ble_service.dart';
 import 'package:race_coach/features/ble/domain/ble_device.dart';
 import 'package:race_coach/features/racebox/data/racebox_service.dart';
+import 'package:race_coach/core/router/app_router.dart';
 
 /// Screen that scans for nearby BLE devices and lets the user connect
 /// to a RaceBox Mini.
@@ -94,7 +95,7 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
 
     // Navigate to the dashboard.
     if (mounted) {
-      context.go('/dashboard');
+      context.go(AppRoutes.dashboard);
     }
   }
 
@@ -122,6 +123,10 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go(AppRoutes.dashboard),
+        ),
         title: const Text(
           'Connect Device',
           style: TextStyle(color: AppColors.textPrimary),

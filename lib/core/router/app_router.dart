@@ -8,29 +8,29 @@ import '../../features/settings/presentation/settings_screen.dart';
 
 /// Named route paths used throughout the app.
 abstract class AppRoutes {
-  static const String deviceScanner = '/';
-  static const String dashboard = '/dashboard';
+  static const String dashboard = '/';
+  static const String deviceScanner = '/scanner';
   static const String settings = '/settings';
 }
 
 /// Provides the [GoRouter] instance to the widget tree via Riverpod.
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: AppRoutes.deviceScanner,
+    initialLocation: AppRoutes.dashboard,
     debugLogDiagnostics: true,
     routes: [
-      GoRoute(
-        path: AppRoutes.deviceScanner,
-        name: 'deviceScanner',
-        builder: (BuildContext context, GoRouterState state) {
-          return const DeviceScannerScreen();
-        },
-      ),
       GoRoute(
         path: AppRoutes.dashboard,
         name: 'dashboard',
         builder: (BuildContext context, GoRouterState state) {
           return const LiveDashboardScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.deviceScanner,
+        name: 'deviceScanner',
+        builder: (BuildContext context, GoRouterState state) {
+          return const DeviceScannerScreen();
         },
       ),
       GoRoute(

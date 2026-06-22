@@ -113,6 +113,17 @@ class BleService {
     _connectionSubscriptions[deviceId] = sub;
   }
 
+  /// Clears any BLE connections from a previous app instance (e.g. hot restart).
+  ///
+  /// flutter_reactive_ble maintains native connections that survive Dart restarts.
+  /// Call this on app startup to ensure a clean state.
+  void clearStaleConnections() {
+    for (final sub in _connectionSubscriptions.values) {
+      sub.cancel();
+    }
+    _connectionSubscriptions.clear();
+  }
+
   /// Disposes all resources.
   void dispose() {
     for (final sub in _connectionSubscriptions.values) {
