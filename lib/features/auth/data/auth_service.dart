@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
@@ -27,17 +28,17 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 /// Manages Firebase Authentication with Google Sign-In.
 ///
-/// **IMPORTANT**: Before using Google Sign-In, you must enable the Google
-/// sign-in provider in the Firebase Console:
-///   Firebase Console → Authentication → Sign-in method → Google → Enable
-///
-/// On Android, ensure the app's SHA-1 fingerprint is registered in the
-/// Firebase project settings.
+/// Uses google_sign_in v6 with the legacy GoogleSignInClient API which is
+/// more reliable than the v7 Credential Manager flow on many devices.
 class AuthService {
   AuthService(this._auth);
 
   final FirebaseAuth _auth;
-  bool _googleInitialized = false;
+
+  /// The GoogleSignIn instance with scopes needed for Firebase Auth.
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email'],
+  );
 
   /// The currently signed-in user, or `null`.
   User? get currentUser => _auth.currentUser;
@@ -45,67 +46,50 @@ class AuthService {
   /// Whether a user is currently signed in.
   bool get isSignedIn => _auth.currentUser != null;
 
-  /// Ensures [GoogleSignIn] is initialized exactly once.
-  Future<void> _ensureGoogleInitialized() async {
-    if (_googleInitialized) return;
-    await GoogleSignIn.instance.initialize();
-    _googleInitialized = true;
-  }
-
   /// Sign in with Google.
   ///
   /// Returns the [UserCredential] on success, or `null` if the user
   /// cancelled the sign-in flow.
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      await _ensureGoogleInitialized();
+      debugPrint('[Auth] Starting Google Sign-In (v6 legacy flow)...');
 
-      final googleUser = await GoogleSignIn.instance.authenticate();
-      // v7: authenticate() throws on cancel, so googleUser is never null.
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        debugPrint('[Auth] User cancelled sign-in');
+        return null; // User cancelled
+      }
 
-      final googleAuth = googleUser.authentication;
+      debugPrint('[Auth] Google user: ${googleUser.displayName} (${googleUser.email})');
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      debugPrint('[Auth] idToken present: ${googleAuth.idToken != null}');
+      debugPrint('[Auth] accessToken present: ${googleAuth.accessToken != null}');
+
       final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      return await _auth.signInWithCredential(credential);
-    } on FirebaseAuthException {
+      debugPrint('[Auth] Calling signInWithCredential...');
+      final result = await _auth.signInWithCredential(credential);
+      debugPrint('[Auth] ✅ Signed in as: ${result.user?.displayName}');
+      return result;
+    } catch (e, st) {
+      debugPrint('[Auth] ❌ Sign-in error: $e');
+      debugPrint('[Auth] Stack: $st');
       rethrow;
-    } catch (e) {
-      // User cancelled or other error.
-      if (e.toString().contains('cancel') ||
-          e.toString().contains('canceled')) {
-        return null;
-      }
-      throw FirebaseAuthException(
-        code: 'google-sign-in-failed',
-        message: 'Google Sign-In failed: $e',
-      );
     }
   }
 
   /// Sign out from both Google and Firebase.
   Future<void> signOut() async {
     try {
-      await _ensureGoogleInitialized();
-      await GoogleSignIn.instance.signOut();
+      await _googleSignIn.signOut();
     } catch (_) {
       // Google sign-out failure is non-critical.
     }
     await _auth.signOut();
   }
-}
-
-/// Exception wrapper for Firebase Auth errors.
-class FirebaseAuthException implements Exception {
-  const FirebaseAuthException({
-    required this.code,
-    required this.message,
-  });
-
-  final String code;
-  final String message;
-
-  @override
-  String toString() => 'FirebaseAuthException($code): $message';
 }
