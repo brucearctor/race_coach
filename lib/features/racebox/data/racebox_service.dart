@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/features/ble/data/ble_service.dart';
@@ -78,7 +79,9 @@ class RaceBoxService {
 
   /// Handles raw BLE notification data, buffering and parsing packets.
   void _onDataReceived(List<int> data) {
+    debugPrint('[RaceBox] BLE notification: ${data.length} bytes, first 10: ${data.take(10).toList()}');
     _packetBuffer.addAll(data);
+    debugPrint('[RaceBox] Buffer now ${_packetBuffer.length} bytes');
 
     // Try to extract complete packets from the buffer.
     while (_packetBuffer.length >= RaceBoxProtocol.minGpsPacketLength) {
@@ -87,25 +90,30 @@ class RaceBoxService {
 
       if (headerIndex < 0) {
         // No header found — discard everything.
+        debugPrint('[RaceBox] No header found, discarding ${_packetBuffer.length} bytes');
         _packetBuffer.clear();
         break;
       }
 
       // Discard bytes before the header.
       if (headerIndex > 0) {
+        debugPrint('[RaceBox] Discarding $headerIndex bytes before header');
         _packetBuffer.removeRange(0, headerIndex);
       }
 
-      // Need at least 5 bytes to read the payload length.
-      if (_packetBuffer.length < 5) break;
+      // Need at least 6 bytes to read class, id, and payload length.
+      if (_packetBuffer.length < 6) break;
 
-      // Read payload length (bytes 3-4, little-endian).
+      // UBX format: [0xB5, 0x62, class, id, lenLo, lenHi, ...payload..., ckA, ckB]
+      // Read payload length (bytes 4-5, little-endian).
       final payloadLength =
-          _packetBuffer[3] | (_packetBuffer[4] << 8);
-      final totalPacketLength = 5 + payloadLength; // 5 = header(2) + type(1) + len(2)
+          _packetBuffer[4] | (_packetBuffer[5] << 8);
+      final totalPacketLength = 6 + payloadLength + 2; // header(2) + class(1) + id(1) + len(2) + payload + checksum(2)
+      debugPrint('[RaceBox] class=0x${_packetBuffer[2].toRadixString(16)} id=0x${_packetBuffer[3].toRadixString(16)} payloadLen=$payloadLength totalLen=$totalPacketLength bufLen=${_packetBuffer.length}');
 
       if (_packetBuffer.length < totalPacketLength) {
         // Incomplete packet — wait for more data.
+        debugPrint('[RaceBox] Incomplete packet, waiting for more data');
         break;
       }
 
@@ -116,12 +124,16 @@ class RaceBoxService {
       // Parse it.
       final parsed = RaceBoxProtocol.parsePacket(packet);
       if (parsed != null) {
+        debugPrint('[RaceBox] ✅ Parsed: lat=${parsed.latitude.toStringAsFixed(5)} lon=${parsed.longitude.toStringAsFixed(5)} speed=${parsed.speedKmh.toStringAsFixed(1)} km/h sats=${parsed.satellites}');
         _dataController.add(parsed);
+      } else {
+        debugPrint('[RaceBox] ❌ Parse returned null for ${packet.length}-byte packet, type=0x${packet[2].toRadixString(16)}');
       }
     }
 
     // Safety: prevent the buffer from growing unbounded if we get garbage.
     if (_packetBuffer.length > 1024) {
+      debugPrint('[RaceBox] Buffer overflow (${_packetBuffer.length} bytes), clearing');
       _packetBuffer.clear();
     }
   }

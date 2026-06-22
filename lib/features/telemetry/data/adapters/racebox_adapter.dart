@@ -8,6 +8,7 @@ import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart'
 import 'package:race_coach/generated/racecoach/v1/telemetry.pb.dart';
 import 'package:race_coach/features/racebox/domain/racebox_data.dart';
 import 'package:race_coach/features/racebox/data/racebox_providers.dart';
+import 'package:race_coach/features/racebox/data/racebox_service.dart';
 import 'package:race_coach/features/telemetry/data/telemetry_bus.dart';
 
 // =============================================================================
@@ -69,27 +70,36 @@ class RaceBoxAdapter {
 // Riverpod bridge provider
 // =============================================================================
 
-/// A provider that watches [raceBoxDataProvider] and automatically pumps
+/// A provider that watches [raceBoxDataStreamProvider] and automatically pumps
 /// each new sample through [RaceBoxAdapter] into the [TelemetryBus].
 ///
 /// Simply reading (or watching) this provider from a top-level widget is
 /// enough to activate the bridge.  The returned value is the most recent
 /// [TelemetryFrame] that was pushed, or `null` if no data has arrived.
 final raceBoxTelemetryBridgeProvider = Provider<TelemetryFrame?>((ref) {
-  final raceBoxData = ref.watch(raceBoxDataProvider);
+  final raceBoxAsync = ref.watch(raceBoxDataStreamProvider);
 
-  // Don't push the initial empty sentinel through the bus.
-  if (raceBoxData.timestamp.millisecondsSinceEpoch == 0) {
-    return null;
-  }
+  return raceBoxAsync.whenOrNull<TelemetryFrame?>(
+    data: (raceBoxData) {
+      // Don't push the initial empty sentinel through the bus.
+      if (raceBoxData.timestamp.millisecondsSinceEpoch == 0) {
+        return null;
+      }
 
-  final frame = RaceBoxAdapter.fromRaceBoxData(raceBoxData);
+      // Also sync the state provider so other consumers stay in sync.
+      Future.microtask(() {
+        ref.read(raceBoxDataProvider.notifier).state = raceBoxData;
+      });
 
-  // Schedule the bus update for after the current build phase to avoid
-  // modifying provider state during a build.
-  Future.microtask(() {
-    ref.read(telemetryBusProvider.notifier).updateFrame(frame);
-  });
+      final frame = RaceBoxAdapter.fromRaceBoxData(raceBoxData);
 
-  return frame;
+      // Schedule the bus update for after the current build phase to avoid
+      // modifying provider state during a build.
+      Future.microtask(() {
+        ref.read(telemetryBusProvider.notifier).updateFrame(frame);
+      });
+
+      return frame;
+    },
+  );
 });

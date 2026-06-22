@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/racebox/data/racebox_providers.dart';
 import 'package:race_coach/features/racebox/presentation/racebox_status_widget.dart';
+import 'package:race_coach/features/telemetry/data/adapters/racebox_adapter.dart';
+import 'package:race_coach/features/session/data/session_recorder.dart';
 import 'package:race_coach/features/live/presentation/widgets/speed_display.dart';
 import 'package:race_coach/features/live/presentation/widgets/g_force_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/lap_timer_widget.dart';
@@ -31,6 +33,12 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final isRecording = ref.watch(isRecordingProvider);
+
+    // Activate bridge providers — these pump data between layers:
+    // RaceBox BLE → raceBoxDataProvider → TelemetryBus → dashboard widgets
+    ref.watch(raceBoxTelemetryBridgeProvider);
+    // Session recording bridge — auto-starts/stops with isRecordingProvider
+    ref.watch(sessionRecordingBridgeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
