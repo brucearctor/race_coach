@@ -305,6 +305,19 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
 
+          _SettingsTile(
+            icon: Icons.record_voice_over,
+            title: 'Voice',
+            subtitle: ref.watch(audioCoachProvider).currentVoice?['name']
+                    ?.split('#').first ??
+                'System Default',
+            trailing: const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+            ),
+            onTap: () => _showVoicePicker(context, ref),
+          ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: OutlinedButton.icon(
@@ -461,18 +474,153 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Shows a bottom sheet with available TTS voices for selection.
+void _showVoicePicker(BuildContext context, WidgetRef ref) async {
+  final coach = ref.read(audioCoachProvider);
+  final voices = await coach.getAvailableVoices();
+
+  if (!context.mounted) return;
+
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: AppColors.surface,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      maxChildSize: 0.85,
+      minChildSize: 0.3,
+      expand: false,
+      builder: (context, scrollController) => Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.textDim,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Select Voice',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Expanded(
+            child: ListView.builder(
+              controller: scrollController,
+              itemCount: voices.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  final isSelected = coach.currentVoice == null;
+                  return ListTile(
+                    leading: Icon(
+                      Icons.auto_awesome,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                    title: Text(
+                      'System Default',
+                      style: TextStyle(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check, color: AppColors.primary)
+                        : null,
+                    onTap: () {
+                      coach.setVoice(null);
+                      coach.speakImmediate('System default voice');
+                      Navigator.of(context).pop();
+                    },
+                  );
+                }
+
+                final voice = voices[index - 1];
+                final name = voice['name'] ?? 'Unknown';
+                final locale = voice['locale'] ?? '';
+                final displayName = name.split('#').first;
+                final isSelected =
+                    coach.currentVoice?['name'] == voice['name'];
+
+                return ListTile(
+                  leading: Icon(
+                    Icons.person,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
+                  ),
+                  title: Text(
+                    displayName,
+                    style: TextStyle(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                  subtitle: Text(
+                    locale,
+                    style: const TextStyle(
+                      color: AppColors.textDim,
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? const Icon(Icons.check, color: AppColors.primary)
+                      : IconButton(
+                          icon: const Icon(
+                            Icons.play_arrow,
+                            color: AppColors.textSecondary,
+                          ),
+                          onPressed: () {
+                            coach.setVoice(voice);
+                            coach.speakImmediate('Turn 3, brake now');
+                          },
+                        ),
+                  onTap: () {
+                    coach.setVoice(voice);
+                    coach.speakImmediate('Voice selected');
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _SettingsTile extends StatelessWidget {
   const _SettingsTile({
     required this.icon,
     required this.title,
     this.subtitle,
     this.trailing,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String? subtitle;
   final Widget? trailing;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -495,6 +643,7 @@ class _SettingsTile extends StatelessWidget {
             )
           : null,
       trailing: trailing,
+      onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
   }

@@ -36,11 +36,48 @@ class AudioCoach {
   double _volume = 1.0;
   double _speechRate = 0.5;
   double _pitch = 1.0;
+  Map<String, String>? _currentVoice;
 
   double get volume => _volume;
   double get speechRate => _speechRate;
   double get pitch => _pitch;
   bool get isEnabled => _enabled;
+
+  /// The currently selected voice, or null for system default.
+  Map<String, String>? get currentVoice => _currentVoice;
+
+  /// Fetch available English voices from the TTS engine.
+  Future<List<Map<String, String>>> getAvailableVoices() async {
+    final voices = await _tts.getVoices;
+    if (voices == null) return [];
+
+    final list = <Map<String, String>>[];
+    for (final v in voices) {
+      final map = Map<String, String>.from(v as Map);
+      final locale = map['locale'] ?? '';
+      // Filter to English voices only.
+      if (locale.startsWith('en')) {
+        list.add(map);
+      }
+    }
+    // Sort by locale then name for consistent ordering.
+    list.sort((a, b) {
+      final localeCompare = (a['locale'] ?? '').compareTo(b['locale'] ?? '');
+      if (localeCompare != 0) return localeCompare;
+      return (a['name'] ?? '').compareTo(b['name'] ?? '');
+    });
+    return list;
+  }
+
+  /// Set the TTS voice. Pass null to reset to system default.
+  Future<void> setVoice(Map<String, String>? voice) async {
+    _currentVoice = voice;
+    if (voice != null) {
+      await _tts.setVoice(voice);
+    } else {
+      await _tts.setLanguage('en-US');
+    }
+  }
 
   Future<void> _init() async {
     await _tts.setLanguage('en-US');
