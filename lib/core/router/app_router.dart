@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/ble/presentation/device_scanner_screen.dart';
 import '../../features/live/presentation/live_dashboard_screen.dart';
+import '../../features/session/presentation/sessions_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 
 /// Named route paths used throughout the app.
 abstract class AppRoutes {
   static const String dashboard = '/';
   static const String deviceScanner = '/scanner';
+  static const String sessions = '/sessions';
   static const String settings = '/settings';
 }
 
@@ -38,6 +40,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'settings',
         builder: (BuildContext context, GoRouterState state) {
           return const SettingsScreen();
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.sessions,
+        name: 'sessions',
+        builder: (BuildContext context, GoRouterState state) {
+          return const SessionsScreen();
         },
       ),
     ],

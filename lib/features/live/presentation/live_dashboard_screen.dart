@@ -101,6 +101,14 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
               onPressed: () => showDeviceBottomSheet(context, ref),
             ),
 
+          // ── Sessions ──────────────────────────────────────────
+          IconButton(
+            icon: const Icon(Icons.folder_outlined),
+            color: AppColors.textSecondary,
+            tooltip: 'Sessions',
+            onPressed: () => context.go(AppRoutes.sessions),
+          ),
+
           // ── Settings ─────────────────────────────────────────
           IconButton(
             icon: const Icon(Icons.settings_rounded),
