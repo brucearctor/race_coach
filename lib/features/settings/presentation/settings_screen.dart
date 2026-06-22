@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/coaching/data/audio_coach.dart';
+import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/track/presentation/track_selector_widget.dart';
 
 // ── Settings State ─────────────────────────────────────────────────────
@@ -187,12 +188,84 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (value) {
               notifier.setAudioEnabled(value);
               ref.read(audioCoachProvider).setEnabled(value);
+              if (!value) {
+                ref.read(audioModeProvider.notifier).state = AudioMode.off;
+              } else if (ref.read(audioModeProvider) == AudioMode.off) {
+                ref.read(audioModeProvider.notifier).state =
+                    AudioMode.turnAnnouncer;
+              }
             },
             secondary: const Icon(
               Icons.record_voice_over_rounded,
               color: AppColors.textSecondary,
             ),
           ),
+
+          // ── Audio Mode Selector ──────────────────────────────
+          if (settings.audioEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Text(
+                'MODE',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+            ...AudioMode.values.where((m) => m != AudioMode.off).map(
+              (mode) {
+                final selected = ref.watch(audioModeProvider) == mode;
+                return RadioListTile<AudioMode>(
+                  title: Row(
+                    children: [
+                      Icon(
+                        mode.icon,
+                        size: 18,
+                        color: selected
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        mode.label,
+                        style: TextStyle(
+                          color: selected
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                          fontWeight:
+                              selected ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(left: 28),
+                    child: Text(
+                      mode.description,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textDim,
+                      ),
+                    ),
+                  ),
+                  value: mode,
+                  groupValue: ref.watch(audioModeProvider),
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(audioModeProvider.notifier).state = value;
+                    }
+                  },
+                  activeColor: AppColors.primary,
+                  dense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12),
+                );
+              },
+            ),
+          ],
 
           _SettingsTile(
             icon: Icons.volume_up_rounded,

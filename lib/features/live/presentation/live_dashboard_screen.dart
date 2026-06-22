@@ -10,6 +10,8 @@ import 'package:race_coach/features/racebox/presentation/racebox_status_widget.d
 import 'package:race_coach/features/racebox/presentation/device_bottom_sheet.dart';
 import 'package:race_coach/features/telemetry/data/adapters/racebox_adapter.dart';
 import 'package:race_coach/features/session/data/session_recorder.dart';
+import 'package:race_coach/features/coaching/data/turn_announcer.dart';
+import 'package:race_coach/features/coaching/data/lap_time_announcer.dart';
 import 'package:race_coach/features/live/data/lap_detection_bridge.dart';
 import 'package:race_coach/features/track/data/track_service.dart';
 import 'package:race_coach/features/live/presentation/widgets/speed_display.dart';
@@ -71,6 +73,8 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
       ref.watch(sessionRecordingBridgeProvider);
       ref.watch(lapDetectionBridgeProvider);
       ref.watch(trackAutoDetectionProvider);
+      ref.watch(turnAnnouncerProvider);
+      ref.watch(lapTimeAnnouncerProvider);
     }
 
     return Scaffold(
