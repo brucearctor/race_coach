@@ -53,7 +53,7 @@ final turnAnnouncerProvider = Provider<void>((ref) {
       for (final corner in config.corners) {
         if (!corner.hasEntry()) continue;
 
-        final distance = _distanceMeters(
+        final distance = distanceMetersForTesting(
           data.latitude,
           data.longitude,
           corner.entry.latitude,
@@ -70,7 +70,7 @@ final turnAnnouncerProvider = Provider<void>((ref) {
 
           announced[corner.number] = now;
 
-          final spokenName = _shortName(corner.name);
+          final spokenName = shortNameForTesting(corner.name);
           debugPrint('[TurnAnnouncer] 📢 $spokenName '
               '(${distance.toStringAsFixed(0)}m from entry)');
 
@@ -92,7 +92,8 @@ final turnAnnouncerProvider = Provider<void>((ref) {
 ///
 /// If the name contains parentheses (e.g. "Cyclone (T8)"), returns the
 /// part before the parenthesis, trimmed.  Otherwise returns the full name.
-String _shortName(String name) {
+@visibleForTesting
+String shortNameForTesting(String name) {
   final parenIndex = name.indexOf('(');
   if (parenIndex > 0) {
     return name.substring(0, parenIndex).trim();
@@ -101,7 +102,8 @@ String _shortName(String name) {
 }
 
 /// Haversine distance between two GPS coordinates in meters.
-double _distanceMeters(
+@visibleForTesting
+double distanceMetersForTesting(
   double lat1,
   double lon1,
   double lat2,

@@ -47,7 +47,7 @@ final lapTimeAnnouncerProvider = Provider<void>((ref) {
         final lapTime = previousLapTime;
         if (lapTime == null) return;
 
-        final message = _buildMessage(
+        final message = buildLapMessageForTesting(
           lapTime: lapTime,
           bestLapTime: next.bestLapTime,
         );
@@ -70,11 +70,12 @@ final lapTimeAnnouncerProvider = Provider<void>((ref) {
 // ── Message building ──────────────────────────────────────────────────
 
 /// Build the spoken message for a completed lap.
-String _buildMessage({
+@visibleForTesting
+String buildLapMessageForTesting({
   required Duration lapTime,
   required Duration? bestLapTime,
 }) {
-  final timeStr = _formatLapTimeForSpeech(lapTime);
+  final timeStr = formatLapTimeForSpeechForTesting(lapTime);
 
   // This lap IS the new best.
   if (bestLapTime != null && lapTime <= bestLapTime) {
@@ -104,7 +105,8 @@ String _buildMessage({
 /// Examples:
 /// - 1:42.300 → "1 42 3"
 /// - 0:58.700 → "58 point 7"
-String _formatLapTimeForSpeech(Duration d) {
+@visibleForTesting
+String formatLapTimeForSpeechForTesting(Duration d) {
   final minutes = d.inMinutes;
   final seconds = d.inSeconds % 60;
   final tenths = (d.inMilliseconds % 1000) ~/ 100;
