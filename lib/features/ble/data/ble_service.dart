@@ -163,23 +163,33 @@ class BleConnectionManager extends StateNotifier<Map<String, BleConnectionState>
 
   /// Attempts to connect to the device with [deviceId].
   void connect(String deviceId) {
-    state = {...state, deviceId: BleConnectionState.connecting};
+    final connectingState = Map<String, BleConnectionState>.from(state);
+    connectingState[deviceId] = BleConnectionState.connecting;
+    state = connectingState;
 
     _subscriptions[deviceId]?.cancel();
     final sub = _bleService.connectToDevice(deviceId).listen(
       (update) {
         switch (update.connectionState) {
           case DeviceConnectionState.connecting:
-            state = {...state, deviceId: BleConnectionState.connecting};
+            final newState = Map<String, BleConnectionState>.from(state);
+            newState[deviceId] = BleConnectionState.connecting;
+            state = newState;
           case DeviceConnectionState.connected:
-            state = {...state, deviceId: BleConnectionState.connected};
+            final newState = Map<String, BleConnectionState>.from(state);
+            newState[deviceId] = BleConnectionState.connected;
+            state = newState;
           case DeviceConnectionState.disconnecting:
           case DeviceConnectionState.disconnected:
-            state = {...state, deviceId: BleConnectionState.disconnected};
+            final newState = Map<String, BleConnectionState>.from(state);
+            newState[deviceId] = BleConnectionState.disconnected;
+            state = newState;
         }
       },
       onError: (Object error) {
-        state = {...state, deviceId: BleConnectionState.error};
+        final newState = Map<String, BleConnectionState>.from(state);
+        newState[deviceId] = BleConnectionState.error;
+        state = newState;
       },
     );
     _subscriptions[deviceId] = sub;
@@ -191,7 +201,9 @@ class BleConnectionManager extends StateNotifier<Map<String, BleConnectionState>
     _subscriptions[deviceId]?.cancel();
     _subscriptions.remove(deviceId);
     _bleService.disconnect(deviceId);
-    state = {...state, deviceId: BleConnectionState.disconnected};
+    final newState = Map<String, BleConnectionState>.from(state);
+    newState[deviceId] = BleConnectionState.disconnected;
+    state = newState;
   }
 
   /// Disconnects all devices.

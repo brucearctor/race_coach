@@ -86,10 +86,8 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
     // Store the connected device ID.
     ref.read(connectedDeviceIdProvider.notifier).state = device.id;
 
-    // Initiate BLE connection via the connection notifier.
-    ref.read(bleConnectionManagerProvider.notifier).connect(device.id);
-
     // Connect the RaceBox service to start streaming data.
+    // RaceBoxService manages its own BLE connection internally.
     final raceBoxService = ref.read(raceBoxServiceProvider);
     await raceBoxService.connect(device.id);
 

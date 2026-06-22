@@ -52,33 +52,36 @@ class AuthService {
   /// cancelled the sign-in flow.
   Future<UserCredential?> signInWithGoogle() async {
     try {
-      debugPrint('[Auth] Starting Google Sign-In (v6 legacy flow)...');
+      if (kDebugMode) {
+        debugPrint('[Auth] Starting Google Sign-In (v6 legacy flow)...');
+      }
 
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        debugPrint('[Auth] User cancelled sign-in');
+        if (kDebugMode) {
+          debugPrint('[Auth] User cancelled sign-in');
+        }
         return null; // User cancelled
       }
 
-      debugPrint('[Auth] Google user: ${googleUser.displayName} (${googleUser.email})');
-
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
-      debugPrint('[Auth] idToken present: ${googleAuth.idToken != null}');
-      debugPrint('[Auth] accessToken present: ${googleAuth.accessToken != null}');
 
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      debugPrint('[Auth] Calling signInWithCredential...');
       final result = await _auth.signInWithCredential(credential);
-      debugPrint('[Auth] ✅ Signed in as: ${result.user?.displayName}');
+      if (kDebugMode) {
+        debugPrint('[Auth] ✅ Sign-in successful');
+      }
       return result;
     } catch (e, st) {
-      debugPrint('[Auth] ❌ Sign-in error: $e');
-      debugPrint('[Auth] Stack: $st');
+      if (kDebugMode) {
+        debugPrint('[Auth] ❌ Sign-in error: $e');
+        debugPrint('[Auth] Stack: $st');
+      }
       rethrow;
     }
   }

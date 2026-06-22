@@ -28,14 +28,22 @@ class _GForceWidgetState extends ConsumerState<GForceWidget> {
   static const int _maxTrailLength = 20;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.listenManual(telemetryBusProvider, (previous, next) {
+        _trail.add((next.lateralG, next.longitudinalG));
+        if (_trail.length > _maxTrailLength) {
+          _trail.removeAt(0);
+        }
+        setState(() {});
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final telemetryState = ref.watch(telemetryBusProvider);
-
-    // Add current position to trail.
-    _trail.add((telemetryState.lateralG, telemetryState.longitudinalG));
-    if (_trail.length > _maxTrailLength) {
-      _trail.removeAt(0);
-    }
 
     return Container(
       padding: const EdgeInsets.all(8),

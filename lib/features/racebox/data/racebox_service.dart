@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/features/ble/data/ble_service.dart';
@@ -18,7 +19,7 @@ class RaceBoxService {
 
   final BleService _bleService;
 
-  final _dataController = StreamController<RaceBoxData>.broadcast();
+  var _dataController = StreamController<RaceBoxData>.broadcast();
   StreamSubscription<dynamic>? _connectionSubscription;
   StreamSubscription<List<int>>? _notificationSubscription;
 
@@ -49,6 +50,11 @@ class RaceBoxService {
     // Disconnect any existing connection first.
     disconnect();
 
+    // Re-create the stream controller if it was closed by dispose().
+    if (_dataController.isClosed) {
+      _dataController = StreamController<RaceBoxData>.broadcast();
+    }
+
     _connectedDeviceId = deviceId;
     _packetBuffer.clear();
 
@@ -56,7 +62,7 @@ class RaceBoxService {
     _connectionSubscription = _bleService.connectToDevice(deviceId).listen(
       (update) {
         // Once connected, subscribe to the TX characteristic.
-        if (update.connectionState.name == 'connected') {
+        if (update.connectionState == DeviceConnectionState.connected) {
           _subscribeToNotifications(deviceId);
         }
       },

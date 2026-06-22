@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
@@ -278,7 +279,7 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
 /// Reads the currently-selected track/config to label the session directory.
 final sessionRecorderProvider =
     StateNotifierProvider<SessionRecorder, SessionRecorderState>((ref) {
-  final trackState = ref.watch(trackServiceProvider);
+  final trackState = ref.read(trackServiceProvider);
   final trackName = trackState.selectedTrack?.name ?? 'unknown-track';
   final configName = trackState.selectedConfig?.name ?? '';
 
@@ -300,11 +301,13 @@ final sessionRecordingBridgeProvider = Provider<void>((ref) {
 
   // Start / stop based on the toggle.
   if (isRecording && !recorderState.isRecording) {
-    // Fire-and-forget — startRecording is async but the bridge is
-    // synchronous. Errors are logged in debug builds.
-    recorder.startRecording();
+    recorder.startRecording().catchError((e) {
+      debugPrint('[SessionBridge] Error starting recording: $e');
+    });
   } else if (!isRecording && recorderState.isRecording) {
-    recorder.stopRecording();
+    recorder.stopRecording().catchError((e) {
+      debugPrint('[SessionBridge] Error stopping recording: $e');
+    });
   }
 
   // Feed telemetry frames while recording.
