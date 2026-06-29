@@ -1,0 +1,20 @@
+[package]
+name = "race_coach_core"
+version = "0.1.0"
+edition = "2021"
+description = "Race coaching analysis engine — telemetry processing, braking detection, friction circle, delta-T"
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+
+[dependencies]
+# flutter_rust_bridge will be added after research subagent reports back
+
+[dev-dependencies]
+approx = "0.5"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true
