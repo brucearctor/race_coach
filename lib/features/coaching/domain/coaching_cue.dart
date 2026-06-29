@@ -8,6 +8,8 @@ enum CoachingCueType {
   general,
   turnAnnouncement,
   lapTime,
+  coasting,
+  trailBraking,
 }
 
 /// Priority level for a coaching cue.
