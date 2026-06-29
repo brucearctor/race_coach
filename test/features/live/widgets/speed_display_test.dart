@@ -34,11 +34,7 @@ void main() {
           return bus;
         }),
       ],
-      child: const MaterialApp(
-        home: Scaffold(
-          body: SpeedDisplay(),
-        ),
-      ),
+      child: const MaterialApp(home: Scaffold(body: SpeedDisplay())),
     );
   }
 
@@ -47,14 +43,14 @@ void main() {
   // ===========================================================================
 
   group('SpeedDisplay widget', () {
-    testWidgets('renders without errors at zero speed',
-        (WidgetTester tester) async {
+    testWidgets('renders without errors at zero speed', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildWidget(TelemetryState.empty()));
       expect(find.byType(SpeedDisplay), findsOneWidget);
     });
 
-    testWidgets('displays "0" when speed is zero',
-        (WidgetTester tester) async {
+    testWidgets('displays "0" when speed is zero', (WidgetTester tester) async {
       await tester.pumpWidget(buildWidget(TelemetryState.empty()));
       // SpeedDisplay shows speedMph.round() — 0 km/h → 0 mph → "0"
       expect(find.text('0'), findsWidgets);
@@ -70,8 +66,9 @@ void main() {
       expect(find.text('MAX 0'), findsOneWidget);
     });
 
-    testWidgets('displays speed value when telemetry provides a speed',
-        (WidgetTester tester) async {
+    testWidgets('displays speed value when telemetry provides a speed', (
+      WidgetTester tester,
+    ) async {
       // 160.934 km/h ≈ 100 mph → rounds to 100
       final state = stateWithSpeedKmh(160.934);
       await tester.pumpWidget(buildWidget(state));
@@ -81,8 +78,9 @@ void main() {
       expect(find.text('100'), findsWidgets);
     });
 
-    testWidgets('displays max speed indicator with current speed',
-        (WidgetTester tester) async {
+    testWidgets('displays max speed indicator with current speed', (
+      WidgetTester tester,
+    ) async {
       final state = stateWithSpeedKmh(160.934);
       await tester.pumpWidget(buildWidget(state));
       await tester.pumpAndSettle();
@@ -91,8 +89,9 @@ void main() {
       expect(find.textContaining('MAX'), findsOneWidget);
     });
 
-    testWidgets('contains upward arrow icon for max speed',
-        (WidgetTester tester) async {
+    testWidgets('contains upward arrow icon for max speed', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(buildWidget(TelemetryState.empty()));
       expect(find.byIcon(Icons.arrow_upward_rounded), findsOneWidget);
     });

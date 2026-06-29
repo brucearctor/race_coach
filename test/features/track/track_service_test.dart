@@ -170,10 +170,7 @@ void main() {
 
       // The first config in thunderhillRacewayPark is "East with Bypass"
       expect(service.state.selectedConfig, isNotNull);
-      expect(
-        service.state.selectedConfig!.configId,
-        equals('east-bypass'),
-      );
+      expect(service.state.selectedConfig!.configId, equals('east-bypass'));
     });
   });
 
@@ -198,10 +195,14 @@ void main() {
 
       service.setFinishLine(pointA, pointB);
 
-      expect(service.state.selectedConfig!.finishLineA.latitude,
-          closeTo(39.539, 0.001));
-      expect(service.state.selectedConfig!.finishLineB.latitude,
-          closeTo(39.538, 0.001));
+      expect(
+        service.state.selectedConfig!.finishLineA.latitude,
+        closeTo(39.539, 0.001),
+      );
+      expect(
+        service.state.selectedConfig!.finishLineB.latitude,
+        closeTo(39.538, 0.001),
+      );
     });
 
     test('does nothing when no config is selected', () {
@@ -236,17 +237,11 @@ void main() {
       final config = TrackConfiguration()..configId = 'test-config';
 
       // Only track set
-      final state1 = TrackState(
-        availableTracks: [],
-        selectedTrack: track,
-      );
+      final state1 = TrackState(availableTracks: [], selectedTrack: track);
       expect(state1.hasSelection, isFalse);
 
       // Only config set
-      final state2 = TrackState(
-        availableTracks: [],
-        selectedConfig: config,
-      );
+      final state2 = TrackState(availableTracks: [], selectedConfig: config);
       expect(state2.hasSelection, isFalse);
 
       // Both set

@@ -111,7 +111,8 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
     });
 
     // Check if the scan stream has completed (error or done).
-    if (scanResult.hasError || (!scanResult.isLoading && !scanResult.isRefreshing)) {
+    if (scanResult.hasError ||
+        (!scanResult.isLoading && !scanResult.isRefreshing)) {
       if (_isScanning) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _stopScan());
       }
@@ -246,7 +247,9 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
                 ),
                 child: Icon(
                   isRaceBox ? Icons.speed : Icons.bluetooth,
-                  color: isRaceBox ? AppColors.primary : AppColors.textSecondary,
+                  color: isRaceBox
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                   size: 24,
                 ),
               ),
@@ -264,8 +267,9 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
                             device.name,
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontWeight:
-                                  isRaceBox ? FontWeight.w600 : FontWeight.w400,
+                              fontWeight: isRaceBox
+                                  ? FontWeight.w600
+                                  : FontWeight.w400,
                               fontSize: 15,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -319,10 +323,13 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
                   backgroundColor: isRaceBox
                       ? AppColors.primary.withValues(alpha: 0.2)
                       : AppColors.textDim.withValues(alpha: 0.2),
-                  foregroundColor:
-                      isRaceBox ? AppColors.primary : AppColors.textSecondary,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  foregroundColor: isRaceBox
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -414,9 +421,7 @@ class _DeviceScannerScreenState extends ConsumerState<DeviceScannerScreen>
             child: child,
           );
         },
-        child: Icon(
-          _isScanning ? Icons.stop : Icons.bluetooth_searching,
-        ),
+        child: Icon(_isScanning ? Icons.stop : Icons.bluetooth_searching),
       ),
       label: Text(
         _isScanning ? 'Stop' : 'Scan',

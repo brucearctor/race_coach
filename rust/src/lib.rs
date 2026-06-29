@@ -7,11 +7,13 @@
 //! Called from Flutter via `flutter_rust_bridge`. Dart handles platform
 //! concerns (BLE, TTS, UI, Firebase). Rust handles math.
 
+pub mod api;
 pub mod braking;
 pub mod calibration;
 pub mod coaching;
 pub mod distance;
 pub mod dynamics;
+mod frb_generated; /* AUTO-GENERATED — do not edit */
 pub mod math;
 pub mod ml;
 pub mod reference;

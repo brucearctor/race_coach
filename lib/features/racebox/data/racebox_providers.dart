@@ -13,12 +13,7 @@ final raceBoxDataProvider = StateProvider<RaceBoxData>(
 );
 
 /// Connection status of the RaceBox device.
-enum RaceBoxConnectionStatus {
-  disconnected,
-  scanning,
-  connecting,
-  connected,
-}
+enum RaceBoxConnectionStatus { disconnected, scanning, connecting, connected }
 
 /// Provides the current BLE connection status.
 final raceBoxConnectionStatusProvider = StateProvider<RaceBoxConnectionStatus>(

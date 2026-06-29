@@ -9,9 +9,7 @@ class AppTheme {
 
   /// The single dark [ThemeData] used by the entire app.
   static ThemeData get darkTheme {
-    final textTheme = GoogleFonts.interTextTheme(
-      ThemeData.dark().textTheme,
-    );
+    final textTheme = GoogleFonts.interTextTheme(ThemeData.dark().textTheme);
 
     return ThemeData(
       useMaterial3: true,
@@ -48,9 +46,7 @@ class AppTheme {
           color: AppColors.textPrimary,
           fontWeight: FontWeight.w500,
         ),
-        bodyLarge: textTheme.bodyLarge?.copyWith(
-          color: AppColors.textPrimary,
-        ),
+        bodyLarge: textTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
         bodyMedium: textTheme.bodyMedium?.copyWith(
           color: AppColors.textSecondary,
         ),
@@ -127,16 +123,12 @@ class AppTheme {
 
       // ── TextButton ──────────────────────────────────────────────────
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.primary,
-        ),
+        style: TextButton.styleFrom(foregroundColor: AppColors.primary),
       ),
 
       // ── IconButton ──────────────────────────────────────────────────
       iconButtonTheme: IconButtonThemeData(
-        style: IconButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-        ),
+        style: IconButton.styleFrom(foregroundColor: AppColors.textPrimary),
       ),
 
       // ── Divider ─────────────────────────────────────────────────────
@@ -160,9 +152,7 @@ class AppTheme {
           color: AppColors.textPrimary,
         ),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
 
       // ── ProgressIndicator ───────────────────────────────────────────

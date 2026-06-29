@@ -101,57 +101,56 @@ void main() {
 
       for (var i = 0; i < frames.length; i++) {
         expect(decoded[i].gps.latitude, equals(frames[i].gps.latitude));
-        expect(
-          decoded[i].gps.speedKmh,
-          closeTo(frames[i].gps.speedKmh, 0.1),
-        );
+        expect(decoded[i].gps.speedKmh, closeTo(frames[i].gps.speedKmh, 0.1));
       }
     });
 
-    test('handles frames with different sizes (some with motion, some without)',
-        () {
-      // Frame with GPS only
-      final gpsOnly = TelemetryFrame()
-        ..gps = (GpsData()
-          ..latitude = 37.0
-          ..longitude = -122.0);
+    test(
+      'handles frames with different sizes (some with motion, some without)',
+      () {
+        // Frame with GPS only
+        final gpsOnly = TelemetryFrame()
+          ..gps = (GpsData()
+            ..latitude = 37.0
+            ..longitude = -122.0);
 
-      // Frame with GPS + motion
-      final gpsAndMotion = TelemetryFrame()
-        ..gps = (GpsData()
-          ..latitude = 38.0
-          ..longitude = -121.0
-          ..speedKmh = 100.0
-          ..headingDegrees = 90.0
-          ..altitudeMeters = 50.0
-          ..satellites = 14
-          ..hdop = 0.8)
-        ..motion = (MotionData()
-          ..gForceLateral = 0.5
-          ..gForceLongitudinal = -0.3
-          ..gForceVertical = 0.98);
+        // Frame with GPS + motion
+        final gpsAndMotion = TelemetryFrame()
+          ..gps = (GpsData()
+            ..latitude = 38.0
+            ..longitude = -121.0
+            ..speedKmh = 100.0
+            ..headingDegrees = 90.0
+            ..altitudeMeters = 50.0
+            ..satellites = 14
+            ..hdop = 0.8)
+          ..motion = (MotionData()
+            ..gForceLateral = 0.5
+            ..gForceLongitudinal = -0.3
+            ..gForceVertical = 0.98);
 
-      // Frame with minimal data
-      final minimal = TelemetryFrame()
-        ..sourceType = SourceType.SOURCE_TYPE_PHONE_GPS;
+        // Frame with minimal data
+        final minimal = TelemetryFrame()
+          ..sourceType = SourceType.SOURCE_TYPE_PHONE_GPS;
 
-      final encoded = encodeRawFrames([gpsOnly, gpsAndMotion, minimal]);
-      final decoded = decodeRawFrames(encoded);
+        final encoded = encodeRawFrames([gpsOnly, gpsAndMotion, minimal]);
+        final decoded = decodeRawFrames(encoded);
 
-      expect(decoded.length, equals(3));
+        expect(decoded.length, equals(3));
 
-      // First frame: GPS only
-      expect(decoded[0].gps.latitude, equals(37.0));
-      expect(decoded[0].hasMotion(), isFalse);
+        // First frame: GPS only
+        expect(decoded[0].gps.latitude, equals(37.0));
+        expect(decoded[0].hasMotion(), isFalse);
 
-      // Second frame: GPS + motion
-      expect(decoded[1].gps.latitude, equals(38.0));
-      expect(decoded[1].gps.satellites, equals(14));
-      expect(decoded[1].motion.gForceLateral, closeTo(0.5, 0.01));
+        // Second frame: GPS + motion
+        expect(decoded[1].gps.latitude, equals(38.0));
+        expect(decoded[1].gps.satellites, equals(14));
+        expect(decoded[1].motion.gForceLateral, closeTo(0.5, 0.01));
 
-      // Third frame: minimal
-      expect(decoded[2].sourceType, equals(SourceType.SOURCE_TYPE_PHONE_GPS));
-    });
+        // Third frame: minimal
+        expect(decoded[2].sourceType, equals(SourceType.SOURCE_TYPE_PHONE_GPS));
+      },
+    );
   });
 
   // ===========================================================================
@@ -161,10 +160,7 @@ void main() {
   group('Edge cases', () {
     test('large batch of frames round-trips correctly', () {
       final frames = List.generate(100, (i) {
-        return makeFrame(
-          latitude: 37.0 + i * 0.001,
-          speedKmh: 50.0 + i,
-        );
+        return makeFrame(latitude: 37.0 + i * 0.001, speedKmh: 50.0 + i);
       });
 
       final encoded = encodeRawFrames(frames);
@@ -182,16 +178,18 @@ void main() {
       expect(decoded, isEmpty);
     });
 
-    test('truncated data decodes gracefully (header says more data than exists)',
-        () {
-      // Valid 4-byte header claiming 1000 bytes of payload, but only 4 bytes total
-      final buf = ByteData(4);
-      buf.setUint32(0, 1000, Endian.big);
-      final truncated = buf.buffer.asUint8List();
+    test(
+      'truncated data decodes gracefully (header says more data than exists)',
+      () {
+        // Valid 4-byte header claiming 1000 bytes of payload, but only 4 bytes total
+        final buf = ByteData(4);
+        buf.setUint32(0, 1000, Endian.big);
+        final truncated = buf.buffer.asUint8List();
 
-      final decoded = decodeRawFrames(truncated);
-      expect(decoded, isEmpty);
-    });
+        final decoded = decodeRawFrames(truncated);
+        expect(decoded, isEmpty);
+      },
+    );
 
     test('source type is preserved through round-trip', () {
       for (final st in [
@@ -203,8 +201,7 @@ void main() {
         final frame = TelemetryFrame()..sourceType = st;
         final encoded = encodeRawFrames([frame]);
         final decoded = decodeRawFrames(encoded);
-        expect(decoded.first.sourceType, equals(st),
-            reason: 'Failed for $st');
+        expect(decoded.first.sourceType, equals(st), reason: 'Failed for $st');
       }
     });
   });

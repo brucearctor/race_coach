@@ -101,8 +101,8 @@ void showDeviceBottomSheet(BuildContext context, WidgetRef ref) {
                               label: data.satellites >= 8
                                   ? 'Excellent'
                                   : data.satellites >= 5
-                                      ? 'Good'
-                                      : 'Weak',
+                                  ? 'Good'
+                                  : 'Weak',
                             ),
                           ],
                         );

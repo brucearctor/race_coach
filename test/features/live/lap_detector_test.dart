@@ -18,33 +18,21 @@ void main() {
     test('sets hasFinishLine to true', () {
       expect(detector.hasFinishLine, isFalse);
 
-      detector.setFinishLine(
-        LatLng(0.0, -0.0001),
-        LatLng(0.0, 0.0001),
-      );
+      detector.setFinishLine(LatLng(0.0, -0.0001), LatLng(0.0, 0.0001));
 
       expect(detector.hasFinishLine, isTrue);
     });
 
     test('resets lap count when called', () {
       // Set up a finish line and simulate some crossing state.
-      detector.setFinishLine(
-        LatLng(0.0, -0.0001),
-        LatLng(0.0, 0.0001),
-      );
+      detector.setFinishLine(LatLng(0.0, -0.0001), LatLng(0.0, 0.0001));
 
       // Trigger a first crossing to bump internal state.
-      detector.checkCrossing(
-        LatLng(-0.0001, 0.0),
-        LatLng(0.0001, 0.0),
-      );
+      detector.checkCrossing(LatLng(-0.0001, 0.0), LatLng(0.0001, 0.0));
       expect(detector.currentLap, equals(1));
 
       // Re-set finish line — lap count should reset.
-      detector.setFinishLine(
-        LatLng(0.0, -0.0002),
-        LatLng(0.0, 0.0002),
-      );
+      detector.setFinishLine(LatLng(0.0, -0.0002), LatLng(0.0, 0.0002));
       expect(detector.currentLap, equals(0));
     });
   });
@@ -86,10 +74,7 @@ void main() {
       detector.setFinishLine(finishA, finishB);
 
       // First crossing — starts timing.
-      detector.checkCrossing(
-        LatLng(-0.0001, 0.0),
-        LatLng(0.0001, 0.0),
-      );
+      detector.checkCrossing(LatLng(-0.0001, 0.0), LatLng(0.0001, 0.0));
 
       // Wait past the debounce threshold of 10 seconds.
       // We need DateTime.now() to advance. Since LapDetector uses
@@ -113,10 +98,7 @@ void main() {
       detector.setFinishLine(finishA, finishB);
 
       // First crossing — starts timer.
-      detector.checkCrossing(
-        LatLng(-0.0001, 0.0),
-        LatLng(0.0001, 0.0),
-      );
+      detector.checkCrossing(LatLng(-0.0001, 0.0), LatLng(0.0001, 0.0));
 
       // Immediate second crossing — should be debounced.
       final result = detector.checkCrossing(
@@ -174,10 +156,7 @@ void main() {
       detector.setFinishLine(finishA, finishB);
 
       // First crossing — starts lap 1.
-      detector.checkCrossing(
-        LatLng(-0.0001, 0.0),
-        LatLng(0.0001, 0.0),
-      );
+      detector.checkCrossing(LatLng(-0.0001, 0.0), LatLng(0.0001, 0.0));
 
       expect(detector.currentLap, equals(1));
     });
@@ -221,10 +200,7 @@ void main() {
 
   group('reset', () {
     test('clears finish line', () {
-      detector.setFinishLine(
-        LatLng(0.0, -0.0001),
-        LatLng(0.0, 0.0001),
-      );
+      detector.setFinishLine(LatLng(0.0, -0.0001), LatLng(0.0, 0.0001));
       expect(detector.hasFinishLine, isTrue);
 
       detector.reset();
@@ -232,16 +208,10 @@ void main() {
     });
 
     test('resets lap count', () {
-      detector.setFinishLine(
-        LatLng(0.0, -0.0001),
-        LatLng(0.0, 0.0001),
-      );
+      detector.setFinishLine(LatLng(0.0, -0.0001), LatLng(0.0, 0.0001));
 
       // Trigger a crossing to increment internal state.
-      detector.checkCrossing(
-        LatLng(-0.0001, 0.0),
-        LatLng(0.0001, 0.0),
-      );
+      detector.checkCrossing(LatLng(-0.0001, 0.0), LatLng(0.0001, 0.0));
       expect(detector.currentLap, equals(1));
 
       detector.reset();
@@ -249,10 +219,7 @@ void main() {
     });
 
     test('crossings return null after reset', () {
-      detector.setFinishLine(
-        LatLng(0.0, -0.0001),
-        LatLng(0.0, 0.0001),
-      );
+      detector.setFinishLine(LatLng(0.0, -0.0001), LatLng(0.0, 0.0001));
       detector.reset();
 
       // No finish line → crossing check should return null.

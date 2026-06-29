@@ -47,5 +47,6 @@ extension AudioModeLabel on AudioMode {
 
 // ── Riverpod provider ──────────────────────────────────────────────────
 
-final audioModeProvider =
-    StateProvider<AudioMode>((ref) => AudioMode.turnAnnouncer);
+final audioModeProvider = StateProvider<AudioMode>(
+  (ref) => AudioMode.turnAnnouncer,
+);

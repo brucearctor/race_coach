@@ -59,31 +59,34 @@ class RaceBoxService {
     _packetBuffer.clear();
 
     // Listen for connection state changes.
-    _connectionSubscription = _bleService.connectToDevice(deviceId).listen(
-      (update) {
-        // Once connected, subscribe to the TX characteristic.
-        if (update.connectionState == DeviceConnectionState.connected) {
-          _subscribeToNotifications(deviceId);
-        }
-      },
-      onError: (Object error) {
-        _dataController.addError(error);
-        disconnect();
-      },
-    );
+    _connectionSubscription = _bleService
+        .connectToDevice(deviceId)
+        .listen(
+          (update) {
+            // Once connected, subscribe to the TX characteristic.
+            if (update.connectionState == DeviceConnectionState.connected) {
+              _subscribeToNotifications(deviceId);
+            }
+          },
+          onError: (Object error) {
+            _dataController.addError(error);
+            disconnect();
+          },
+        );
   }
 
   /// Subscribes to the NUS TX characteristic for incoming data packets.
   void _subscribeToNotifications(String deviceId) {
     final txChar = RaceBoxProtocol.txCharacteristic(deviceId);
 
-    _notificationSubscription =
-        _bleService.subscribeToCharacteristic(txChar).listen(
-      _onDataReceived,
-      onError: (Object error) {
-        _dataController.addError(error);
-      },
-    );
+    _notificationSubscription = _bleService
+        .subscribeToCharacteristic(txChar)
+        .listen(
+          _onDataReceived,
+          onError: (Object error) {
+            _dataController.addError(error);
+          },
+        );
   }
 
   /// Handles raw BLE notification data, buffering and parsing packets.
@@ -111,9 +114,11 @@ class RaceBoxService {
 
       // UBX format: [0xB5, 0x62, class, id, lenLo, lenHi, ...payload..., ckA, ckB]
       // Read payload length (bytes 4-5, little-endian).
-      final payloadLength =
-          _packetBuffer[4] | (_packetBuffer[5] << 8);
-      final totalPacketLength = 6 + payloadLength + 2; // header(2) + class(1) + id(1) + len(2) + payload + checksum(2)
+      final payloadLength = _packetBuffer[4] | (_packetBuffer[5] << 8);
+      final totalPacketLength =
+          6 +
+          payloadLength +
+          2; // header(2) + class(1) + id(1) + len(2) + payload + checksum(2)
 
       if (_packetBuffer.length < totalPacketLength) {
         break;
@@ -128,17 +133,23 @@ class RaceBoxService {
       if (parsed != null) {
         _parseCount++;
         if (_parseCount % 25 == 1) {
-          debugPrint('[RaceBox] ✅ frame #$_parseCount: ${parsed.speedKmh.toStringAsFixed(1)} km/h, ${parsed.satellites} sats');
+          debugPrint(
+            '[RaceBox] ✅ frame #$_parseCount: ${parsed.speedKmh.toStringAsFixed(1)} km/h, ${parsed.satellites} sats',
+          );
         }
         _dataController.add(parsed);
       } else {
-        debugPrint('[RaceBox] ❌ Parse returned null for ${packet.length}-byte packet, type=0x${packet[2].toRadixString(16)}');
+        debugPrint(
+          '[RaceBox] ❌ Parse returned null for ${packet.length}-byte packet, type=0x${packet[2].toRadixString(16)}',
+        );
       }
     }
 
     // Safety: prevent the buffer from growing unbounded if we get garbage.
     if (_packetBuffer.length > 1024) {
-      debugPrint('[RaceBox] Buffer overflow (${_packetBuffer.length} bytes), clearing');
+      debugPrint(
+        '[RaceBox] Buffer overflow (${_packetBuffer.length} bytes), clearing',
+      );
       _packetBuffer.clear();
     }
   }

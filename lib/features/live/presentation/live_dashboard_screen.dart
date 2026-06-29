@@ -121,8 +121,9 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
       body: isConnected ? _buildDashboard(isRecording) : _buildEmptyState(),
 
       // ── Session recording FAB (only when connected) ──────────────────
-      floatingActionButton:
-          isConnected ? _buildRecordingFab(isRecording) : null,
+      floatingActionButton: isConnected
+          ? _buildRecordingFab(isRecording)
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
@@ -191,10 +192,7 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
           const SizedBox(height: 8),
           const Text(
             'Connect a RaceBox or use phone GPS',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 32),
           FilledButton.icon(
@@ -202,8 +200,7 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
             icon: const Icon(Icons.bluetooth),
             label: const Text('Connect Device'),
             style: FilledButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
           ),
         ],

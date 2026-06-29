@@ -41,9 +41,9 @@ class SessionUploader {
     required FirebaseAuth auth,
     required FirebaseFirestore firestore,
     required FirebaseStorage storage,
-  })  : _auth = auth,
-        _firestore = firestore,
-        _storage = storage;
+  }) : _auth = auth,
+       _firestore = firestore,
+       _storage = storage;
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -72,10 +72,7 @@ class SessionUploader {
     final rawFramesFile = File('${sessionDir.path}/raw_frames.pb');
 
     if (!sessionFile.existsSync()) {
-      throw FileSystemException(
-        'session.pb not found',
-        sessionFile.path,
-      );
+      throw FileSystemException('session.pb not found', sessionFile.path);
     }
 
     // Parse session proto for metadata.

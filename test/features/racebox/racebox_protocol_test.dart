@@ -226,10 +226,7 @@ void main() {
       expect(result, isNotNull);
 
       // Timestamp
-      expect(
-        result!.timestamp,
-        equals(DateTime.utc(2025, 6, 15, 14, 30, 45)),
-      );
+      expect(result!.timestamp, equals(DateTime.utc(2025, 6, 15, 14, 30, 45)));
 
       // Latitude: 375375300 / 1e7 = 37.53753
       expect(result.latitude, closeTo(37.53753, 1e-5));
