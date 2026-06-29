@@ -14,6 +14,7 @@ pub mod coaching;
 pub mod distance;
 pub mod dynamics;
 mod frb_generated; /* AUTO-GENERATED — do not edit */
+pub mod generated;
 pub mod math;
 pub mod ml;
 pub mod reference;
