@@ -113,11 +113,7 @@ void main() {
     });
 
     test('maps negative g-force values correctly', () {
-      final data = makeTestData(
-        gForceX: -1.5,
-        gForceY: -2.0,
-        gForceZ: -0.1,
-      );
+      final data = makeTestData(gForceX: -1.5, gForceY: -2.0, gForceZ: -0.1);
       final frame = RaceBoxAdapter.fromRaceBoxData(data);
 
       expect(frame.motion.gForceLateral, closeTo(-1.5, 0.01));
@@ -181,8 +177,14 @@ void main() {
 
       // The arrival timestamp seconds should be between before and after.
       final arrivalSec = frame.arrivalTimestamp.seconds.toInt();
-      expect(arrivalSec, greaterThanOrEqualTo(beforeCall.millisecondsSinceEpoch ~/ 1000));
-      expect(arrivalSec, lessThanOrEqualTo(afterCall.millisecondsSinceEpoch ~/ 1000));
+      expect(
+        arrivalSec,
+        greaterThanOrEqualTo(beforeCall.millisecondsSinceEpoch ~/ 1000),
+      );
+      expect(
+        arrivalSec,
+        lessThanOrEqualTo(afterCall.millisecondsSinceEpoch ~/ 1000),
+      );
     });
   });
 

@@ -19,7 +19,8 @@ class BleService {
   final FlutterReactiveBle _ble;
 
   /// Active connection subscriptions keyed by device ID.
-  final _connectionSubscriptions = <String, StreamSubscription<ConnectionStateUpdate>>{};
+  final _connectionSubscriptions =
+      <String, StreamSubscription<ConnectionStateUpdate>>{};
 
   /// Scans for nearby BLE devices and emits an updated list as devices are
   /// discovered.
@@ -94,10 +95,7 @@ class BleService {
     QualifiedCharacteristic characteristic,
     List<int> data,
   ) async {
-    await _ble.writeCharacteristicWithoutResponse(
-      characteristic,
-      value: data,
-    );
+    await _ble.writeCharacteristicWithoutResponse(characteristic, value: data);
   }
 
   /// Disconnects a specific device by cancelling its connection subscription.
@@ -107,7 +105,10 @@ class BleService {
   }
 
   /// Tracks a connection subscription for cleanup.
-  void trackConnection(String deviceId, StreamSubscription<ConnectionStateUpdate> sub) {
+  void trackConnection(
+    String deviceId,
+    StreamSubscription<ConnectionStateUpdate> sub,
+  ) {
     // Cancel any existing subscription for this device first.
     _connectionSubscriptions[deviceId]?.cancel();
     _connectionSubscriptions[deviceId] = sub;
@@ -140,7 +141,8 @@ class BleService {
 /// Tracks the BLE connection state of multiple devices simultaneously.
 ///
 /// State is a map of device ID → [BleConnectionState].
-class BleConnectionManager extends StateNotifier<Map<String, BleConnectionState>> {
+class BleConnectionManager
+    extends StateNotifier<Map<String, BleConnectionState>> {
   BleConnectionManager(this._bleService) : super({});
 
   final BleService _bleService;
@@ -168,30 +170,32 @@ class BleConnectionManager extends StateNotifier<Map<String, BleConnectionState>
     state = connectingState;
 
     _subscriptions[deviceId]?.cancel();
-    final sub = _bleService.connectToDevice(deviceId).listen(
-      (update) {
-        switch (update.connectionState) {
-          case DeviceConnectionState.connecting:
+    final sub = _bleService
+        .connectToDevice(deviceId)
+        .listen(
+          (update) {
+            switch (update.connectionState) {
+              case DeviceConnectionState.connecting:
+                final newState = Map<String, BleConnectionState>.from(state);
+                newState[deviceId] = BleConnectionState.connecting;
+                state = newState;
+              case DeviceConnectionState.connected:
+                final newState = Map<String, BleConnectionState>.from(state);
+                newState[deviceId] = BleConnectionState.connected;
+                state = newState;
+              case DeviceConnectionState.disconnecting:
+              case DeviceConnectionState.disconnected:
+                final newState = Map<String, BleConnectionState>.from(state);
+                newState[deviceId] = BleConnectionState.disconnected;
+                state = newState;
+            }
+          },
+          onError: (Object error) {
             final newState = Map<String, BleConnectionState>.from(state);
-            newState[deviceId] = BleConnectionState.connecting;
+            newState[deviceId] = BleConnectionState.error;
             state = newState;
-          case DeviceConnectionState.connected:
-            final newState = Map<String, BleConnectionState>.from(state);
-            newState[deviceId] = BleConnectionState.connected;
-            state = newState;
-          case DeviceConnectionState.disconnecting:
-          case DeviceConnectionState.disconnected:
-            final newState = Map<String, BleConnectionState>.from(state);
-            newState[deviceId] = BleConnectionState.disconnected;
-            state = newState;
-        }
-      },
-      onError: (Object error) {
-        final newState = Map<String, BleConnectionState>.from(state);
-        newState[deviceId] = BleConnectionState.error;
-        state = newState;
-      },
-    );
+          },
+        );
     _subscriptions[deviceId] = sub;
     _bleService.trackConnection(deviceId, sub);
   }
@@ -239,24 +243,28 @@ final bleServiceProvider = Provider<BleService>((ref) {
 /// Auto-disposes when no longer listened to, which cancels the scan.
 final bleScanProvider = StreamProvider.autoDispose<List<BleDevice>>((ref) {
   final bleService = ref.watch(bleServiceProvider);
-  return bleService.scanForDevices(
-    timeout: const Duration(seconds: 15),
-  );
+  return bleService.scanForDevices(timeout: const Duration(seconds: 15));
 });
 
 /// Manages BLE connections for multiple devices simultaneously.
 ///
 /// State is a `Map<String, BleConnectionState>` keyed by device ID.
 final bleConnectionManagerProvider =
-    StateNotifierProvider<BleConnectionManager, Map<String, BleConnectionState>>((ref) {
-  final bleService = ref.watch(bleServiceProvider);
-  return BleConnectionManager(bleService);
-});
+    StateNotifierProvider<
+      BleConnectionManager,
+      Map<String, BleConnectionState>
+    >((ref) {
+      final bleService = ref.watch(bleServiceProvider);
+      return BleConnectionManager(bleService);
+    });
 
 /// Convenience provider: connection state for a single device.
 ///
 /// Usage: `ref.watch(bleDeviceStateProvider('device-id'))`
-final bleDeviceStateProvider = Provider.family<BleConnectionState, String>((ref, deviceId) {
+final bleDeviceStateProvider = Provider.family<BleConnectionState, String>((
+  ref,
+  deviceId,
+) {
   final connections = ref.watch(bleConnectionManagerProvider);
   return connections[deviceId] ?? BleConnectionState.disconnected;
 });

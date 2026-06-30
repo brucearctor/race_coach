@@ -4,3 +4,10 @@ managed:
 plugins:
   - protoc_builtin: dart
     out: lib/generated
+
+  # Generate Rust domain types from protos (via proto2type lang=rust)
+  - local: protoc-gen-proto2type
+    out: rust/src/generated
+    opt:
+      - paths=source_relative
+      - lang=rust

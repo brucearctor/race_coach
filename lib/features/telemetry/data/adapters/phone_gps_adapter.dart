@@ -38,8 +38,9 @@ class PhoneGpsAdapter {
       distanceFilter: distanceFilter,
     );
 
-    return Geolocator.getPositionStream(locationSettings: settings)
-        .map(_positionToFrame);
+    return Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).map(_positionToFrame);
   }
 
   // ---------------------------------------------------------------------------
@@ -112,13 +113,10 @@ final phoneGpsStreamProvider = StreamProvider<TelemetryFrame>((ref) {
 
   final controller = StreamController<TelemetryFrame>();
 
-  final subscription = PhoneGpsAdapter.startListening().listen(
-    (frame) {
-      ref.read(telemetryBusProvider.notifier).updateFrame(frame);
-      controller.add(frame);
-    },
-    onError: controller.addError,
-  );
+  final subscription = PhoneGpsAdapter.startListening().listen((frame) {
+    ref.read(telemetryBusProvider.notifier).updateFrame(frame);
+    controller.add(frame);
+  }, onError: controller.addError);
 
   ref.onDispose(() {
     subscription.cancel();

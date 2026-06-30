@@ -39,8 +39,7 @@ class RaceBoxData {
   double get speedMph => speedKmh * 0.621371;
 
   /// Combined lateral + longitudinal G-force (ignores vertical).
-  double get totalGForce =>
-      math.sqrt(gForceX * gForceX + gForceY * gForceY);
+  double get totalGForce => math.sqrt(gForceX * gForceX + gForceY * gForceY);
 
   /// Lateral (side-to-side) G-force. Positive = right turn.
   double get lateralG => gForceX;
@@ -58,18 +57,18 @@ class RaceBoxData {
 
   /// Returns a zeroed-out "empty" data point.
   factory RaceBoxData.empty() => RaceBoxData(
-        timestamp: DateTime.fromMillisecondsSinceEpoch(0),
-        latitude: 0,
-        longitude: 0,
-        speedKmh: 0,
-        headingDegrees: 0,
-        altitudeMeters: 0,
-        gForceX: 0,
-        gForceY: 0,
-        gForceZ: 0,
-        satellites: 0,
-        hdop: 99.9,
-      );
+    timestamp: DateTime.fromMillisecondsSinceEpoch(0),
+    latitude: 0,
+    longitude: 0,
+    speedKmh: 0,
+    headingDegrees: 0,
+    altitudeMeters: 0,
+    gForceX: 0,
+    gForceY: 0,
+    gForceZ: 0,
+    satellites: 0,
+    hdop: 99.9,
+  );
 
   // -----------------------------------------------------------------------
   // copyWith
@@ -108,34 +107,34 @@ class RaceBoxData {
   // -----------------------------------------------------------------------
 
   Map<String, dynamic> toJson() => {
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'latitude': latitude,
-        'longitude': longitude,
-        'speedKmh': speedKmh,
-        'headingDegrees': headingDegrees,
-        'altitudeMeters': altitudeMeters,
-        'gForceX': gForceX,
-        'gForceY': gForceY,
-        'gForceZ': gForceZ,
-        'satellites': satellites,
-        'hdop': hdop,
-      };
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'latitude': latitude,
+    'longitude': longitude,
+    'speedKmh': speedKmh,
+    'headingDegrees': headingDegrees,
+    'altitudeMeters': altitudeMeters,
+    'gForceX': gForceX,
+    'gForceY': gForceY,
+    'gForceZ': gForceZ,
+    'satellites': satellites,
+    'hdop': hdop,
+  };
 
   factory RaceBoxData.fromJson(Map<String, dynamic> json) => RaceBoxData(
-        timestamp: DateTime.fromMillisecondsSinceEpoch(
-          (json['timestamp'] as num).toInt(),
-        ),
-        latitude: (json['latitude'] as num).toDouble(),
-        longitude: (json['longitude'] as num).toDouble(),
-        speedKmh: (json['speedKmh'] as num).toDouble(),
-        headingDegrees: (json['headingDegrees'] as num).toDouble(),
-        altitudeMeters: (json['altitudeMeters'] as num).toDouble(),
-        gForceX: (json['gForceX'] as num).toDouble(),
-        gForceY: (json['gForceY'] as num).toDouble(),
-        gForceZ: (json['gForceZ'] as num).toDouble(),
-        satellites: (json['satellites'] as num).toInt(),
-        hdop: (json['hdop'] as num).toDouble(),
-      );
+    timestamp: DateTime.fromMillisecondsSinceEpoch(
+      (json['timestamp'] as num).toInt(),
+    ),
+    latitude: (json['latitude'] as num).toDouble(),
+    longitude: (json['longitude'] as num).toDouble(),
+    speedKmh: (json['speedKmh'] as num).toDouble(),
+    headingDegrees: (json['headingDegrees'] as num).toDouble(),
+    altitudeMeters: (json['altitudeMeters'] as num).toDouble(),
+    gForceX: (json['gForceX'] as num).toDouble(),
+    gForceY: (json['gForceY'] as num).toDouble(),
+    gForceZ: (json['gForceZ'] as num).toDouble(),
+    satellites: (json['satellites'] as num).toInt(),
+    hdop: (json['hdop'] as num).toDouble(),
+  );
 
   @override
   String toString() =>

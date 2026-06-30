@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'firebase_options.dart';
+import 'package:race_coach/src/rust/frb_generated.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,9 @@ void main() async {
   // (e.g. hot restart). The native BLE layer can hold connections
   // that the Dart VM no longer tracks.
   FlutterReactiveBle().deinitialize();
+
+  // Initialize Rust analysis core via flutter_rust_bridge.
+  await RustLib.init();
 
   // Initialize Firebase.
   await Firebase.initializeApp(

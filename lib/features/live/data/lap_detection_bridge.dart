@@ -31,12 +31,16 @@ final lapDetectionBridgeProvider = Provider<void>((ref) {
       LatLng(a.latitude, a.longitude),
       LatLng(b.latitude, b.longitude),
     );
-    debugPrint('[LapBridge] Finish line set: '
-        '(${a.latitude}, ${a.longitude}) → (${b.latitude}, ${b.longitude})');
+    debugPrint(
+      '[LapBridge] Finish line set: '
+      '(${a.latitude}, ${a.longitude}) → (${b.latitude}, ${b.longitude})',
+    );
   } else {
     // No valid finish line — reset so we don't detect stale crossings.
     lapDetector.reset();
-    debugPrint('[LapBridge] No finish line configured — lap detection inactive');
+    debugPrint(
+      '[LapBridge] No finish line configured — lap detection inactive',
+    );
     return;
   }
 
@@ -44,49 +48,45 @@ final lapDetectionBridgeProvider = Provider<void>((ref) {
   LatLng? previousPosition;
 
   // ── 3. Listen to the RaceBox GPS stream ────────────────────────────────
-  ref.listen<AsyncValue<dynamic>>(
-    raceBoxDataStreamProvider,
-    (previous, next) {
-      final data = next.valueOrNull;
-      if (data == null) return;
+  ref.listen<AsyncValue<dynamic>>(raceBoxDataStreamProvider, (previous, next) {
+    final data = next.valueOrNull;
+    if (data == null) return;
 
-      final currentPosition = LatLng(data.latitude, data.longitude);
+    final currentPosition = LatLng(data.latitude, data.longitude);
 
-      // Skip (0, 0) or clearly invalid positions.
-      if (data.latitude == 0.0 && data.longitude == 0.0) return;
+    // Skip (0, 0) or clearly invalid positions.
+    if (data.latitude == 0.0 && data.longitude == 0.0) return;
 
-      if (previousPosition != null) {
-        final crossing = lapDetector.checkCrossing(
-          previousPosition!,
-          currentPosition,
-        );
+    if (previousPosition != null) {
+      final crossing = lapDetector.checkCrossing(
+        previousPosition!,
+        currentPosition,
+      );
 
-        if (crossing != null) {
-          debugPrint('[LapBridge] 🏁 Lap crossing detected: $crossing');
-          ref.read(lapTimerProvider.notifier).completeLap();
-        } else if (lapDetector.currentLap == 1 &&
-            !ref.read(lapTimerProvider).isRunning) {
-          // The detector just saw its first crossing (currentLap flipped
-          // from 0 → 1) but returned null because there's no completed
-          // lap yet — start the timer so the first lap is timed.
-          //
-          // NOTE: We detect this by checking that the detector advanced to
-          // lap 1 while the timer isn't running yet.  This is a one-shot
-          // condition; subsequent builds won't re-trigger because the
-          // timer will already be running.
-        }
-      }
-
-      // Check if the detector just started its first lap (previousPosition
-      // existed, we called checkCrossing, detector moved to lap 1, and
-      // timer is not yet running).
-      if (lapDetector.currentLap >= 1 &&
+      if (crossing != null) {
+        debugPrint('[LapBridge] 🏁 Lap crossing detected: $crossing');
+        ref.read(lapTimerProvider.notifier).completeLap();
+      } else if (lapDetector.currentLap == 1 &&
           !ref.read(lapTimerProvider).isRunning) {
-        debugPrint('[LapBridge] ⏱️ Starting lap timer (first crossing)');
-        ref.read(lapTimerProvider.notifier).start();
+        // The detector just saw its first crossing (currentLap flipped
+        // from 0 → 1) but returned null because there's no completed
+        // lap yet — start the timer so the first lap is timed.
+        //
+        // NOTE: We detect this by checking that the detector advanced to
+        // lap 1 while the timer isn't running yet.  This is a one-shot
+        // condition; subsequent builds won't re-trigger because the
+        // timer will already be running.
       }
+    }
 
-      previousPosition = currentPosition;
-    },
-  );
+    // Check if the detector just started its first lap (previousPosition
+    // existed, we called checkCrossing, detector moved to lap 1, and
+    // timer is not yet running).
+    if (lapDetector.currentLap >= 1 && !ref.read(lapTimerProvider).isRunning) {
+      debugPrint('[LapBridge] ⏱️ Starting lap timer (first crossing)');
+      ref.read(lapTimerProvider.notifier).start();
+    }
+
+    previousPosition = currentPosition;
+  });
 });

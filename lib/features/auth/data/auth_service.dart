@@ -36,9 +36,7 @@ class AuthService {
   final FirebaseAuth _auth;
 
   /// The GoogleSignIn instance with scopes needed for Firebase Auth.
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email']);
 
   /// The currently signed-in user, or `null`.
   User? get currentUser => _auth.currentUser;

@@ -126,8 +126,7 @@ class _GForcePainter extends CustomPainter {
     );
   }
 
-  void _drawAxisLabels(
-      Canvas canvas, Offset center, double radius, Size size) {
+  void _drawAxisLabels(Canvas canvas, Offset center, double radius, Size size) {
     const style = TextStyle(
       color: AppColors.textSecondary,
       fontSize: 9,
@@ -135,20 +134,40 @@ class _GForcePainter extends CustomPainter {
     );
 
     // Top: Accel
-    _drawText(canvas, 'ACCEL', Offset(center.dx, center.dy - radius - 14),
-        style, TextAlign.center);
+    _drawText(
+      canvas,
+      'ACCEL',
+      Offset(center.dx, center.dy - radius - 14),
+      style,
+      TextAlign.center,
+    );
 
     // Bottom: Brake
-    _drawText(canvas, 'BRAKE', Offset(center.dx, center.dy + radius + 4),
-        style, TextAlign.center);
+    _drawText(
+      canvas,
+      'BRAKE',
+      Offset(center.dx, center.dy + radius + 4),
+      style,
+      TextAlign.center,
+    );
 
     // Left: Left
-    _drawText(canvas, 'L', Offset(center.dx - radius - 10, center.dy - 5),
-        style, TextAlign.center);
+    _drawText(
+      canvas,
+      'L',
+      Offset(center.dx - radius - 10, center.dy - 5),
+      style,
+      TextAlign.center,
+    );
 
     // Right: Right
-    _drawText(canvas, 'R', Offset(center.dx + radius + 4, center.dy - 5),
-        style, TextAlign.center);
+    _drawText(
+      canvas,
+      'R',
+      Offset(center.dx + radius + 4, center.dy - 5),
+      style,
+      TextAlign.center,
+    );
   }
 
   void _drawTrail(Canvas canvas, Offset center, double radius) {
@@ -170,7 +189,9 @@ class _GForcePainter extends CustomPainter {
 
   void _drawCurrentDot(Canvas canvas, Offset center, double radius) {
     final offset = _gToOffset(lateralG, longitudinalG, center, radius);
-    final totalG = math.sqrt(lateralG * lateralG + longitudinalG * longitudinalG);
+    final totalG = math.sqrt(
+      lateralG * lateralG + longitudinalG * longitudinalG,
+    );
     final color = _colorForG(totalG);
 
     // Outer glow.
@@ -196,8 +217,7 @@ class _GForcePainter extends CustomPainter {
   ///
   /// lateralG:      positive = right → positive X offset
   /// longitudinalG: positive = accel → negative Y offset (up on screen)
-  Offset _gToOffset(
-      double latG, double lonG, Offset center, double radius) {
+  Offset _gToOffset(double latG, double lonG, Offset center, double radius) {
     final clampedLat = latG.clamp(-maxG, maxG);
     final clampedLon = lonG.clamp(-maxG, maxG);
 
@@ -214,8 +234,13 @@ class _GForcePainter extends CustomPainter {
     return AppColors.gForceExtreme;
   }
 
-  void _drawText(Canvas canvas, String text, Offset position,
-      TextStyle style, TextAlign align) {
+  void _drawText(
+    Canvas canvas,
+    String text,
+    Offset position,
+    TextStyle style,
+    TextAlign align,
+  ) {
     final textSpan = TextSpan(text: text, style: style);
     final textPainter = TextPainter(
       text: textSpan,
@@ -223,10 +248,7 @@ class _GForcePainter extends CustomPainter {
       textDirection: ui.TextDirection.ltr,
     )..layout();
 
-    final offset = Offset(
-      position.dx - textPainter.width / 2,
-      position.dy,
-    );
+    final offset = Offset(position.dx - textPainter.width / 2, position.dy);
     textPainter.paint(canvas, offset);
   }
 

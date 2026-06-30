@@ -81,8 +81,10 @@ class TrackSelectorWidget extends ConsumerWidget {
               ),
               if (trackState.autoDetected)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryMuted.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(6),
@@ -145,8 +147,10 @@ class TrackSelectorWidget extends ConsumerWidget {
               label: const Text('Clear'),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.textSecondary,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
               ),
             ),
           ),
@@ -191,10 +195,7 @@ class TrackSelectorWidget extends ConsumerWidget {
         isExpanded: true,
         dropdownColor: AppColors.surface,
         underline: const SizedBox.shrink(),
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         items: availableTracks.map((track) {
           return DropdownMenuItem<String>(
             value: track.trackId,
@@ -205,9 +206,7 @@ class TrackSelectorWidget extends ConsumerWidget {
           );
         }).toList(),
         onChanged: (trackId) {
-          final track = availableTracks.firstWhere(
-            (t) => t.trackId == trackId,
-          );
+          final track = availableTracks.firstWhere((t) => t.trackId == trackId);
           onChanged(track);
         },
       ),
@@ -231,10 +230,7 @@ class TrackSelectorWidget extends ConsumerWidget {
         isExpanded: true,
         dropdownColor: AppColors.surface,
         underline: const SizedBox.shrink(),
-        style: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 14,
-        ),
+        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
         items: configurations.map((config) {
           final hasFinish = config.hasFinishLineA() && config.hasFinishLineB();
           return DropdownMenuItem<String>(
@@ -242,14 +238,14 @@ class TrackSelectorWidget extends ConsumerWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: Text(
-                    config.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: Text(config.name, overflow: TextOverflow.ellipsis),
                 ),
                 if (hasFinish)
-                  const Icon(Icons.flag_rounded,
-                      size: 14, color: AppColors.success),
+                  const Icon(
+                    Icons.flag_rounded,
+                    size: 14,
+                    color: AppColors.success,
+                  ),
               ],
             ),
           );

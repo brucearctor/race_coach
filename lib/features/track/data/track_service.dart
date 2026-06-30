@@ -17,9 +17,7 @@ class TrackService extends StateNotifier<TrackState> {
 
   /// Load the local track library (hardcoded for now, Firestore later).
   void loadLibrary() {
-    state = state.copyWith(
-      availableTracks: getLocalTrackLibrary(),
-    );
+    state = state.copyWith(availableTracks: getLocalTrackLibrary());
   }
 
   /// Manually select a track and configuration.
@@ -89,7 +87,8 @@ class TrackService extends StateNotifier<TrackState> {
     const earthRadiusMeters = 6371000.0;
     final dLat = _toRadians(lat2 - lat1);
     final dLon = _toRadians(lon2 - lon1);
-    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final a =
+        math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_toRadians(lat1)) *
             math.cos(_toRadians(lat2)) *
             math.sin(dLon / 2) *
@@ -139,8 +138,9 @@ class TrackState {
 // =============================================================================
 
 /// Track service provider — manages the track library and selection.
-final trackServiceProvider =
-    StateNotifierProvider<TrackService, TrackState>((ref) {
+final trackServiceProvider = StateNotifierProvider<TrackService, TrackState>((
+  ref,
+) {
   final service = TrackService();
   service.loadLibrary();
   return service;

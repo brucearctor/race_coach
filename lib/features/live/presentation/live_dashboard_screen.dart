@@ -10,6 +10,7 @@ import 'package:race_coach/features/racebox/presentation/racebox_status_widget.d
 import 'package:race_coach/features/racebox/presentation/device_bottom_sheet.dart';
 import 'package:race_coach/features/telemetry/data/adapters/racebox_adapter.dart';
 import 'package:race_coach/features/session/data/session_recorder.dart';
+import 'package:race_coach/features/coaching/data/coaching_bridge_activation.dart';
 import 'package:race_coach/features/coaching/data/turn_announcer.dart';
 import 'package:race_coach/features/coaching/data/lap_time_announcer.dart';
 import 'package:race_coach/features/live/data/lap_detection_bridge.dart';
@@ -18,6 +19,7 @@ import 'package:race_coach/features/live/presentation/widgets/speed_display.dart
 import 'package:race_coach/features/live/presentation/widgets/g_force_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/lap_timer_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/track_map_widget.dart';
+import 'package:race_coach/features/live/presentation/widgets/delta_t_widget.dart';
 
 /// Main live dashboard screen – the primary view while on track.
 ///
@@ -74,6 +76,7 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
       ref.watch(trackAutoDetectionProvider);
       ref.watch(turnAnnouncerProvider);
       ref.watch(lapTimeAnnouncerProvider);
+      ref.watch(coachingBridgeActivationProvider);
     }
 
     return Scaffold(
@@ -121,8 +124,9 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
       body: isConnected ? _buildDashboard(isRecording) : _buildEmptyState(),
 
       // ── Session recording FAB (only when connected) ──────────────────
-      floatingActionButton:
-          isConnected ? _buildRecordingFab(isRecording) : null,
+      floatingActionButton: isConnected
+          ? _buildRecordingFab(isRecording)
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
@@ -140,7 +144,12 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
             // ── Speed display (top, prominent) ──────────────────
             const SpeedDisplay(),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+
+            // ── Delta-T indicator (coach mode) ─────────────────
+            const DeltaTWidget(),
+
+            const SizedBox(height: 8),
 
             // ── Middle row: G-force + Lap timer ────────────────
             SizedBox(
@@ -191,10 +200,7 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
           const SizedBox(height: 8),
           const Text(
             'Connect a RaceBox or use phone GPS',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 32),
           FilledButton.icon(
@@ -202,8 +208,7 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
             icon: const Icon(Icons.bluetooth),
             label: const Text('Connect Device'),
             style: FilledButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             ),
           ),
         ],

@@ -9,8 +9,9 @@ void main() {
 
   group('SessionStorage.parseDateFromId', () {
     test('parses valid date from standard session id', () {
-      final date =
-          SessionStorage.parseDateFromId('2026-06-22_thunderhill_east-bypass');
+      final date = SessionStorage.parseDateFromId(
+        '2026-06-22_thunderhill_east-bypass',
+      );
       expect(date.year, 2026);
       expect(date.month, 6);
       expect(date.day, 22);
@@ -24,16 +25,16 @@ void main() {
     });
 
     test('parses date from id with different track name', () {
-      final date =
-          SessionStorage.parseDateFromId('2025-12-31_laguna-seca_full');
+      final date = SessionStorage.parseDateFromId(
+        '2025-12-31_laguna-seca_full',
+      );
       expect(date.year, 2025);
       expect(date.month, 12);
       expect(date.day, 31);
     });
 
     test('parses first day of year correctly', () {
-      final date =
-          SessionStorage.parseDateFromId('2026-01-01_some_track');
+      final date = SessionStorage.parseDateFromId('2026-01-01_some_track');
       expect(date.year, 2026);
       expect(date.month, 1);
       expect(date.day, 1);
@@ -59,11 +60,14 @@ void main() {
       expect(date, DateTime(2000));
     });
 
-    test('date-like but invalid month parses leniently (Dart wraps months)', () {
-      final date = SessionStorage.parseDateFromId('2026-13-01_track');
-      // Dart's DateTime constructor wraps month 13 → January of next year.
-      expect(date, DateTime(2027, 1, 1));
-    });
+    test(
+      'date-like but invalid month parses leniently (Dart wraps months)',
+      () {
+        final date = SessionStorage.parseDateFromId('2026-13-01_track');
+        // Dart's DateTime constructor wraps month 13 → January of next year.
+        expect(date, DateTime(2027, 1, 1));
+      },
+    );
 
     test('date-like but invalid day parses leniently (Dart wraps days)', () {
       final date = SessionStorage.parseDateFromId('2026-02-30_track');

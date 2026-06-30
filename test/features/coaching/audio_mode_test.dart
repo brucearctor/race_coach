@@ -41,8 +41,11 @@ void main() {
 
     test('labels are unique across all modes', () {
       final labels = AudioMode.values.map((m) => m.label).toList();
-      expect(labels.toSet().length, labels.length,
-          reason: 'All labels should be unique');
+      expect(
+        labels.toSet().length,
+        labels.length,
+        reason: 'All labels should be unique',
+      );
     });
 
     test('off label is "Off"', () {
@@ -73,16 +76,21 @@ void main() {
   group('AudioMode.description', () {
     test('each mode has a non-empty description', () {
       for (final mode in AudioMode.values) {
-        expect(mode.description, isNotEmpty,
-            reason: '$mode should have a description');
+        expect(
+          mode.description,
+          isNotEmpty,
+          reason: '$mode should have a description',
+        );
       }
     });
 
     test('descriptions are unique across all modes', () {
-      final descriptions =
-          AudioMode.values.map((m) => m.description).toList();
-      expect(descriptions.toSet().length, descriptions.length,
-          reason: 'All descriptions should be unique');
+      final descriptions = AudioMode.values.map((m) => m.description).toList();
+      expect(
+        descriptions.toSet().length,
+        descriptions.length,
+        reason: 'All descriptions should be unique',
+      );
     });
   });
 

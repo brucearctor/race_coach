@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -61,8 +59,8 @@ class TrackMapNotifier extends StateNotifier<List<TrackPoint>> {
 
 final trackMapProvider =
     StateNotifierProvider<TrackMapNotifier, List<TrackPoint>>((ref) {
-  return TrackMapNotifier();
-});
+      return TrackMapNotifier();
+    });
 
 // ── Widget ─────────────────────────────────────────────────────────────
 
@@ -142,8 +140,10 @@ class _TrackMapWidgetState extends ConsumerState<TrackMapWidget>
       );
     }
 
-    final currentPosition =
-        LatLng(telemetryState.gps!.latitude, telemetryState.gps!.longitude);
+    final currentPosition = LatLng(
+      telemetryState.gps!.latitude,
+      telemetryState.gps!.longitude,
+    );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
@@ -165,9 +165,7 @@ class _TrackMapWidgetState extends ConsumerState<TrackMapWidget>
 
           // ── Speed-coded polyline trail ─────────────────────────
           if (trackPoints.length >= 2)
-            PolylineLayer(
-              polylines: _buildSpeedPolylines(trackPoints),
-            ),
+            PolylineLayer(polylines: _buildSpeedPolylines(trackPoints)),
 
           // ── Current position marker ────────────────────────────
           AnimatedBuilder(
@@ -183,10 +181,7 @@ class _TrackMapWidgetState extends ConsumerState<TrackMapWidget>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.primary.withValues(alpha: 0.3),
-                        border: Border.all(
-                          color: AppColors.primary,
-                          width: 2,
-                        ),
+                        border: Border.all(color: AppColors.primary, width: 2),
                       ),
                       child: Center(
                         child: Container(
@@ -245,11 +240,13 @@ class _TrackMapWidgetState extends ConsumerState<TrackMapWidget>
       final hue = normalised * 120;
       final color = HSLColor.fromAHSL(1.0, hue, 0.9, 0.5).toColor();
 
-      polylines.add(Polyline(
-        points: [points[i].position, points[i + 1].position],
-        color: color,
-        strokeWidth: 3,
-      ));
+      polylines.add(
+        Polyline(
+          points: [points[i].position, points[i + 1].position],
+          color: color,
+          strokeWidth: 3,
+        ),
+      );
     }
 
     return polylines;

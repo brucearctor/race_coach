@@ -64,34 +64,30 @@ class SettingsState {
 class SettingsNotifier extends StateNotifier<SettingsState> {
   SettingsNotifier() : super(const SettingsState());
 
-  void setSpeedUnit(SpeedUnit unit) =>
-      state = state.copyWith(speedUnit: unit);
+  void setSpeedUnit(SpeedUnit unit) => state = state.copyWith(speedUnit: unit);
 
-  void setTempUnit(TempUnit unit) =>
-      state = state.copyWith(tempUnit: unit);
+  void setTempUnit(TempUnit unit) => state = state.copyWith(tempUnit: unit);
 
   void setAudioEnabled(bool enabled) =>
       state = state.copyWith(audioEnabled: enabled);
 
-  void setVolume(double volume) =>
-      state = state.copyWith(volume: volume);
+  void setVolume(double volume) => state = state.copyWith(volume: volume);
 
-  void setSpeechRate(double rate) =>
-      state = state.copyWith(speechRate: rate);
+  void setSpeechRate(double rate) => state = state.copyWith(speechRate: rate);
 
   void setGpsSource(GpsSource source) =>
       state = state.copyWith(gpsSource: source);
 
-  void setFinishLine() =>
-      state = state.copyWith(finishLineSet: true);
+  void setFinishLine() => state = state.copyWith(finishLineSet: true);
 }
 
 // ── Provider ───────────────────────────────────────────────────────────
 
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  return SettingsNotifier();
-});
+final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>(
+  (ref) {
+    return SettingsNotifier();
+  },
+);
 
 // ── Settings Screen ────────────────────────────────────────────────────
 
@@ -223,63 +219,60 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            ...AudioMode.values.where((m) => m != AudioMode.off).map(
-              (mode) {
-                final selected = ref.watch(audioModeProvider) == mode;
-                return RadioListTile<AudioMode>(
-                  title: Row(
-                    children: [
-                      Icon(
-                        mode.icon,
-                        size: 18,
+            ...AudioMode.values.where((m) => m != AudioMode.off).map((mode) {
+              final selected = ref.watch(audioModeProvider) == mode;
+              return RadioListTile<AudioMode>(
+                title: Row(
+                  children: [
+                    Icon(
+                      mode.icon,
+                      size: 18,
+                      color: selected
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      mode.label,
+                      style: TextStyle(
                         color: selected
-                            ? AppColors.primary
+                            ? AppColors.textPrimary
                             : AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        mode.label,
-                        style: TextStyle(
-                          color: selected
-                              ? AppColors.textPrimary
-                              : AppColors.textSecondary,
-                          fontWeight:
-                              selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(left: 28),
-                    child: Text(
-                      mode.description,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textDim,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                       ),
                     ),
+                  ],
+                ),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(left: 28),
+                  child: Text(
+                    mode.description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textDim,
+                    ),
                   ),
-                  value: mode,
-                  groupValue: ref.watch(audioModeProvider),
-                  onChanged: (value) {
-                    if (value != null) {
-                      ref.read(audioModeProvider.notifier).state = value;
-                    }
-                  },
-                  activeColor: AppColors.primary,
-                  dense: true,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12),
-                );
-              },
-            ),
+                ),
+                value: mode,
+                groupValue: ref.watch(audioModeProvider),
+                onChanged: (value) {
+                  if (value != null) {
+                    ref.read(audioModeProvider.notifier).state = value;
+                  }
+                },
+                activeColor: AppColors.primary,
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              );
+            }),
           ],
 
           _SettingsTile(
             icon: Icons.volume_up_rounded,
             title: 'Volume',
-            subtitle:
-                '${(settings.volume * 100).round()}%',
+            subtitle: '${(settings.volume * 100).round()}%',
             trailing: SizedBox(
               width: 150,
               child: Slider(
@@ -297,8 +290,7 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.speed_rounded,
             title: 'Speech Rate',
-            subtitle:
-                '${(settings.speechRate * 100).round()}%',
+            subtitle: '${(settings.speechRate * 100).round()}%',
             trailing: SizedBox(
               width: 150,
               child: Slider(
@@ -316,8 +308,12 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.record_voice_over,
             title: 'Voice',
-            subtitle: ref.watch(audioCoachProvider).currentVoice?['name']
-                    ?.split('#').first ??
+            subtitle:
+                ref
+                    .watch(audioCoachProvider)
+                    .currentVoice?['name']
+                    ?.split('#')
+                    .first ??
                 'System Default',
             trailing: const Icon(
               Icons.chevron_right,
@@ -419,8 +415,11 @@ class SettingsScreen extends ConsumerWidget {
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle_rounded,
-                      size: 16, color: AppColors.success),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    size: 16,
+                    color: AppColors.success,
+                  ),
                   SizedBox(width: 6),
                   Text(
                     'Finish line is set',
@@ -542,8 +541,9 @@ void _showVoicePicker(BuildContext context, WidgetRef ref) async {
                         color: isSelected
                             ? AppColors.primary
                             : AppColors.textPrimary,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w400,
                       ),
                     ),
                     trailing: isSelected
@@ -561,8 +561,7 @@ void _showVoicePicker(BuildContext context, WidgetRef ref) async {
                 final name = voice['name'] ?? 'Unknown';
                 final locale = voice['locale'] ?? '';
                 final displayName = name.split('#').first;
-                final isSelected =
-                    coach.currentVoice?['name'] == voice['name'];
+                final isSelected = coach.currentVoice?['name'] == voice['name'];
 
                 return ListTile(
                   leading: Icon(
@@ -577,8 +576,9 @@ void _showVoicePicker(BuildContext context, WidgetRef ref) async {
                       color: isSelected
                           ? AppColors.primary
                           : AppColors.textPrimary,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w400,
                     ),
                   ),
                   subtitle: Text(

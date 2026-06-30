@@ -116,8 +116,8 @@ class TelemetryBus extends StateNotifier<TelemetryState> {
 /// The single [TelemetryBus] instance used across the app.
 final telemetryBusProvider =
     StateNotifierProvider<TelemetryBus, TelemetryState>(
-  (ref) => TelemetryBus(),
-);
+      (ref) => TelemetryBus(),
+    );
 
 /// Watches just the GPS data slot.
 final currentGpsProvider = Provider<GpsData?>((ref) {

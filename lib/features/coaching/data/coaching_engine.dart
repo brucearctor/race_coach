@@ -66,12 +66,14 @@ class CoachingEngine {
       }
     }
 
-    audioCoach.speak(CoachingCue(
-      type: CoachingCueType.sectorTime,
-      message: message,
-      priority: CuePriority.high,
-      timestamp: DateTime.now(),
-    ));
+    audioCoach.speak(
+      CoachingCue(
+        type: CoachingCueType.sectorTime,
+        message: message,
+        priority: CuePriority.high,
+        timestamp: DateTime.now(),
+      ),
+    );
   }
 
   // ── Private helpers ────────────────────────────────────────────────
@@ -89,12 +91,14 @@ class CoachingEngine {
     if (rounded < 5) return; // Don't announce when stationary.
 
     _lastSpeedAnnounce = now;
-    audioCoach.speak(CoachingCue(
-      type: CoachingCueType.speed,
-      message: '$rounded $unit.',
-      priority: CuePriority.low,
-      timestamp: now,
-    ));
+    audioCoach.speak(
+      CoachingCue(
+        type: CoachingCueType.speed,
+        message: '$rounded $unit.',
+        priority: CuePriority.low,
+        timestamp: now,
+      ),
+    );
   }
 
   void _checkGForceWarning(RaceBoxData data) {
@@ -109,12 +113,14 @@ class CoachingEngine {
     final direction = data.lateralG > 0 ? 'right' : 'left';
     final gStr = lateralMag.toStringAsFixed(1);
 
-    audioCoach.speak(CoachingCue(
-      type: CoachingCueType.general,
-      message: 'High lateral g. $gStr g to the $direction.',
-      priority: CuePriority.medium,
-      timestamp: now,
-    ));
+    audioCoach.speak(
+      CoachingCue(
+        type: CoachingCueType.general,
+        message: 'High lateral g. $gStr g to the $direction.',
+        priority: CuePriority.medium,
+        timestamp: now,
+      ),
+    );
   }
 
   String _formatDuration(Duration d) {

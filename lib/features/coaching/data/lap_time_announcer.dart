@@ -30,41 +30,41 @@ final lapTimeAnnouncerProvider = Provider<void>((ref) {
   // currentLapTime before the reset.
   Duration? previousLapTime;
 
-  ref.listen<LapTimerState>(
-    lapTimerProvider,
-    (previous, next) {
-      // Capture the current lap time before it resets to zero.
-      if (previous != null && next.currentLapTime == Duration.zero &&
-          previous.currentLapTime > const Duration(seconds: 10)) {
-        previousLapTime = previous.currentLapTime;
-      }
+  ref.listen<LapTimerState>(lapTimerProvider, (previous, next) {
+    // Capture the current lap time before it resets to zero.
+    if (previous != null &&
+        next.currentLapTime == Duration.zero &&
+        previous.currentLapTime > const Duration(seconds: 10)) {
+      previousLapTime = previous.currentLapTime;
+    }
 
-      // Detect lap completion: lapCount increased.
-      if (next.lapCount > previousLapCount) {
-        previousLapCount = next.lapCount;
+    // Detect lap completion: lapCount increased.
+    if (next.lapCount > previousLapCount) {
+      previousLapCount = next.lapCount;
 
-        // The completed lap time is the previousLapTime we captured.
-        final lapTime = previousLapTime;
-        if (lapTime == null) return;
+      // The completed lap time is the previousLapTime we captured.
+      final lapTime = previousLapTime;
+      if (lapTime == null) return;
 
-        final message = buildLapMessageForTesting(
-          lapTime: lapTime,
-          bestLapTime: next.bestLapTime,
-        );
+      final message = buildLapMessageForTesting(
+        lapTime: lapTime,
+        bestLapTime: next.bestLapTime,
+      );
 
-        debugPrint('[LapTimeAnnouncer] 🏁 Lap ${next.lapCount}: $message');
+      debugPrint('[LapTimeAnnouncer] 🏁 Lap ${next.lapCount}: $message');
 
-        audioCoach.speak(CoachingCue(
+      audioCoach.speak(
+        CoachingCue(
           type: CoachingCueType.lapTime,
           message: message,
           priority: CuePriority.high,
           timestamp: DateTime.now(),
-        ));
+        ),
+      );
 
-        previousLapTime = null;
-      }
-    },
-  );
+      previousLapTime = null;
+    }
+  });
 });
 
 // ── Message building ──────────────────────────────────────────────────

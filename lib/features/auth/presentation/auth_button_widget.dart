@@ -180,8 +180,7 @@ class _AuthButtonWidgetState extends ConsumerState<AuthButtonWidget> {
           CircleAvatar(
             radius: 20,
             backgroundColor: AppColors.surfaceLight,
-            backgroundImage:
-                photoUrl != null ? NetworkImage(photoUrl) : null,
+            backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
             child: photoUrl == null
                 ? Text(
                     displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',

@@ -76,17 +76,13 @@ void main() {
       });
 
       test('clearBest sets bestLapTime to null', () {
-        final state = LapTimerState(
-          bestLapTime: const Duration(seconds: 60),
-        );
+        final state = LapTimerState(bestLapTime: const Duration(seconds: 60));
         final copy = state.copyWith(clearBest: true);
         expect(copy.bestLapTime, isNull);
       });
 
       test('clearBest=false preserves bestLapTime', () {
-        final state = LapTimerState(
-          bestLapTime: const Duration(seconds: 60),
-        );
+        final state = LapTimerState(bestLapTime: const Duration(seconds: 60));
         final copy = state.copyWith(clearBest: false);
         expect(copy.bestLapTime, const Duration(seconds: 60));
       });
@@ -274,69 +270,62 @@ void main() {
     testWidgets('renders without errors', (WidgetTester tester) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: LapTimerWidget()),
-          ),
+          child: MaterialApp(home: Scaffold(body: LapTimerWidget())),
         ),
       );
       expect(find.byType(LapTimerWidget), findsOneWidget);
     });
 
-    testWidgets('shows "LAP –" when no laps completed',
-        (WidgetTester tester) async {
+    testWidgets('shows "LAP –" when no laps completed', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: LapTimerWidget()),
-          ),
+          child: MaterialApp(home: Scaffold(body: LapTimerWidget())),
         ),
       );
       expect(find.text('LAP –'), findsOneWidget);
     });
 
-    testWidgets('shows "BEST --:--.---" when no best lap',
-        (WidgetTester tester) async {
+    testWidgets('shows "BEST --:--.---" when no best lap', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: LapTimerWidget()),
-          ),
+          child: MaterialApp(home: Scaffold(body: LapTimerWidget())),
         ),
       );
       expect(find.text('BEST --:--.---'), findsOneWidget);
     });
 
-    testWidgets('shows timer_off icon when not running',
-        (WidgetTester tester) async {
+    testWidgets('shows timer_off icon when not running', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: LapTimerWidget()),
-          ),
+          child: MaterialApp(home: Scaffold(body: LapTimerWidget())),
         ),
       );
       expect(find.byIcon(Icons.timer_off_rounded), findsOneWidget);
     });
 
-    testWidgets('shows initial lap time as 00:00.000',
-        (WidgetTester tester) async {
+    testWidgets('shows initial lap time as 00:00.000', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: LapTimerWidget()),
-          ),
+          child: MaterialApp(home: Scaffold(body: LapTimerWidget())),
         ),
       );
       expect(find.text('00:00.000'), findsOneWidget);
     });
 
-    testWidgets('shows trophy icon for best lap row',
-        (WidgetTester tester) async {
+    testWidgets('shows trophy icon for best lap row', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         const ProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: LapTimerWidget()),
-          ),
+          child: MaterialApp(home: Scaffold(body: LapTimerWidget())),
         ),
       );
       expect(find.byIcon(Icons.emoji_events_rounded), findsOneWidget);

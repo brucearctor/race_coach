@@ -72,10 +72,7 @@ class LapTimerNotifier extends StateNotifier<LapTimerState> {
           ? elapsed - state.bestLapTime!
           : Duration.zero;
 
-      state = state.copyWith(
-        currentLapTime: elapsed,
-        delta: delta,
-      );
+      state = state.copyWith(currentLapTime: elapsed, delta: delta);
     });
   }
 
@@ -126,10 +123,11 @@ class LapTimerNotifier extends StateNotifier<LapTimerState> {
 
 // ── Provider ───────────────────────────────────────────────────────────
 
-final lapTimerProvider =
-    StateNotifierProvider<LapTimerNotifier, LapTimerState>((ref) {
-  return LapTimerNotifier();
-});
+final lapTimerProvider = StateNotifierProvider<LapTimerNotifier, LapTimerState>(
+  (ref) {
+    return LapTimerNotifier();
+  },
+);
 
 // ── Widget ─────────────────────────────────────────────────────────────
 
@@ -157,9 +155,7 @@ class LapTimerWidget extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                lapState.lapCount == 0
-                    ? 'LAP –'
-                    : 'LAP ${lapState.lapCount}',
+                lapState.lapCount == 0 ? 'LAP –' : 'LAP ${lapState.lapCount}',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,

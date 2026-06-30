@@ -72,10 +72,8 @@ class SessionRecorderState {
 ///   3. [markLap]        — finalises the current lap and starts a new one.
 ///   4. [stopRecording]  — writes session.pb + raw_frames.pb to disk.
 class SessionRecorder extends StateNotifier<SessionRecorderState> {
-  SessionRecorder({
-    required this.trackName,
-    required this.configName,
-  }) : super(SessionRecorderState.idle());
+  SessionRecorder({required this.trackName, required this.configName})
+    : super(SessionRecorderState.idle());
 
   /// Human-readable track + configuration name used for directory naming and
   /// the Session proto's `track_name` field.
@@ -141,11 +139,13 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
 
     // Flush any remaining frames as a partial lap.
     if (_currentLapFrames.isNotEmpty) {
-      _completedLaps.add(_buildLap(
-        lapNumber: _completedLaps.length + 1,
-        lapTimeSeconds: 0, // Unknown — lap was not completed.
-        frames: _currentLapFrames,
-      ));
+      _completedLaps.add(
+        _buildLap(
+          lapNumber: _completedLaps.length + 1,
+          lapTimeSeconds: 0, // Unknown — lap was not completed.
+          frames: _currentLapFrames,
+        ),
+      );
       _currentLapFrames.clear();
     }
 
@@ -209,8 +209,10 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
   /// Example: `2026-06-22_thunderhill_east-bypass`
   String _buildSessionId(DateTime now) {
     final date = '${now.year}-${_pad(now.month)}-${_pad(now.day)}';
-    final safeName =
-        _fullTrackName.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    final safeName = _fullTrackName.toLowerCase().replaceAll(
+      RegExp(r'[^a-z0-9]+'),
+      '-',
+    );
     return '${date}_$safeName';
   }
 
@@ -242,10 +244,7 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
   /// Convert a Dart [DateTime] to a protobuf [Timestamp].
   static Timestamp _timestampFromDateTime(DateTime dt) {
     final ms = dt.millisecondsSinceEpoch;
-    return Timestamp(
-      seconds: Int64(ms ~/ 1000),
-      nanos: (ms % 1000) * 1000000,
-    );
+    return Timestamp(seconds: Int64(ms ~/ 1000), nanos: (ms % 1000) * 1000000);
   }
 
   /// Get (or create) the session directory for a given [sessionId].
@@ -279,15 +278,12 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
 /// Reads the currently-selected track/config to label the session directory.
 final sessionRecorderProvider =
     StateNotifierProvider<SessionRecorder, SessionRecorderState>((ref) {
-  final trackState = ref.read(trackServiceProvider);
-  final trackName = trackState.selectedTrack?.name ?? 'unknown-track';
-  final configName = trackState.selectedConfig?.name ?? '';
+      final trackState = ref.read(trackServiceProvider);
+      final trackName = trackState.selectedTrack?.name ?? 'unknown-track';
+      final configName = trackState.selectedConfig?.name ?? '';
 
-  return SessionRecorder(
-    trackName: trackName,
-    configName: configName,
-  );
-});
+      return SessionRecorder(trackName: trackName, configName: configName);
+    });
 
 /// Bridges the [isRecordingProvider] toggle and the [telemetryBusProvider]
 /// stream into the [SessionRecorder].

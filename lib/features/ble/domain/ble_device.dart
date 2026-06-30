@@ -1,12 +1,7 @@
 // BLE device model and connection state for the Race Coach app.
 
 /// Represents the connection state of a BLE device.
-enum BleConnectionState {
-  disconnected,
-  connecting,
-  connected,
-  error,
-}
+enum BleConnectionState { disconnected, connecting, connected, error }
 
 /// Represents a discovered BLE device.
 class BleDevice {
@@ -71,19 +66,20 @@ class BleDevice {
       'BleDevice(id: $id, name: $name, rssi: $rssi, services: $serviceUuids)';
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'rssi': rssi,
-        'serviceUuids': serviceUuids,
-      };
+    'id': id,
+    'name': name,
+    'rssi': rssi,
+    'serviceUuids': serviceUuids,
+  };
 
   factory BleDevice.fromJson(Map<String, dynamic> json) => BleDevice(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        rssi: json['rssi'] as int,
-        serviceUuids: (json['serviceUuids'] as List<dynamic>?)
-                ?.map((e) => e as String)
-                .toList() ??
-            const [],
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    rssi: json['rssi'] as int,
+    serviceUuids:
+        (json['serviceUuids'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
+        const [],
+  );
 }

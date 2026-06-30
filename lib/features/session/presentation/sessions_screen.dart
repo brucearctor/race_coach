@@ -98,10 +98,14 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text('Delete Session',
-            style: TextStyle(color: AppColors.textPrimary)),
-        content: const Text('This cannot be undone.',
-            style: TextStyle(color: AppColors.textSecondary)),
+        title: const Text(
+          'Delete Session',
+          style: TextStyle(color: AppColors.textPrimary),
+        ),
+        content: const Text(
+          'This cannot be undone.',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -169,19 +173,22 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline,
-                  size: 48, color: AppColors.error),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
               const SizedBox(height: 16),
               Text(
                 'Failed to load sessions',
                 style: const TextStyle(
-                    color: AppColors.textPrimary, fontSize: 16),
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
                 '$error',
                 style: const TextStyle(
-                    color: AppColors.textSecondary, fontSize: 12),
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -192,8 +199,11 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.folder_open,
-                      size: 64, color: AppColors.textDim),
+                  const Icon(
+                    Icons.folder_open,
+                    size: 64,
+                    color: AppColors.textDim,
+                  ),
                   const SizedBox(height: 16),
                   const Text(
                     'No Sessions Yet',
@@ -279,8 +289,11 @@ class _SessionCard extends StatelessWidget {
             // ── Header: Track name + date ──────────────
             Row(
               children: [
-                const Icon(Icons.location_on,
-                    size: 18, color: AppColors.primary),
+                const Icon(
+                  Icons.location_on,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -309,10 +322,7 @@ class _SessionCard extends StatelessWidget {
             // ── Stats row ──────────────────────────────
             Row(
               children: [
-                _StatChip(
-                  icon: Icons.flag,
-                  label: '${session.lapCount} laps',
-                ),
+                _StatChip(icon: Icons.flag, label: '${session.lapCount} laps'),
                 const SizedBox(width: 16),
                 if (session.bestLap != null)
                   _StatChip(
@@ -333,12 +343,18 @@ class _SessionCard extends StatelessWidget {
                     ),
                   )
                 else if (isUploaded)
-                  const Icon(Icons.cloud_done,
-                      color: AppColors.success, size: 24)
+                  const Icon(
+                    Icons.cloud_done,
+                    color: AppColors.success,
+                    size: 24,
+                  )
                 else if (isFailed)
                   IconButton(
-                    icon: const Icon(Icons.cloud_off,
-                        color: AppColors.error, size: 24),
+                    icon: const Icon(
+                      Icons.cloud_off,
+                      color: AppColors.error,
+                      size: 24,
+                    ),
                     tooltip: 'Retry upload',
                     onPressed: isSignedIn ? onUpload : null,
                     padding: EdgeInsets.zero,
@@ -348,9 +364,7 @@ class _SessionCard extends StatelessWidget {
                   IconButton(
                     icon: Icon(
                       Icons.cloud_upload_outlined,
-                      color: isSignedIn
-                          ? AppColors.primary
-                          : AppColors.textDim,
+                      color: isSignedIn ? AppColors.primary : AppColors.textDim,
                       size: 24,
                     ),
                     tooltip: isSignedIn
@@ -365,8 +379,11 @@ class _SessionCard extends StatelessWidget {
 
                 // ── Delete button ──────────────────────
                 IconButton(
-                  icon: const Icon(Icons.delete_outline,
-                      color: AppColors.textDim, size: 22),
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.textDim,
+                    size: 22,
+                  ),
                   tooltip: 'Delete session',
                   onPressed: onDelete,
                   padding: EdgeInsets.zero,
@@ -382,8 +399,19 @@ class _SessionCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[date.month]} ${date.day}, ${date.year}';
   }
@@ -421,10 +449,7 @@ class _StatChip extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(color: color, fontSize: 13),
-        ),
+        Text(label, style: TextStyle(color: color, fontSize: 13)),
       ],
     );
   }

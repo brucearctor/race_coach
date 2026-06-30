@@ -39,51 +39,52 @@ final turnAnnouncerProvider = Provider<void>((ref) {
   // Track recently announced corners: corner number → last announce time.
   final announced = <int, DateTime>{};
 
-  ref.listen(
-    raceBoxDataStreamProvider,
-    (previous, next) {
-      final data = next.valueOrNull;
-      if (data == null) return;
+  ref.listen(raceBoxDataStreamProvider, (previous, next) {
+    final data = next.valueOrNull;
+    if (data == null) return;
 
-      // Skip invalid GPS.
-      if (data.latitude == 0.0 && data.longitude == 0.0) return;
+    // Skip invalid GPS.
+    if (data.latitude == 0.0 && data.longitude == 0.0) return;
 
-      final now = DateTime.now();
+    final now = DateTime.now();
 
-      for (final corner in config.corners) {
-        if (!corner.hasEntry()) continue;
+    for (final corner in config.corners) {
+      if (!corner.hasEntry()) continue;
 
-        final distance = distanceMetersForTesting(
-          data.latitude,
-          data.longitude,
-          corner.entry.latitude,
-          corner.entry.longitude,
+      final distance = distanceMetersForTesting(
+        data.latitude,
+        data.longitude,
+        corner.entry.latitude,
+        corner.entry.longitude,
+      );
+
+      if (distance < _announceDistanceMeters) {
+        // Check cooldown.
+        final lastAnnounce = announced[corner.number];
+        if (lastAnnounce != null &&
+            now.difference(lastAnnounce) < _announceCooldown) {
+          continue;
+        }
+
+        announced[corner.number] = now;
+
+        final spokenName = shortNameForTesting(corner.name);
+        debugPrint(
+          '[TurnAnnouncer] 📢 $spokenName '
+          '(${distance.toStringAsFixed(0)}m from entry)',
         );
 
-        if (distance < _announceDistanceMeters) {
-          // Check cooldown.
-          final lastAnnounce = announced[corner.number];
-          if (lastAnnounce != null &&
-              now.difference(lastAnnounce) < _announceCooldown) {
-            continue;
-          }
-
-          announced[corner.number] = now;
-
-          final spokenName = shortNameForTesting(corner.name);
-          debugPrint('[TurnAnnouncer] 📢 $spokenName '
-              '(${distance.toStringAsFixed(0)}m from entry)');
-
-          audioCoach.speak(CoachingCue(
+        audioCoach.speak(
+          CoachingCue(
             type: CoachingCueType.turnAnnouncement,
             message: spokenName,
             priority: CuePriority.medium,
             timestamp: now,
-          ));
-        }
+          ),
+        );
       }
-    },
-  );
+    }
+  });
 });
 
 // ── Helpers ────────────────────────────────────────────────────────────
@@ -112,7 +113,8 @@ double distanceMetersForTesting(
   const R = 6371000.0;
   final dLat = (lat2 - lat1) * math.pi / 180;
   final dLon = (lon2 - lon1) * math.pi / 180;
-  final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+  final a =
+      math.sin(dLat / 2) * math.sin(dLat / 2) +
       math.cos(lat1 * math.pi / 180) *
           math.cos(lat2 * math.pi / 180) *
           math.sin(dLon / 2) *

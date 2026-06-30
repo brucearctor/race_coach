@@ -8,18 +8,15 @@ enum CoachingCueType {
   general,
   turnAnnouncement,
   lapTime,
+  coasting,
+  trailBraking,
 }
 
 /// Priority level for a coaching cue.
 ///
 /// Higher priority cues can interrupt lower-priority speech
 /// and are delivered sooner in the queue.
-enum CuePriority {
-  low,
-  medium,
-  high,
-  critical,
-}
+enum CuePriority { low, medium, high, critical }
 
 /// A single coaching instruction to be delivered to the driver.
 ///

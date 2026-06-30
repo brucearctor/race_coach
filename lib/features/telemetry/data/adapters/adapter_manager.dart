@@ -1,4 +1,3 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/generated/racecoach/v1/telemetry.pbenum.dart';
@@ -30,9 +29,7 @@ const List<SourceType> _motionPriority = [
 ];
 
 /// Engine / fuel data only comes from OBD, so no priority conflict today.
-const List<SourceType> _enginePriority = [
-  SourceType.SOURCE_TYPE_OBD_BLE,
-];
+const List<SourceType> _enginePriority = [SourceType.SOURCE_TYPE_OBD_BLE];
 
 // =============================================================================
 // AdapterManagerState
@@ -68,12 +65,15 @@ class AdapterManagerState {
   }) {
     return AdapterManagerState(
       activeAdapters: activeAdapters ?? this.activeAdapters,
-      gpsAuthority:
-          clearGpsAuthority ? null : (gpsAuthority ?? this.gpsAuthority),
-      motionAuthority:
-          clearMotionAuthority ? null : (motionAuthority ?? this.motionAuthority),
-      engineAuthority:
-          clearEngineAuthority ? null : (engineAuthority ?? this.engineAuthority),
+      gpsAuthority: clearGpsAuthority
+          ? null
+          : (gpsAuthority ?? this.gpsAuthority),
+      motionAuthority: clearMotionAuthority
+          ? null
+          : (motionAuthority ?? this.motionAuthority),
+      engineAuthority: clearEngineAuthority
+          ? null
+          : (engineAuthority ?? this.engineAuthority),
     );
   }
 
@@ -128,8 +128,7 @@ class AdapterManager extends StateNotifier<AdapterManagerState> {
 
   /// Whether the given [source] should be allowed to write GPS data to the
   /// bus right now based on priority.
-  bool isGpsAuthoritative(SourceType source) =>
-      state.gpsAuthority == source;
+  bool isGpsAuthoritative(SourceType source) => state.gpsAuthority == source;
 
   /// Whether the given [source] should be allowed to write motion data to the
   /// bus right now based on priority.
@@ -208,8 +207,8 @@ class AdapterManager extends StateNotifier<AdapterManagerState> {
 /// The single [AdapterManager] instance.
 final adapterManagerProvider =
     StateNotifierProvider<AdapterManager, AdapterManagerState>(
-  (ref) => AdapterManager(ref),
-);
+      (ref) => AdapterManager(ref),
+    );
 
 /// Convenience provider: automatically activates the RaceBox adapter when
 /// the RaceBox device transitions to [RaceBoxConnectionStatus.connected]

@@ -88,16 +88,16 @@ class _RaceBoxStatusWidgetState extends ConsumerState<RaceBoxStatusWidget> {
       decoration: BoxDecoration(
         color: statusColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: statusColor.withValues(alpha: 0.4),
-          width: 1,
-        ),
+        border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Animated dot
-          _PulsingDot(color: statusColor, isActive: connectionState == BleConnectionState.connected),
+          _PulsingDot(
+            color: statusColor,
+            isActive: connectionState == BleConnectionState.connected,
+          ),
           const SizedBox(width: 6),
 
           // Icon
@@ -190,9 +190,10 @@ class _PulsingDotState extends State<_PulsingDot>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _animation = Tween<double>(begin: 0.4, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.4,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     if (widget.isActive) {
       _controller.repeat(reverse: true);
