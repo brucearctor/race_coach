@@ -71,8 +71,8 @@ class BrakingIndicatorWidget extends ConsumerWidget {
                 _formatOnsetDelta(referenceOnsetDeltaM),
                 style: TextStyle(
                   color: referenceOnsetDeltaM >= 0
-                      ? AppColors.deltaSlower
-                      : AppColors.deltaFaster,
+                      ? AppColors.deltaFaster
+                      : AppColors.deltaSlower,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                 ),

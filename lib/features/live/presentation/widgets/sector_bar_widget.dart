@@ -28,6 +28,10 @@ class _SectorBarWidgetState extends ConsumerState<SectorBarWidget> {
   /// Track the previous sector to detect transitions.
   int _previousSector = 0;
 
+  /// Last known delta for the sector we're currently in.
+  /// Captured continuously so we have the correct value on transition.
+  double? _lastKnownDelta;
+
   static const int _totalSectors = 3;
 
   @override
@@ -42,17 +46,24 @@ class _SectorBarWidgetState extends ConsumerState<SectorBarWidget> {
     // Detect lap reset: sector went back to 1.
     if (currentSector == 1 && _previousSector > 1) {
       // Store the last sector delta before resetting.
-      if (_previousSector <= _totalSectors && sectorDelta != null) {
-        _completedDeltas[_previousSector] = sectorDelta;
+      if (_previousSector <= _totalSectors && _lastKnownDelta != null) {
+        _completedDeltas[_previousSector] = _lastKnownDelta!;
       }
       _completedDeltas.clear();
+      _lastKnownDelta = null;
     }
 
     // Detect sector transition: store delta for the sector we just left.
-    if (currentSector > _previousSector &&
-        _previousSector > 0 &&
-        sectorDelta != null) {
-      _completedDeltas[_previousSector] = sectorDelta;
+    if (currentSector > _previousSector && _previousSector > 0) {
+      if (_lastKnownDelta != null) {
+        _completedDeltas[_previousSector] = _lastKnownDelta!;
+      }
+      _lastKnownDelta = null;
+    }
+
+    // Continuously track the current sector's delta.
+    if (sectorDelta != null) {
+      _lastKnownDelta = sectorDelta;
     }
 
     _previousSector = currentSector;
