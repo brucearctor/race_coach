@@ -16,10 +16,12 @@ import 'package:race_coach/features/coaching/data/lap_time_announcer.dart';
 import 'package:race_coach/features/live/data/lap_detection_bridge.dart';
 import 'package:race_coach/features/track/data/track_service.dart';
 import 'package:race_coach/features/live/presentation/widgets/speed_display.dart';
-import 'package:race_coach/features/live/presentation/widgets/g_force_widget.dart';
+import 'package:race_coach/features/live/presentation/widgets/friction_circle_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/lap_timer_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/track_map_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/delta_t_widget.dart';
+import 'package:race_coach/features/live/presentation/widgets/sector_bar_widget.dart';
+import 'package:race_coach/features/live/presentation/widgets/braking_indicator_widget.dart';
 
 /// Main live dashboard screen – the primary view while on track.
 ///
@@ -146,18 +148,29 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
 
             const SizedBox(height: 8),
 
-            // ── Delta-T indicator (coach mode) ─────────────────
-            const DeltaTWidget(),
+            // ── Delta-T + Braking indicator row ────────────────
+            const Row(
+              children: [
+                Expanded(child: DeltaTWidget()),
+                SizedBox(width: 8),
+                BrakingIndicatorWidget(),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── Sector splits bar ──────────────────────────────
+            const SectorBarWidget(),
 
             const SizedBox(height: 8),
 
-            // ── Middle row: G-force + Lap timer ────────────────
+            // ── Middle row: Friction circle + Lap timer ────────
             SizedBox(
               height: 200,
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Expanded(child: GForceWidget()),
+                  const Expanded(child: FrictionCircleWidget()),
                   const SizedBox(width: 12),
                   const Expanded(child: LapTimerWidget()),
                 ],
