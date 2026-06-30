@@ -6,6 +6,9 @@
 //!
 //! Window size: configurable, typically 25 frames (1 second at 25 Hz).
 //! Output: flat f32 vector suitable for TFLite inference.
+//!
+//! **Heading**: Uses circular statistics (atan2 of mean sin/cos) to correctly
+//! handle the 360° → 0° wrap-around.
 
 use std::collections::VecDeque;
 
@@ -63,6 +66,16 @@ impl FeatureExtractor {
     ///
     /// Returns None if the window is not full yet.
     /// Returns a flat vector of [FEATURE_COUNT] f32 values.
+    ///
+    /// Feature layout:
+    ///   [0..4]   speed:    mean, std, min, max
+    ///   [4..8]   g_lat:    mean, std, min, max
+    ///   [8..12]  g_long:   mean, std, min, max
+    ///   [12..16] g_vert:   mean, std, min, max
+    ///   [16..20] altitude: mean, std, min, max
+    ///   [20..24] heading:  circular_mean, circular_std, min_dev, max_dev
+    ///   [24]     speed_range (max - min)
+    ///   [25]     g_total_mean (combined lateral + longitudinal magnitude)
     pub fn extract(&self) -> Option<Vec<f32>> {
         if !self.is_ready() {
             return None;
@@ -71,59 +84,112 @@ impl FeatureExtractor {
         let n = self.window.len() as f32;
         let mut features = Vec::with_capacity(FEATURE_COUNT);
 
-        // Extract 6 channels: speed, g_lat, g_long, g_vert, heading, altitude
-        let channels: Vec<Vec<f32>> = vec![
-            self.window.iter().map(|f| f.speed_kmh).collect(),
-            self.window.iter().map(|f| f.g_lateral).collect(),
-            self.window.iter().map(|f| f.g_longitudinal).collect(),
-            self.window.iter().map(|f| f.g_vertical).collect(),
-            self.window.iter().map(|f| f.heading_deg).collect(),
-            self.window.iter().map(|f| f.altitude_m).collect(),
-        ];
+        // ── Linear channels (single-pass) ────────────────────────────────
+        // Channels: speed, g_lat, g_long, g_vert, altitude (5 linear channels)
+        let mut sums = [0.0_f32; 5];
+        let mut mins = [f32::MAX; 5];
+        let mut maxs = [f32::MIN; 5];
+        // For heading (circular): accumulate sin/cos
+        let mut sin_sum = 0.0_f64;
+        let mut cos_sum = 0.0_f64;
+        // For g_total derived feature
+        let mut g_total_sum = 0.0_f32;
 
-        // Compute 4 statistics per channel: mean, std, min, max
-        for channel in &channels {
-            let sum: f32 = channel.iter().sum();
-            let mean = sum / n;
+        for frame in &self.window {
+            let vals = [
+                frame.speed_kmh,
+                frame.g_lateral,
+                frame.g_longitudinal,
+                frame.g_vertical,
+                frame.altitude_m,
+            ];
+            for (i, &v) in vals.iter().enumerate() {
+                sums[i] += v;
+                mins[i] = mins[i].min(v);
+                maxs[i] = maxs[i].max(v);
+            }
 
-            let variance: f32 = channel.iter().map(|v| (v - mean) * (v - mean)).sum::<f32>() / n;
+            // Circular heading accumulation
+            let rad = (frame.heading_deg as f64).to_radians();
+            sin_sum += rad.sin();
+            cos_sum += rad.cos();
+
+            // Combined G magnitude
+            g_total_sum += (frame.g_lateral * frame.g_lateral
+                + frame.g_longitudinal * frame.g_longitudinal)
+                .sqrt();
+        }
+
+        // Compute mean and std for each linear channel (second pass for variance)
+        let means: [f32; 5] = std::array::from_fn(|i| sums[i] / n);
+
+        for (i, &mean) in means.iter().enumerate() {
+            let accessor: fn(&TelemetryInput) -> f32 = match i {
+                0 => |f| f.speed_kmh,
+                1 => |f| f.g_lateral,
+                2 => |f| f.g_longitudinal,
+                3 => |f| f.g_vertical,
+                4 => |f| f.altitude_m,
+                _ => unreachable!(),
+            };
+            let variance: f32 = self
+                .window
+                .iter()
+                .map(|f| {
+                    let v = accessor(f);
+                    (v - mean) * (v - mean)
+                })
+                .sum::<f32>()
+                / n;
             let std = variance.sqrt();
-
-            let min = channel
-                .iter()
-                .copied()
-                .min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .unwrap_or(0.0);
-            let max = channel
-                .iter()
-                .copied()
-                .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal))
-                .unwrap_or(0.0);
 
             features.push(mean);
             features.push(std);
-            features.push(min);
-            features.push(max);
+            features.push(mins[i]);
+            features.push(maxs[i]);
         }
 
-        // Derived features
+        // ── Heading (circular statistics) ────────────────────────────────
+        let n_f64 = self.window.len() as f64;
+        let heading_mean_rad = (sin_sum / n_f64).atan2(cos_sum / n_f64);
+        let heading_mean_deg = heading_mean_rad.to_degrees();
+        // Normalize to [0, 360)
+        let heading_mean_deg = ((heading_mean_deg % 360.0) + 360.0) % 360.0;
 
-        // 1. Speed range (max - min) — how much speed changed in the window
-        let speed_range = features[2] - features[3]; // max - min (indices: speed_min=2, speed_max=3)
-                                                     // Actually: features[0]=speed_mean, [1]=speed_std, [2]=speed_min, [3]=speed_max
-        features.push(features[3] - features[2]); // speed_max - speed_min
+        // Circular standard deviation: sqrt(-2 * ln(R)), where R = |mean resultant|
+        let r_bar = ((sin_sum / n_f64).powi(2) + (cos_sum / n_f64).powi(2)).sqrt();
+        let heading_std_deg = if r_bar > 0.0 && r_bar <= 1.0 {
+            ((-2.0 * r_bar.ln()).sqrt()).to_degrees()
+        } else if r_bar > 1.0 {
+            // Numerical safety: R slightly > 1 due to floating point
+            0.0
+        } else {
+            // R = 0 means uniform distribution
+            180.0
+        };
 
-        // 2. Combined G magnitude mean
-        let g_total_mean: f32 = self
-            .window
-            .iter()
-            .map(|f| (f.g_lateral * f.g_lateral + f.g_longitudinal * f.g_longitudinal).sqrt())
-            .sum::<f32>()
-            / n;
-        features.push(g_total_mean);
+        // Min/max angular deviation from circular mean
+        let mut min_dev = f32::MAX;
+        let mut max_dev = f32::MIN;
+        for frame in &self.window {
+            let diff = angular_diff(frame.heading_deg as f64, heading_mean_deg);
+            let diff_f32 = diff as f32;
+            min_dev = min_dev.min(diff_f32);
+            max_dev = max_dev.max(diff_f32);
+        }
 
-        // Ensure consistent size (drop the incorrect speed_range we didn't use)
-        let _ = speed_range;
+        features.push(heading_mean_deg as f32);
+        features.push(heading_std_deg as f32);
+        features.push(min_dev);
+        features.push(max_dev);
+
+        // ── Derived features ─────────────────────────────────────────────
+
+        // Speed range (max - min)
+        features.push(maxs[0] - mins[0]);
+
+        // Combined G magnitude mean
+        features.push(g_total_sum / n);
 
         debug_assert_eq!(features.len(), FEATURE_COUNT);
 
@@ -134,6 +200,18 @@ impl FeatureExtractor {
     pub fn reset(&mut self) {
         self.window.clear();
     }
+}
+
+/// Signed angular difference in degrees, range [-180, 180].
+fn angular_diff(a_deg: f64, b_deg: f64) -> f64 {
+    let mut d = a_deg - b_deg;
+    while d > 180.0 {
+        d -= 360.0;
+    }
+    while d < -180.0 {
+        d += 360.0;
+    }
+    d
 }
 
 impl Default for FeatureExtractor {
@@ -147,13 +225,23 @@ mod tests {
     use super::*;
 
     fn make_input(speed: f32, g_lat: f32, g_long: f32) -> TelemetryInput {
+        make_input_full(speed, g_lat, g_long, 90.0, 100.0)
+    }
+
+    fn make_input_full(
+        speed: f32,
+        g_lat: f32,
+        g_long: f32,
+        heading: f32,
+        altitude: f32,
+    ) -> TelemetryInput {
         TelemetryInput {
             timestamp_ms: 0,
             latitude: 0.0,
             longitude: 0.0,
             speed_kmh: speed,
-            heading_deg: 90.0,
-            altitude_m: 100.0,
+            heading_deg: heading,
+            altitude_m: altitude,
             g_lateral: g_lat,
             g_longitudinal: g_long,
             g_vertical: 1.0,
@@ -240,5 +328,101 @@ mod tests {
         fe.reset();
         assert!(!fe.is_ready());
         assert!(fe.extract().is_none());
+    }
+
+    // ── Heading wrap-around tests ────────────────────────────────────────
+
+    #[test]
+    fn test_heading_no_wrap_consistent_direction() {
+        let mut fe = FeatureExtractor::with_config(FeatureConfig { window_size: 3 });
+        for _ in 0..3 {
+            fe.push(make_input_full(100.0, 0.0, 0.0, 90.0, 100.0));
+        }
+        let features = fe.extract().unwrap();
+        // Heading mean (index 20) should be 90
+        assert!(
+            (features[20] - 90.0).abs() < 1.0,
+            "heading mean should be ~90, got {}",
+            features[20]
+        );
+        // Heading std (index 21) should be ~0
+        assert!(
+            features[21] < 1.0,
+            "heading std should be ~0, got {}",
+            features[21]
+        );
+    }
+
+    #[test]
+    fn test_heading_wrap_around_north() {
+        // Critical test: heading crosses 360°/0° boundary
+        let mut fe = FeatureExtractor::with_config(FeatureConfig { window_size: 5 });
+        fe.push(make_input_full(100.0, 0.0, 0.0, 358.0, 100.0));
+        fe.push(make_input_full(100.0, 0.0, 0.0, 359.0, 100.0));
+        fe.push(make_input_full(100.0, 0.0, 0.0, 0.0, 100.0));
+        fe.push(make_input_full(100.0, 0.0, 0.0, 1.0, 100.0));
+        fe.push(make_input_full(100.0, 0.0, 0.0, 2.0, 100.0));
+
+        let features = fe.extract().unwrap();
+        let heading_mean = features[20];
+        let heading_std = features[21];
+
+        // Mean should be ~0° (north), NOT ~144° (naive arithmetic mean)
+        // Angular distance from north: min(heading, 360-heading)
+        let dist_from_north = heading_mean.min(360.0 - heading_mean);
+        assert!(
+            dist_from_north < 10.0,
+            "heading mean should be near 0°/360°, got {heading_mean}°"
+        );
+        // Std should be small (~2°), not ~170°
+        assert!(
+            heading_std < 10.0,
+            "heading std should be small, got {heading_std}°"
+        );
+    }
+
+    #[test]
+    fn test_heading_wrap_south() {
+        // Heading around 180° — no wrap issue, but verify correctness
+        let mut fe = FeatureExtractor::with_config(FeatureConfig { window_size: 3 });
+        fe.push(make_input_full(100.0, 0.0, 0.0, 179.0, 100.0));
+        fe.push(make_input_full(100.0, 0.0, 0.0, 180.0, 100.0));
+        fe.push(make_input_full(100.0, 0.0, 0.0, 181.0, 100.0));
+
+        let features = fe.extract().unwrap();
+        let heading_mean = features[20];
+        assert!(
+            (heading_mean - 180.0).abs() < 2.0,
+            "heading mean should be ~180°, got {heading_mean}°"
+        );
+    }
+
+    #[test]
+    fn test_speed_range_derived_feature() {
+        let mut fe = FeatureExtractor::with_config(FeatureConfig { window_size: 3 });
+        fe.push(make_input(80.0, 0.0, 0.0));
+        fe.push(make_input(100.0, 0.0, 0.0));
+        fe.push(make_input(120.0, 0.0, 0.0));
+
+        let features = fe.extract().unwrap();
+        // speed_range = features[24] = max - min = 120 - 80 = 40
+        assert!(
+            (features[24] - 40.0).abs() < 0.01,
+            "speed range should be 40, got {}",
+            features[24]
+        );
+    }
+
+    #[test]
+    fn test_no_nan_with_zero_g() {
+        let mut fe = FeatureExtractor::with_config(FeatureConfig { window_size: 3 });
+        for _ in 0..3 {
+            fe.push(make_input(0.0, 0.0, 0.0));
+        }
+        let features = fe.extract().unwrap();
+        for (i, &f) in features.iter().enumerate() {
+            assert!(!f.is_nan(), "Feature {i} is NaN");
+            assert!(!f.is_infinite(), "Feature {i} is infinite");
+        }
     }
 }
