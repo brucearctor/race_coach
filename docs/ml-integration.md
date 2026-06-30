@@ -263,22 +263,56 @@ Architecture: async post-lap/post-session analysis, separate from the real-time 
 - [x] `CueType::MlBraking` and `CueType::MlThrottle` — wired into coaching pipeline
 - [x] Analyzer configs — `ml_features` stub in `AnalysisConfig`
 
-### Phase 1: Data Collection (next)
+### Phase 1: Label Existing Sessions Offline (next)
 
-No trained model exists yet. Before adding an inference framework, we need
-labeled training data.
+No trained model exists yet. But training data already sits on disk —
+`SessionRecorder` saves every frame as `raw_frames.pb` (length-delimited
+protobuf at 25 Hz) with full GPS, IMU, and engine telemetry.
 
-**What to collect during sessions:**
+**Labeling approach:** Replay saved sessions through the existing Rust
+analyzer pipeline offline. The analyzers already detect the events we
+want labels for — they just emit coaching cues instead of writing labels.
 
-| Event | Label | Source |
-|-------|-------|--------|
-| Braking onset | track position + speed + G at brake application | `BrakingOnsetDetector` |
-| Throttle application | track position + speed + G at throttle-on | New: `ThrottleOnsetDetector` |
-| Reference comparison | delta vs reference at each event | `ReferenceLap` |
-| Corner classification | apex position + radius + entry/exit speed | GPS + speed trace |
+```text
+raw_frames.pb (saved session)
+    ↓
+Offline replay script (Rust or Python)
+    ↓
+Run through: BrakingOnsetDetector, FrictionCircleAnalyzer,
+             CornerSpeedComparison, JerkAnalyzer, TrailBrakingAnalyzer
+    ↓
+Capture analyzer output as labeled events
+    ↓
+labeled_events.jsonl — ready for training
+```
 
-**Storage:** Append labeled events to a per-session `.jsonl` file alongside raw telemetry.
-After 5-10 sessions, export to training pipeline.
+**What each saved frame contains:**
+
+| Field | Proto Path |
+|-------|-----------|
+| Speed | `gps.speedKmh` |
+| Lat/Lon | `gps.latitude/longitude` |
+| Heading | `gps.headingDegrees` |
+| Altitude | `gps.altitudeMeters` |
+| G-force (lat/lon/vert) | `motion.gForceLateral/Longitudinal/Vertical` |
+| Yaw/Pitch/Roll rate | `motion.yawRateDps/pitchRateDps/rollRateDps` |
+| Throttle | `engine.throttlePct` |
+| Timestamp | `arrivalTimestamp` |
+| Lap boundaries | `session.laps[].telemetry` |
+
+**Labels extracted per event:**
+
+| Event | Already Detected By | Label Fields |
+|-------|-------------------|-------------|
+| Braking onset | `BrakingOnsetDetector` | track position, speed, G, ref delta |
+| Trail braking quality | `TrailBrakingAnalyzer` | quality score 0–1, zone |
+| Coasting zones | `FrictionCircleAnalyzer` | duration, grip utilization |
+| Corner apex | `CornerSpeedComparison` | min-speed point, ref delta |
+| Jerk events | `JerkAnalyzer` | magnitude, direction |
+| Throttle application | Derived: speed derivative goes positive after apex | track position, speed |
+
+**No new logging code needed.** 5-10 saved sessions ≈ thousands of labeled events.
+
 
 ### Phase 2: First ML Model
 
