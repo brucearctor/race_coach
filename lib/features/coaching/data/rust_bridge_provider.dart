@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/generated/racecoach/v1/track.pb.dart';
+import 'package:race_coach/features/coaching/data/reference_lap_service.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/track/data/track_service.dart';
 import 'package:race_coach/src/rust/api/coaching_api.dart' as rust;
@@ -41,6 +43,17 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
 
   await rust.createSession(config: rustConfig);
   ref.read(rustSessionActiveProvider.notifier).state = true;
+
+  // Auto-load the best reference lap for this track.
+  final trackName = '${track.name} ${config.name}'.trim();
+  ref.read(referenceLapServiceProvider.notifier).autoLoadForTrack(trackName)
+      .then((loaded) {
+    if (loaded) {
+      debugPrint('[RustBridge] Auto-loaded reference lap for "$trackName"');
+    } else {
+      debugPrint('[RustBridge] No reference lap available for "$trackName"');
+    }
+  });
 }
 
 Future<void> _destroyRustSession(Ref ref) async {
