@@ -110,6 +110,26 @@ final lapDistancePctProvider = Provider<double>((ref) {
   return ref.watch(rustFrameOutputProvider)?.lapDistancePct ?? 0.0;
 });
 
+/// Friction circle state from Rust engine.
+final frictionCircleProvider = Provider<rust.FrictionCircleState?>((ref) {
+  return ref.watch(rustFrameOutputProvider)?.frictionCircle;
+});
+
+/// Braking state from Rust engine.
+final brakingStateProvider = Provider<rust.BrakingState?>((ref) {
+  return ref.watch(rustFrameOutputProvider)?.brakingState;
+});
+
+/// Current sector number (1-based).
+final currentSectorProvider = Provider<int>((ref) {
+  return ref.watch(rustFrameOutputProvider)?.currentSector ?? 1;
+});
+
+/// Current sector delta vs reference (seconds).
+final sectorDeltaProvider = Provider<double?>((ref) {
+  return ref.watch(rustFrameOutputProvider)?.sectorDelta;
+});
+
 // =============================================================================
 // Type converters — Dart proto types ↔ Rust FFI types
 // =============================================================================
@@ -154,8 +174,8 @@ rust.AnalysisConfig _defaultAnalysisConfig() {
     deltaT: true,
     brakingGOnset: true,
     cornerSpeed: false,
-    trailBraking: false,
-    jerkAnalysis: false,
+    trailBraking: true,
+    jerkAnalysis: true,
     speedDerivative: false,
     frictionCircle: true,
     combinedG: false,
