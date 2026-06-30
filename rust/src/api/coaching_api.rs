@@ -18,6 +18,9 @@ use crate::calibration::imu_bias::{self, ImuCalibrator};
 use crate::coaching::cue_engine::CueEngine;
 use crate::distance::speed_integrated::SpeedIntegratedDistance;
 use crate::dynamics::friction_circle::FrictionCircle;
+use crate::dynamics::jerk::JerkAnalyzer;
+use crate::dynamics::trail_braking::TrailBrakingAnalyzer;
+use crate::ml::features::FeatureExtractor;
 use crate::reference::reference_lap::ReferenceLap;
 use crate::registry::{AnalysisContext, AnalysisRegistry, AnalysisResult, DataRequirement};
 use crate::timing::delta_t::DeltaT;
@@ -30,6 +33,7 @@ use crate::types::*;
 struct Session {
     registry: AnalysisRegistry,
     cue_engine: CueEngine,
+    feature_extractor: FeatureExtractor,
     reference_lap: Option<ReferenceLap>,
     imu_bias: Option<ImuBias>,
     #[allow(dead_code)] // Used for corner config when setting reference laps
@@ -73,6 +77,10 @@ pub fn create_session(config: SessionConfig) -> bool {
     corner_speed.configure(config.track.corners.clone());
     registry.register(Box::new(corner_speed));
 
+    // Phase 1c analyzers (disabled by default, enabled via AnalysisConfig)
+    registry.register(Box::new(TrailBrakingAnalyzer::new()));
+    registry.register(Box::new(JerkAnalyzer::new()));
+
     // Apply user config
     registry.apply_config(&config.analysis);
 
@@ -94,6 +102,7 @@ pub fn create_session(config: SessionConfig) -> bool {
     let session = Session {
         registry,
         cue_engine: CueEngine::new(),
+        feature_extractor: FeatureExtractor::new(),
         reference_lap: None,
         imu_bias: None,
         config,
@@ -226,6 +235,9 @@ pub fn process_frame(input: TelemetryInput) -> FrameOutput {
     session.previous_input = Some(corrected_input);
     session.previous_timestamp_ms = Some(input.timestamp_ms);
 
+    // Feed the ML feature extractor
+    session.feature_extractor.push(corrected_input);
+
     output
 }
 
@@ -322,6 +334,19 @@ pub fn reset_lap() {
         session.track_distance_m = 0.0;
         session.current_sector = 0;
         session.registry.reset_all();
+        session.cue_engine.reset();
+        session.feature_extractor.reset();
+    }
+}
+
+/// Get the current ML feature vector (if the window is full).
+///
+/// Returns a flat Vec<f32> of features, or empty if not enough frames yet.
+pub fn get_ml_features() -> Vec<f32> {
+    let guard = SESSION.lock().unwrap();
+    match guard.as_ref() {
+        Some(session) => session.feature_extractor.extract().unwrap_or_default(),
+        None => Vec::new(),
     }
 }
 
