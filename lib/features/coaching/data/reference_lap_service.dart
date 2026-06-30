@@ -110,7 +110,8 @@ class ReferenceLapService extends StateNotifier<ReferenceLapState> {
       );
     } catch (e) {
       debugPrint('[ReferenceLapService] Error loading frames: $e');
-      state = state.copyWith(
+      state = ReferenceLapState(
+        isLoaded: false,
         isLoading: false,
         error: 'Failed to load reference lap: $e',
       );
@@ -145,6 +146,15 @@ class ReferenceLapService extends StateNotifier<ReferenceLapState> {
         state = state.copyWith(
           isLoading: false,
           error: 'Lap $lapNumber has no telemetry data',
+        );
+        return false;
+      }
+
+      // Reject laps with invalid time.
+      if (lap.lapTimeSeconds <= 0) {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Lap $lapNumber has no valid lap time',
         );
         return false;
       }
@@ -235,34 +245,46 @@ class ReferenceLapService extends StateNotifier<ReferenceLapState> {
 
     // Sort by best lap time (fastest first).
     trackSessions.sort((a, b) => a.bestLap!.compareTo(b.bestLap!));
-    final bestSession = trackSessions.first;
 
-    // Load the session to find which lap number is the best.
-    try {
-      final session = await storage.loadSession(bestSession.sessionId);
-      Lap? bestLap;
-      for (final lap in session.laps) {
-        if (lap.lapTimeSeconds <= 0) continue;
-        if (bestLap == null || lap.lapTimeSeconds < bestLap.lapTimeSeconds) {
-          bestLap = lap;
+    // Try each candidate until one loads successfully.
+    for (final candidate in trackSessions) {
+      try {
+        final session = await storage.loadSession(candidate.sessionId);
+        Lap? bestLap;
+        for (final lap in session.laps) {
+          if (lap.lapTimeSeconds <= 0) continue;
+          if (bestLap == null || lap.lapTimeSeconds < bestLap.lapTimeSeconds) {
+            bestLap = lap;
+          }
         }
+
+        if (bestLap == null || bestLap.telemetry.isEmpty) continue;
+
+        // Check that the lap has GPS data.
+        final hasGps = bestLap.telemetry.any((f) => f.hasGps());
+        if (!hasGps) continue;
+
+        debugPrint('[ReferenceLapService] Auto-loading best lap: '
+            '${candidate.sessionId} lap ${bestLap.lapNumber} '
+            '(${bestLap.lapTimeSeconds}s)');
+
+        final loaded = await loadFromSession(
+          sessionId: candidate.sessionId,
+          lapNumber: bestLap.lapNumber,
+          persist: true,
+        );
+        if (loaded) return true;
+        // If this candidate failed, try the next one.
+      } catch (e) {
+        debugPrint('[ReferenceLapService] Error loading candidate '
+            '${candidate.sessionId}: $e');
+        continue;
       }
-
-      if (bestLap == null || bestLap.telemetry.isEmpty) return false;
-
-      debugPrint('[ReferenceLapService] Auto-loading best lap: '
-          '${bestSession.sessionId} lap ${bestLap.lapNumber} '
-          '(${bestLap.lapTimeSeconds}s)');
-
-      return await loadFromSession(
-        sessionId: bestSession.sessionId,
-        lapNumber: bestLap.lapNumber,
-        persist: true,
-      );
-    } catch (e) {
-      debugPrint('[ReferenceLapService] Error finding best lap: $e');
-      return false;
     }
+
+    debugPrint('[ReferenceLapService] No usable reference lap found '
+        'for track "$trackName"');
+    return false;
   }
 
   /// Clear the loaded reference lap.
@@ -286,14 +308,14 @@ rust.TelemetryInput protoFrameToRustInput(TelemetryFrame frame) {
   final gps = frame.gps;
   final motion = frame.hasMotion() ? frame.motion : null;
 
-  // Use arrival_timestamp (always set) or device_timestamp.
+  // Prefer device_timestamp (actual measurement time) over arrival_timestamp.
   int timestampMs = 0;
-  if (frame.hasArrivalTimestamp()) {
-    timestampMs = frame.arrivalTimestamp.seconds.toInt() * 1000 +
-        frame.arrivalTimestamp.nanos ~/ 1000000;
-  } else if (frame.hasDeviceTimestamp()) {
+  if (frame.hasDeviceTimestamp()) {
     timestampMs = frame.deviceTimestamp.seconds.toInt() * 1000 +
         frame.deviceTimestamp.nanos ~/ 1000000;
+  } else if (frame.hasArrivalTimestamp()) {
+    timestampMs = frame.arrivalTimestamp.seconds.toInt() * 1000 +
+        frame.arrivalTimestamp.nanos ~/ 1000000;
   }
 
   return rust.TelemetryInput(

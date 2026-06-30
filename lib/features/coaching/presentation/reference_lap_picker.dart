@@ -174,6 +174,13 @@ class _ReferenceLapPickerSheetState
       setState(() => _isLoading = false);
       if (loaded) {
         Navigator.of(context).pop();
+      } else {
+        // Surface the error to the user.
+        final error =
+            ref.read(referenceLapServiceProvider).error ?? 'Unknown error';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not load lap: $error')),
+        );
       }
     }
   }
@@ -305,22 +312,21 @@ class _LapInfo {
   final double timeSeconds;
 }
 
-String _formatDuration(Duration d) {
-  final totalMs = d.inMilliseconds;
-  final minutes = totalMs ~/ 60000;
-  final seconds = (totalMs % 60000) / 1000;
+/// Format milliseconds as a lap time string.
+///
+/// Handles the 60-second rollover edge case (e.g. 59999ms → "1:00.0"
+/// instead of "0:60.0").
+String _formatMs(int totalMs) {
+  // Round to nearest 100ms for display.
+  final roundedMs = ((totalMs / 100).round()) * 100;
+  final minutes = roundedMs ~/ 60000;
+  final seconds = (roundedMs % 60000) / 1000;
   if (minutes > 0) {
     return '$minutes:${seconds.toStringAsFixed(1).padLeft(4, '0')}';
   }
   return '${seconds.toStringAsFixed(1)}s';
 }
 
-String _formatLapTime(double seconds) {
-  final totalMs = (seconds * 1000).round();
-  final minutes = totalMs ~/ 60000;
-  final secs = (totalMs % 60000) / 1000;
-  if (minutes > 0) {
-    return '$minutes:${secs.toStringAsFixed(1).padLeft(4, '0')}';
-  }
-  return '${secs.toStringAsFixed(1)}s';
-}
+String _formatDuration(Duration d) => _formatMs(d.inMilliseconds);
+
+String _formatLapTime(double seconds) => _formatMs((seconds * 1000).round());

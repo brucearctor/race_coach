@@ -50,14 +50,14 @@ class ReferenceLapPrefs {
     String trackName,
     ReferenceLapSelection selection,
   ) async {
-    final prefs = await _load();
+    final prefs = Map<String, ReferenceLapSelection>.of(await _load());
     prefs[_normalizeTrackName(trackName)] = selection;
     await _save(prefs);
   }
 
   /// Clear the reference lap selection for a track.
   Future<void> clearSelection(String trackName) async {
-    final prefs = await _load();
+    final prefs = Map<String, ReferenceLapSelection>.of(await _load());
     prefs.remove(_normalizeTrackName(trackName));
     await _save(prefs);
   }
@@ -96,10 +96,11 @@ class ReferenceLapPrefs {
   }
 
   Future<void> _save(Map<String, ReferenceLapSelection> prefs) async {
-    _cache = prefs;
     final file = await _prefsFile();
     final json = prefs.map((key, value) => MapEntry(key, value.toJson()));
     await file.writeAsString(jsonEncode(json));
+    // Only update cache after successful write.
+    _cache = prefs;
   }
 }
 

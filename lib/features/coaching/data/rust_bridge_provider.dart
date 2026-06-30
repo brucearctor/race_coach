@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -46,14 +48,20 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
 
   // Auto-load the best reference lap for this track.
   final trackName = '${track.name} ${config.name}'.trim();
-  ref.read(referenceLapServiceProvider.notifier).autoLoadForTrack(trackName)
-      .then((loaded) {
-    if (loaded) {
-      debugPrint('[RustBridge] Auto-loaded reference lap for "$trackName"');
-    } else {
-      debugPrint('[RustBridge] No reference lap available for "$trackName"');
-    }
-  });
+  unawaited(
+    ref
+        .read(referenceLapServiceProvider.notifier)
+        .autoLoadForTrack(trackName)
+        .then((loaded) {
+      if (loaded) {
+        debugPrint('[RustBridge] Auto-loaded reference lap for "$trackName"');
+      } else {
+        debugPrint('[RustBridge] No reference lap available for "$trackName"');
+      }
+    }).catchError((Object e) {
+      debugPrint('[RustBridge] Error auto-loading reference lap: $e');
+    }),
+  );
 }
 
 Future<void> _destroyRustSession(Ref ref) async {
