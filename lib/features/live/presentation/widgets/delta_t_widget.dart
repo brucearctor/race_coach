@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/coaching/data/reference_lap_service.dart';
 import 'package:race_coach/features/coaching/data/rust_bridge_provider.dart';
+import 'package:race_coach/features/coaching/presentation/reference_lap_picker.dart';
 
 /// Displays the delta-T (time difference vs reference lap).
 ///
@@ -24,8 +25,10 @@ class DeltaTWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasRef = ref.watch(hasReferenceLapProvider);
     if (!hasRef) {
-      return _buildNoReference();
+      return _buildNoReference(context);
     }
+
+    final refState = ref.watch(referenceLapServiceProvider);
 
     final deltaT = ref.watch(deltaTProvider);
     final color = _deltaColor(deltaT);
@@ -38,70 +41,85 @@ class DeltaTWidget extends ConsumerWidget {
         ? '${sign}0.00'
         : '$sign${deltaT.toStringAsFixed(2)}';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'DELTA',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.5,
-              color: color.withValues(alpha: 0.7),
+    return GestureDetector(
+      onTap: () => showReferenceLapPicker(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1.5),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'DELTA',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.5,
+                color: color.withValues(alpha: 0.7),
+              ),
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            display,
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              fontFeatures: const [FontFeature.tabularFigures()],
-              color: color,
+            const SizedBox(height: 2),
+            Text(
+              display,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w700,
+                fontFeatures: const [FontFeature.tabularFigures()],
+                color: color,
+              ),
             ),
-          ),
-          Text(
-            'sec',
-            style: TextStyle(
-              fontSize: 11,
-              color: color.withValues(alpha: 0.6),
+            Text(
+              'sec',
+              style: TextStyle(
+                fontSize: 11,
+                color: color.withValues(alpha: 0.6),
+              ),
             ),
-          ),
-        ],
+            if (refState.isLoaded)
+              Text(
+                'Ref: ${refState.formattedLapTime}',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: color.withValues(alpha: 0.5),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNoReference() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider, width: 1),
-      ),
-      child: const Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.compare_arrows, size: 20, color: AppColors.textDisabled),
-          SizedBox(height: 4),
-          Text(
-            'NO REF LAP',
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1,
-              color: AppColors.textDisabled,
+  Widget _buildNoReference(BuildContext context) {
+    return GestureDetector(
+      onTap: () => showReferenceLapPicker(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider, width: 1),
+        ),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.compare_arrows, size: 20, color: AppColors.textDisabled),
+            SizedBox(height: 4),
+            Text(
+              'TAP TO SET REF LAP',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1,
+                color: AppColors.textDisabled,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
