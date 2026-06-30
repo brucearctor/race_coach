@@ -44,7 +44,7 @@ class _FrictionCircleWidgetState extends ConsumerState<FrictionCircleWidget>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
-    )..repeat(reverse: true);
+    );
 
     _pulseAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -77,6 +77,14 @@ class _FrictionCircleWidgetState extends ConsumerState<FrictionCircleWidget>
     final gMax = frictionCircle?.gMax ?? 1.5;
     final isTrailBraking = frictionCircle?.isTrailBraking ?? false;
     final isCoasting = frictionCircle?.isCoasting ?? false;
+
+    // Only run the pulse animation when over the tire limit.
+    if (utilization > 1.0 && !_pulseController.isAnimating) {
+      _pulseController.repeat(reverse: true);
+    } else if (utilization <= 1.0 && _pulseController.isAnimating) {
+      _pulseController.stop();
+      _pulseController.value = 1.0;
+    }
 
     return Container(
       padding: const EdgeInsets.all(8),
@@ -392,8 +400,12 @@ class _FrictionCirclePainter extends CustomPainter {
   bool shouldRepaint(covariant _FrictionCirclePainter oldDelegate) {
     return lateralG != oldDelegate.lateralG ||
         longitudinalG != oldDelegate.longitudinalG ||
-        trail.length != oldDelegate.trail.length ||
+        gMax != oldDelegate.gMax ||
         utilization != oldDelegate.utilization ||
-        pulseValue != oldDelegate.pulseValue;
+        pulseValue != oldDelegate.pulseValue ||
+        trail.length != oldDelegate.trail.length ||
+        // Once the trail is full, always repaint since the oldest
+        // point was removed and a new one added.
+        trail.length >= 25;
   }
 }
