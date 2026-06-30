@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+language: en-US
+reviews:
+  # Automatically review PRs (vs. on-demand only)
+  auto_review:
+    enabled: true
+    # Skip drafts — only review when ready
+    drafts: false
+    # Skip generated code — proto2type output + FRB bindings
+    path_filters:
+      - "!rust/src/generated/**"
+      - "!lib/src/rust/frb_generated.*"
+      - "!lib/src/rust/api/**"
+      - "!lib/src/rust/types.dart"
+      - "!lib/generated/**"
+      - "!rust/target/**"
+      - "!build/**"
+      - "!**/*.lock"
+
+  # Full review, not just summary
+  profile: chill
+  high_level_summary: true
+  poem: false
+
+  tools:
+    # Enable static analysis integrations
+    clippy:
+      enabled: true
+    ruff:
+      enabled: false
+    biome:
+      enabled: false
+
+chat:
+  auto_reply: true
