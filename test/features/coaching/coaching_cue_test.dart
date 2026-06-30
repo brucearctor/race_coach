@@ -24,8 +24,8 @@ void main() {
       );
     });
 
-    test('has exactly 8 values', () {
-      expect(CoachingCueType.values.length, 8);
+    test('has exactly 10 values', () {
+      expect(CoachingCueType.values.length, 10);
     });
   });
 

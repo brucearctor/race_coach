@@ -6,13 +6,8 @@
 
 // Re-export proto-generated types used by the engine.
 pub use crate::generated::proto::{
-    CoachingCue as ProtoCoachingCue,
-    CoachingCueType as ProtoCueType,
-    Corner as ProtoCorner,
-    CuePriority as ProtoCuePriority,
-    GpsData,
-    SectorSplit as ProtoSectorSplit,
-    Track as ProtoTrack,
+    CoachingCue as ProtoCoachingCue, CoachingCueType as ProtoCueType, Corner as ProtoCorner,
+    CuePriority as ProtoCuePriority, GpsData, SectorSplit as ProtoSectorSplit, Track as ProtoTrack,
     TrackConfiguration as ProtoTrackConfiguration,
 };
 

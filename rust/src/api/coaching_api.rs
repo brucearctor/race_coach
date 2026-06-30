@@ -9,8 +9,8 @@
 //! 4. `calibrate_imu()` — run IMU bias calibration from stationary samples
 //! 5. `destroy_session()` — cleanup
 
-use std::sync::Mutex;
 use std::collections::HashSet;
+use std::sync::Mutex;
 
 use crate::braking::g_onset::BrakingOnsetDetector;
 use crate::calibration::imu_bias::{self, ImuCalibrator};
@@ -29,6 +29,7 @@ struct Session {
     registry: AnalysisRegistry,
     reference_lap: Option<ReferenceLap>,
     imu_bias: Option<ImuBias>,
+    #[allow(dead_code)] // Used in Phase 1b for CueEngine
     config: SessionConfig,
     previous_input: Option<TelemetryInput>,
     previous_timestamp_ms: Option<u64>,
@@ -119,8 +120,12 @@ pub fn process_frame(input: TelemetryInput) -> FrameOutput {
 
     // Apply IMU bias correction
     let corrected_input = if let Some(bias) = &session.imu_bias {
-        let (g_lat, g_long, g_vert) =
-            imu_bias::apply_bias(input.g_lateral, input.g_longitudinal, input.g_vertical, bias);
+        let (g_lat, g_long, g_vert) = imu_bias::apply_bias(
+            input.g_lateral,
+            input.g_longitudinal,
+            input.g_vertical,
+            bias,
+        );
         TelemetryInput {
             g_lateral: g_lat,
             g_longitudinal: g_long,
@@ -146,10 +151,7 @@ pub fn process_frame(input: TelemetryInput) -> FrameOutput {
         None
     };
 
-    let reference_lap_distance_m = session
-        .reference_lap
-        .as_ref()
-        .map(|r| r.total_distance_m);
+    let reference_lap_distance_m = session.reference_lap.as_ref().map(|r| r.total_distance_m);
 
     // Build analysis context
     let ctx = AnalysisContext {
@@ -165,8 +167,10 @@ pub fn process_frame(input: TelemetryInput) -> FrameOutput {
     let results = session.registry.process_frame(&ctx);
 
     // Build output from results
-    let mut output = FrameOutput::default();
-    output.current_sector = session.current_sector;
+    let mut output = FrameOutput {
+        current_sector: session.current_sector,
+        ..FrameOutput::default()
+    };
 
     for result in results {
         match result {

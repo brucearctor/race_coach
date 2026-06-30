@@ -82,12 +82,18 @@ impl TelemetryAnalyzer for SectorTimer {
 
         // Check each sector split line for crossing
         for split in &self.sector_splits {
-            let intersection =
-                line_segment::segments_intersect(prev_pos, current_pos, split.point_a, split.point_b);
+            let intersection = line_segment::segments_intersect(
+                prev_pos,
+                current_pos,
+                split.point_a,
+                split.point_b,
+            );
 
             if intersection.intersects {
-                let sector_time_ms =
-                    ctx.current.timestamp_ms.saturating_sub(self.sector_start_time_ms);
+                let sector_time_ms = ctx
+                    .current
+                    .timestamp_ms
+                    .saturating_sub(self.sector_start_time_ms);
                 let sector_time_s = sector_time_ms as f64 / 1000.0;
 
                 results.push(AnalysisResult::SectorCrossing {

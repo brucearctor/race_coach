@@ -92,8 +92,7 @@ impl TelemetryAnalyzer for BrakingOnsetDetector {
     }
 
     fn analyze(&mut self, ctx: &AnalysisContext) -> Vec<AnalysisResult> {
-        let filtered_g =
-            self.filter.update(ctx.current.g_longitudinal as f64) as f32;
+        let filtered_g = self.filter.update(ctx.current.g_longitudinal as f64) as f32;
 
         let threshold = self.config.threshold_g;
         let release_threshold = threshold * self.config.hysteresis;

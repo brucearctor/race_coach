@@ -87,7 +87,7 @@ mod tests {
         };
         let bearing = bearing_degrees(a, b);
         // Due north ≈ 0°
-        assert!(bearing < 1.0 || bearing > 359.0, "Bearing was {bearing}°");
+        assert!(!(1.0..=359.0).contains(&bearing), "Bearing was {bearing}°");
     }
 
     #[test]

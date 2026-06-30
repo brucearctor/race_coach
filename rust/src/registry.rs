@@ -104,7 +104,10 @@ impl AnalysisRegistry {
     /// the available data sources.
     pub fn configure_for_data(&mut self, available: &HashSet<DataRequirement>) {
         for analyzer in &mut self.analyzers {
-            let requirements_met = analyzer.requirements().iter().all(|r| available.contains(r));
+            let requirements_met = analyzer
+                .requirements()
+                .iter()
+                .all(|r| available.contains(r));
             if !requirements_met && analyzer.is_enabled() {
                 analyzer.set_enabled(false);
             }

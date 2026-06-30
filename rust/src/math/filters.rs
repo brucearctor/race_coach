@@ -77,10 +77,7 @@ pub struct ExponentialFilter {
 impl ExponentialFilter {
     /// Create a new exponential filter with the given smoothing factor.
     pub fn new(alpha: f64) -> Self {
-        assert!(
-            (0.0..=1.0).contains(&alpha),
-            "Alpha must be in [0.0, 1.0]"
-        );
+        assert!((0.0..=1.0).contains(&alpha), "Alpha must be in [0.0, 1.0]");
         Self {
             alpha,
             value: 0.0,

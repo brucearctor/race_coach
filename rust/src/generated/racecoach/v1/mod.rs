@@ -5,8 +5,8 @@
 //
 // Regenerate with: buf generate
 
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
 // telemetry.proto types

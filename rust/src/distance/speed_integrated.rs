@@ -142,10 +142,7 @@ mod tests {
         // After 25 frames at 40ms = 1.0 second at 27.78 m/s ≈ 27.78m
         // But first frame doesn't integrate, so 24 × 0.04 × 27.78 ≈ 26.67m
         let d = sid.current_distance();
-        assert!(
-            (d - 26.67).abs() < 0.5,
-            "Expected ~26.67m, got {d}m"
-        );
+        assert!((d - 26.67).abs() < 0.5, "Expected ~26.67m, got {d}m");
     }
 
     #[test]

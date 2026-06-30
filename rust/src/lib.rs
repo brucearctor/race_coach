@@ -7,6 +7,9 @@
 //! Called from Flutter via `flutter_rust_bridge`. Dart handles platform
 //! concerns (BLE, TTS, UI, Firebase). Rust handles math.
 
+// Allow cfg attributes from flutter_rust_bridge generated code.
+#![allow(unexpected_cfgs)]
+
 pub mod api;
 pub mod braking;
 pub mod calibration;

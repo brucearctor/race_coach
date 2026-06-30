@@ -3,8 +3,8 @@
 //! Computes how far ahead or behind the driver is compared to the reference
 //! lap at the same track distance. Positive = behind, negative = ahead.
 
-use crate::registry::{AnalysisContext, AnalysisResult, DataRequirement, TelemetryAnalyzer};
 use crate::math::filters::ExponentialFilter;
+use crate::registry::{AnalysisContext, AnalysisResult, DataRequirement, TelemetryAnalyzer};
 
 /// Delta-T analyzer.
 pub struct DeltaT {

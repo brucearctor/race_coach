@@ -1,0 +1,39 @@
+name: Flutter
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.*'
+      - 'analysis_options.yaml'
+  pull_request:
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.*'
+      - 'analysis_options.yaml'
+
+jobs:
+  flutter:
+    name: Analyze + Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test

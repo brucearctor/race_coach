@@ -179,9 +179,7 @@ mod tests {
 
     #[test]
     fn test_lookup_at_zero() {
-        let frames: Vec<TelemetryInput> = (0..25)
-            .map(|i| make_frame(i * 40, 100.0))
-            .collect();
+        let frames: Vec<TelemetryInput> = (0..25).map(|i| make_frame(i * 40, 100.0)).collect();
 
         let lap = ReferenceLap::from_frames(&frames, 60.0);
         let frame = lap.lookup(0.0).expect("Should find frame at distance 0");

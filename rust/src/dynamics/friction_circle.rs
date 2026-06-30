@@ -94,7 +94,7 @@ impl TelemetryAnalyzer for FrictionCircle {
         let g_total = (g_lat * g_lat + g_long * g_long).sqrt();
 
         // Update maximum with decay
-        self.g_max = self.g_max * self.config.g_max_decay;
+        self.g_max *= self.config.g_max_decay;
         if g_total > self.g_max {
             self.g_max = g_total;
         }

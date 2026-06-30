@@ -24,8 +24,7 @@ pub struct IntersectionResult {
 ///
 /// Segments intersect iff both t and u are in [0, 1].
 pub fn segments_intersect(a: LatLng, b: LatLng, c: LatLng, d: LatLng) -> IntersectionResult {
-    let denominator =
-        (b.lat - a.lat) * (d.lng - c.lng) - (b.lng - a.lng) * (d.lat - c.lat);
+    let denominator = (b.lat - a.lat) * (d.lng - c.lng) - (b.lng - a.lng) * (d.lat - c.lat);
 
     // Parallel or coincident
     if denominator.abs() < 1e-14 {
@@ -36,11 +35,9 @@ pub fn segments_intersect(a: LatLng, b: LatLng, c: LatLng, d: LatLng) -> Interse
         };
     }
 
-    let t = ((c.lat - a.lat) * (d.lng - c.lng) - (c.lng - a.lng) * (d.lat - c.lat))
-        / denominator;
+    let t = ((c.lat - a.lat) * (d.lng - c.lng) - (c.lng - a.lng) * (d.lat - c.lat)) / denominator;
 
-    let u = -((b.lat - a.lat) * (c.lng - a.lng) - (b.lng - a.lng) * (c.lat - a.lat))
-        / denominator;
+    let u = -((b.lat - a.lat) * (c.lng - a.lng) - (b.lng - a.lng) * (c.lat - a.lat)) / denominator;
 
     IntersectionResult {
         intersects: (0.0..=1.0).contains(&t) && (0.0..=1.0).contains(&u),

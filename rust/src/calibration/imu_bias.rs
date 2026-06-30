@@ -72,7 +72,12 @@ impl Default for ImuCalibrator {
 }
 
 /// Apply IMU bias correction to raw G-force values.
-pub fn apply_bias(g_lateral: f32, g_longitudinal: f32, g_vertical: f32, bias: &ImuBias) -> (f32, f32, f32) {
+pub fn apply_bias(
+    g_lateral: f32,
+    g_longitudinal: f32,
+    g_vertical: f32,
+    bias: &ImuBias,
+) -> (f32, f32, f32) {
     (
         g_lateral - bias.lateral_g,
         g_longitudinal - bias.longitudinal_g,
