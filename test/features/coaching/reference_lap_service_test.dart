@@ -4,7 +4,6 @@ import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
 
 import 'package:race_coach/features/coaching/data/reference_lap_service.dart';
 import 'package:race_coach/generated/racecoach/v1/telemetry.pb.dart';
-import 'package:race_coach/src/rust/types.dart' as rust;
 
 void main() {
   // ===========================================================================
@@ -98,7 +97,7 @@ void main() {
   // ===========================================================================
 
   group('protoFrameToRustInput', () {
-    TelemetryFrame _makeFrame({
+    TelemetryFrame makeFrame({
       double lat = 37.123,
       double lng = -122.456,
       double speedKmh = 150.0,
@@ -152,7 +151,7 @@ void main() {
     }
 
     test('maps GPS fields correctly', () {
-      final frame = _makeFrame(
+      final frame = makeFrame(
         lat: 37.123,
         lng: -122.456,
         speedKmh: 180.5,
@@ -174,7 +173,7 @@ void main() {
     });
 
     test('maps motion data when present', () {
-      final frame = _makeFrame(
+      final frame = makeFrame(
         gLat: 1.2,
         gLon: -0.8,
         gVert: 0.95,
@@ -188,7 +187,7 @@ void main() {
     });
 
     test('defaults motion data to 0/1 when absent', () {
-      final frame = _makeFrame(); // No motion data.
+      final frame = makeFrame(); // No motion data.
 
       final result = protoFrameToRustInput(frame);
 
@@ -198,7 +197,7 @@ void main() {
     });
 
     test('prefers device_timestamp over arrival_timestamp', () {
-      final frame = _makeFrame(
+      final frame = makeFrame(
         deviceTimestampSec: 1000,
         deviceTimestampNanos: 500000000, // 500ms
         arrivalTimestampSec: 2000,
@@ -212,7 +211,7 @@ void main() {
     });
 
     test('falls back to arrival_timestamp when no device_timestamp', () {
-      final frame = _makeFrame(
+      final frame = makeFrame(
         arrivalTimestampSec: 2000,
         arrivalTimestampNanos: 250000000, // 250ms
       );
@@ -224,7 +223,7 @@ void main() {
     });
 
     test('timestamp is 0 when neither timestamp is set', () {
-      final frame = _makeFrame(); // No timestamps.
+      final frame = makeFrame(); // No timestamps.
 
       final result = protoFrameToRustInput(frame);
 
@@ -233,7 +232,7 @@ void main() {
 
     test('handles nano-to-millisecond truncation correctly', () {
       // 999999999 nanos = 999ms (floor division by 1000000).
-      final frame = _makeFrame(
+      final frame = makeFrame(
         deviceTimestampSec: 1,
         deviceTimestampNanos: 999999999,
       );
@@ -245,7 +244,7 @@ void main() {
     });
 
     test('handles zero-second timestamp with nanos', () {
-      final frame = _makeFrame(
+      final frame = makeFrame(
         deviceTimestampSec: 0,
         deviceTimestampNanos: 100000000, // 100ms
       );

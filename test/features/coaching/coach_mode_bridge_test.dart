@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:race_coach/features/coaching/data/coach_mode_bridge.dart';
 import 'package:race_coach/features/coaching/domain/coaching_cue.dart';
 import 'package:race_coach/features/racebox/domain/racebox_data.dart';
 import 'package:race_coach/src/rust/types.dart' as rust;
