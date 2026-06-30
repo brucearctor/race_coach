@@ -112,7 +112,7 @@ impl PriorityQueue {
     pub fn drain(&mut self) -> Vec<CoachingCue> {
         let mut cues = std::mem::take(&mut self.pending);
         // Sort by priority descending (Critical > High > Medium > Low)
-        cues.sort_by(|a, b| b.priority.cmp(&a.priority));
+        cues.sort_by_key(|c| std::cmp::Reverse(c.priority));
         cues
     }
 
