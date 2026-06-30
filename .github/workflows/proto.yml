@@ -20,9 +20,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          # Full clone needed for buf breaking to compare against main
-          fetch-depth: 0
 
       - name: Set up Buf
         uses: bufbuild/buf-setup-action@v1
@@ -32,4 +29,4 @@ jobs:
 
       - name: Check for breaking changes
         if: github.event_name == 'pull_request'
-        run: buf breaking --against '.git#branch=main'
+        run: buf breaking --against 'https://github.com/${{ github.repository }}.git#branch=main,subdir=proto'
