@@ -257,6 +257,47 @@ Architecture: async post-lap/post-session analysis, separate from the real-time 
 
 ## Roadmap
 
-1. **Now**: Add tract, ship first ML coaching cue (brake prediction)
-2. **Next**: Add burn alongside tract for personalized models
-3. **Later**: On-device LLM for natural language session review
+### Phase 0: Infrastructure (done)
+
+- [x] `FeatureExtractor` — 26-feature sliding window, 13 unit tests
+- [x] `CueType::MlBraking` and `CueType::MlThrottle` — wired into coaching pipeline
+- [x] Analyzer configs — `ml_features` stub in `AnalysisConfig`
+
+### Phase 1: Data Collection (next)
+
+No trained model exists yet. Before adding an inference framework, we need
+labeled training data.
+
+**What to collect during sessions:**
+
+| Event | Label | Source |
+|-------|-------|--------|
+| Braking onset | track position + speed + G at brake application | `BrakingOnsetDetector` |
+| Throttle application | track position + speed + G at throttle-on | New: `ThrottleOnsetDetector` |
+| Reference comparison | delta vs reference at each event | `ReferenceLap` |
+| Corner classification | apex position + radius + entry/exit speed | GPS + speed trace |
+
+**Storage:** Append labeled events to a per-session `.jsonl` file alongside raw telemetry.
+After 5-10 sessions, export to training pipeline.
+
+### Phase 2: First ML Model
+
+1. Train a model (PyTorch or burn) on collected data
+2. Add inference framework:
+   - **tract** if training in Python (PyTorch → ONNX → tract)
+   - **burn** if training in Rust (same codebase, no export step)
+3. Wire into `MlEngine` → `CueEngine` for ML-powered coaching cues
+
+See [Quick Start (tract)](#quick-start-tract) and [Adding burn](#adding-burn-phase-2)
+above for integration details.
+
+### Phase 3: Personalization
+
+- On-device fine-tuning via burn (learn driver/car/track specifics)
+- Requires ~50-100 labeled events (3-5 laps of calibration data)
+
+### Phase 4: On-Device LLMs
+
+- Natural language post-session coaching (async, not in the 25 Hz loop)
+- Gemini Nano (Android) / Apple Foundation Models (iOS)
+- See [On-Device LLMs](#on-device-llms-phase-3) above
