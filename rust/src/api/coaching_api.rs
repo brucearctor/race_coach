@@ -12,8 +12,10 @@
 use std::collections::HashSet;
 use std::sync::Mutex;
 
+use crate::braking::corner_speed::CornerSpeedComparison;
 use crate::braking::g_onset::BrakingOnsetDetector;
 use crate::calibration::imu_bias::{self, ImuCalibrator};
+use crate::coaching::cue_engine::CueEngine;
 use crate::distance::speed_integrated::SpeedIntegratedDistance;
 use crate::dynamics::friction_circle::FrictionCircle;
 use crate::reference::reference_lap::ReferenceLap;
@@ -27,9 +29,10 @@ use crate::types::*;
 /// Internal session state managed by the engine.
 struct Session {
     registry: AnalysisRegistry,
+    cue_engine: CueEngine,
     reference_lap: Option<ReferenceLap>,
     imu_bias: Option<ImuBias>,
-    #[allow(dead_code)] // Used in Phase 1b for CueEngine
+    #[allow(dead_code)] // Used for corner config when setting reference laps
     config: SessionConfig,
     previous_input: Option<TelemetryInput>,
     previous_timestamp_ms: Option<u64>,
@@ -65,6 +68,11 @@ pub fn create_session(config: SessionConfig) -> bool {
     registry.register(Box::new(BrakingOnsetDetector::new()));
     registry.register(Box::new(FrictionCircle::new()));
 
+    // Register corner speed comparison with track corners
+    let mut corner_speed = CornerSpeedComparison::new();
+    corner_speed.configure(config.track.corners.clone());
+    registry.register(Box::new(corner_speed));
+
     // Apply user config
     registry.apply_config(&config.analysis);
 
@@ -85,6 +93,7 @@ pub fn create_session(config: SessionConfig) -> bool {
 
     let session = Session {
         registry,
+        cue_engine: CueEngine::new(),
         reference_lap: None,
         imu_bias: None,
         config,
@@ -172,15 +181,15 @@ pub fn process_frame(input: TelemetryInput) -> FrameOutput {
         ..FrameOutput::default()
     };
 
-    for result in results {
+    for result in &results {
         match result {
             AnalysisResult::Distance(d) => {
-                session.track_distance_m = d;
-                output.track_distance_m = d;
+                session.track_distance_m = *d;
+                output.track_distance_m = *d;
                 // Compute lap distance percentage
                 if let Some(total) = reference_lap_distance_m {
                     if total > 0.0 {
-                        output.lap_distance_pct = (d / total).min(1.0) as f32;
+                        output.lap_distance_pct = (*d / total).min(1.0) as f32;
                     }
                 }
             }
@@ -190,24 +199,28 @@ pub fn process_frame(input: TelemetryInput) -> FrameOutput {
             } => {
                 session.current_sector = sector + 1;
                 output.current_sector = session.current_sector;
-                output.sector_delta = Some(sector_time_s);
+                output.sector_delta = Some(*sector_time_s);
             }
             AnalysisResult::DeltaT { seconds, trend } => {
-                output.delta_t_seconds = seconds;
-                output.delta_t_trend = trend;
+                output.delta_t_seconds = *seconds;
+                output.delta_t_trend = *trend;
             }
             AnalysisResult::BrakingUpdate(state) => {
-                output.braking_state = state;
+                output.braking_state = *state;
             }
             AnalysisResult::FrictionUpdate(state) => {
-                output.friction_circle = state;
+                output.friction_circle = *state;
                 output.grip_utilization = state.utilization;
             }
-            AnalysisResult::Cue(cue) => {
-                output.coaching_cues.push(cue);
+            AnalysisResult::Cue(_) => {
+                // Handled by CueEngine below
             }
         }
     }
+
+    // Run the cue engine — it processes all results and applies
+    // heuristics + priority queue to produce the final coaching cues.
+    output.coaching_cues = session.cue_engine.process_results(&results);
 
     // Update state for next frame
     session.previous_input = Some(corrected_input);
