@@ -20,11 +20,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      # Fetch main for breaking change detection
-      - name: Fetch main branch
-        if: github.event_name == 'pull_request'
-        run: git fetch origin main --depth=1
+        with:
+          # Full clone needed for buf breaking to compare against main
+          fetch-depth: 0
 
       - name: Set up Buf
         uses: bufbuild/buf-setup-action@v1
