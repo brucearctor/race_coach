@@ -4,7 +4,7 @@
 
 ## Architecture
 
-```
+```text
 Telemetry (25 Hz) → FeatureExtractor (26 features) → ML Model → CueEngine → Audio Coaching
 ```
 
@@ -80,7 +80,7 @@ impl BrakePredictor {
 
 ### 4. Wire into coaching pipeline
 
-Add `MlEngine` to `CoachingSession` in `coaching_api.rs`:
+Add `MlEngine` to `Session` in `coaching_api.rs`:
 
 ```rust
 let ml_predictions = session.ml_engine.process(&input);
@@ -89,7 +89,7 @@ let ml_predictions = session.ml_engine.process(&input);
 
 ## Module Structure
 
-```
+```text
 rust/src/ml/
 ├── mod.rs              # MlEngine — dispatches to sub-modules
 ├── features.rs         # FeatureExtractor (26 features, already exists)
@@ -108,7 +108,7 @@ Already built and tested:
 
 - **`FeatureExtractor`** (`rust/src/ml/features.rs`): Extracts 26 features per frame with sliding window, circular heading stats. 13 unit tests.
 - **`CueType::MlBraking`** and **`CueType::MlThrottle`**: Already in the type system. Coaching pipeline is wired for ML cues.
-- **Feature list**: speed, lateral/longitudinal G, heading rate, brake/throttle inputs, friction circle utilization, rolling statistics (mean, stddev), and more.
+- **Feature vector (26 values)**: For each of 5 linear channels (speed, g_lat, g_lon, g_vert, altitude) — mean, stddev, min, max (20 features). Plus circular heading mean + stddev (2 features), speed range (1), g_lat range (1), g_lon range (1), g_total mean (1).
 
 ---
 
@@ -172,20 +172,35 @@ pub struct MlEngine {
 ### Step 4: On-device fine-tuning (optional)
 
 ```rust
-// Called between sessions, not in the 25 Hz loop
+// Pseudocode — called between sessions, not in the 25 Hz loop.
+// See burn docs for full training API: https://burn.dev/book/
 pub fn fine_tune(
     model: StyleClassifier<Flex>,
     session_data: Vec<LabeledFrame>,
+    epochs: usize,
 ) -> StyleClassifier<Flex> {
-    // ~5-10 seconds for 1000 frames × 10 epochs
-    // Save: CompactRecorder::new().record(model.into_record(), path)
+    let device = Default::default();
+    let optim = AdamConfig::new().init();
+    let batcher = FrameBatcher::new(session_data);
+
+    for epoch in 0..epochs {
+        for batch in batcher.iter() {
+            let loss = model.forward_loss(batch);
+            // Backprop + optimizer step via burn's autodiff backend
+        }
+    }
+
+    // Save personalized weights (~6 KB for this model)
+    CompactRecorder::new()
+        .record(model.clone().into_record(), "personalized_weights");
+
     model
 }
 ```
 
 ### Personalized weight storage
 
-```
+```text
 {app_documents}/ml/
 ├── style_classifier_base.mpk                          # Shipped with app
 ├── style_classifier_{driver}_{car}_{track}.mpk        # Fine-tuned on-device
