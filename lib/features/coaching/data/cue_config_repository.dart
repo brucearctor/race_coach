@@ -76,11 +76,6 @@ class CueConfigNotifier extends StateNotifier<DartCueConfig> {
       debugPrint('[CueConfig] Failed to push config to Rust: $e');
     }
   }
-
-  /// Push the current state to Rust. Call this when a session starts.
-  Future<void> syncToRust() async {
-    await _pushToRust(state);
-  }
 }
 
 /// Convert a [DartCueConfig] to the FRB-generated [rust.CueConfig].

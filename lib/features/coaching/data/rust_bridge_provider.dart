@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/generated/racecoach/v1/track.pb.dart';
+import 'package:race_coach/features/coaching/data/audio_coach.dart';
 import 'package:race_coach/features/coaching/data/cue_config_repository.dart';
 import 'package:race_coach/features/coaching/data/reference_lap_service.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
@@ -52,6 +53,10 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
 
   await rust.createSession(config: rustConfig, cueConfig: rustCueConfig);
   ref.read(rustSessionActiveProvider.notifier).state = true;
+
+  // Apply Dart-side audio settings (minInterval, speechRate, volume)
+  // from the persisted config so they survive app restarts.
+  ref.read(audioCoachProvider).applyConfig(cueConfig);
 
   // Auto-load the best reference lap for this track.
   final trackName = '${track.name} ${config.name}'.trim();
