@@ -286,3 +286,97 @@ pub struct ImuBias {
     pub vertical_g: f32,
     pub sample_count: u32,
 }
+
+/// User-configurable coaching cue settings, passed from Dart via FFI.
+///
+/// Covers verbosity level, per-cue-type enable/disable toggles,
+/// detection thresholds, and cooldown durations.
+#[derive(Debug, Clone)]
+pub struct CueConfig {
+    // ── Verbosity ────────────────────────────────────────────────
+    /// 0 = Low (Critical + High only), 1 = Medium (default), 2 = High (all)
+    pub verbosity: u8,
+
+    // ── Per-cue-type toggles ─────────────────────────────────────
+    pub enable_braking_cues: bool,
+    pub enable_corner_speed_cues: bool,
+    pub enable_delta_t_cues: bool,
+    pub enable_coasting_cues: bool,
+    pub enable_grip_limit_cues: bool,
+    pub enable_trail_braking_cues: bool,
+    pub enable_jerk_cues: bool,
+
+    // ── CueEngine thresholds ─────────────────────────────────────
+    pub delta_t_threshold_s: f64,
+    pub coasting_threshold: f32,
+    pub over_driving_threshold: f32,
+    pub braking_delta_threshold_m: f32,
+
+    // ── Analyzer thresholds ──────────────────────────────────────
+    pub corner_speed_threshold_kmh: f32,
+
+    // ── Cooldowns (in seconds — converted to frames internally) ──
+    pub per_corner_cooldown_s: f32,
+    pub per_type_cooldown_s: f32,
+}
+
+impl Default for CueConfig {
+    fn default() -> Self {
+        Self {
+            verbosity: 2,
+            enable_braking_cues: true,
+            enable_corner_speed_cues: true,
+            enable_delta_t_cues: true,
+            enable_coasting_cues: true,
+            enable_grip_limit_cues: true,
+            enable_trail_braking_cues: false,
+            enable_jerk_cues: false,
+            delta_t_threshold_s: 0.5,
+            coasting_threshold: 0.15,
+            over_driving_threshold: 0.95,
+            braking_delta_threshold_m: 5.0,
+            corner_speed_threshold_kmh: 3.0,
+            per_corner_cooldown_s: 3.0,
+            per_type_cooldown_s: 1.0,
+        }
+    }
+}
+
+impl CueConfig {
+    /// The frame rate used to convert seconds to frame counts.
+    const FRAME_RATE: f32 = 25.0;
+
+    /// Convert per_corner_cooldown_s to frames.
+    pub fn per_corner_cooldown_frames(&self) -> u32 {
+        (self.per_corner_cooldown_s * Self::FRAME_RATE) as u32
+    }
+
+    /// Convert per_type_cooldown_s to frames.
+    pub fn per_type_cooldown_frames(&self) -> u32 {
+        (self.per_type_cooldown_s * Self::FRAME_RATE) as u32
+    }
+
+    /// Check if a cue type is enabled by its toggle.
+    pub fn is_cue_type_enabled(&self, cue_type: &CueType) -> bool {
+        match cue_type {
+            CueType::Braking => self.enable_braking_cues,
+            CueType::Speed => self.enable_corner_speed_cues,
+            CueType::LapTime | CueType::SectorTime => self.enable_delta_t_cues,
+            CueType::Coasting => self.enable_coasting_cues,
+            CueType::GripUtilization | CueType::GForce => self.enable_grip_limit_cues,
+            CueType::TrailBraking => self.enable_trail_braking_cues,
+            CueType::MlBraking | CueType::MlThrottle => self.enable_jerk_cues,
+            // Always-on types
+            CueType::Throttle | CueType::Line | CueType::General => true,
+        }
+    }
+
+    /// Minimum priority for a cue to pass the verbosity filter.
+    pub fn min_priority(&self) -> CuePriority {
+        match self.verbosity {
+            0 => CuePriority::High,
+            1 => CuePriority::Medium,
+            _ => CuePriority::Low,
+        }
+    }
+}

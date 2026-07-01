@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 1496912356;
+  int get rustContentHash => 1071520897;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -88,9 +88,12 @@ abstract class RustLibApi extends BaseApi {
 
   Future<bool> crateApiCoachingApiCreateSession({
     required SessionConfig config,
+    CueConfig? cueConfig,
   });
 
   Future<void> crateApiCoachingApiDestroySession();
+
+  Future<Float32List> crateApiCoachingApiGetMlFeatures();
 
   String crateApiSimpleGreet({required String name});
 
@@ -109,6 +112,8 @@ abstract class RustLibApi extends BaseApi {
   Future<void> crateApiCoachingApiSetAnalysisConfig({
     required AnalysisConfig config,
   });
+
+  Future<void> crateApiCoachingApiSetCueConfig({required CueConfig config});
 
   Future<void> crateApiCoachingApiSetReferenceLap({
     required List<TelemetryInput> frames,
@@ -184,12 +189,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @override
   Future<bool> crateApiCoachingApiCreateSession({
     required SessionConfig config,
+    CueConfig? cueConfig,
   }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_box_autoadd_session_config(config, serializer);
+          sse_encode_opt_box_autoadd_cue_config(cueConfig, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -202,14 +209,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiCoachingApiCreateSessionConstMeta,
-        argValues: [config],
+        argValues: [config, cueConfig],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiCoachingApiCreateSessionConstMeta =>
-      const TaskConstMeta(debugName: "create_session", argNames: ["config"]);
+      const TaskConstMeta(
+        debugName: "create_session",
+        argNames: ["config", "cueConfig"],
+      );
 
   @override
   Future<void> crateApiCoachingApiDestroySession() {
@@ -239,13 +249,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "destroy_session", argNames: []);
 
   @override
+  Future<Float32List> crateApiCoachingApiGetMlFeatures() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_prim_f_32_strict,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiCoachingApiGetMlFeaturesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCoachingApiGetMlFeaturesConstMeta =>
+      const TaskConstMeta(debugName: "get_ml_features", argNames: []);
+
+  @override
   String crateApiSimpleGreet({required String name}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(name, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -270,7 +307,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
@@ -297,7 +334,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -324,7 +361,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 9,
             port: port_,
           );
         },
@@ -354,7 +391,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -381,7 +418,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 11,
             port: port_,
           );
         },
@@ -411,7 +448,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 12,
             port: port_,
           );
         },
@@ -433,6 +470,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<void> crateApiCoachingApiSetCueConfig({required CueConfig config}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_cue_config(config, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 13,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiCoachingApiSetCueConfigConstMeta,
+        argValues: [config],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiCoachingApiSetCueConfigConstMeta =>
+      const TaskConstMeta(debugName: "set_cue_config", argNames: ["config"]);
+
+  @override
   Future<void> crateApiCoachingApiSetReferenceLap({
     required List<TelemetryInput> frames,
     required double lapTimeS,
@@ -446,7 +511,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 14,
             port: port_,
           );
         },
@@ -522,6 +587,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AnalysisConfig dco_decode_box_autoadd_analysis_config(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_analysis_config(raw);
+  }
+
+  @protected
+  CueConfig dco_decode_box_autoadd_cue_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_cue_config(raw);
   }
 
   @protected
@@ -602,6 +673,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       entry: dco_decode_lat_lng(arr[2]),
       apex: dco_decode_lat_lng(arr[3]),
       exit: dco_decode_lat_lng(arr[4]),
+    );
+  }
+
+  @protected
+  CueConfig dco_decode_cue_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 15)
+      throw Exception('unexpected arr length: expect 15 but see ${arr.length}');
+    return CueConfig(
+      verbosity: dco_decode_u_8(arr[0]),
+      enableBrakingCues: dco_decode_bool(arr[1]),
+      enableCornerSpeedCues: dco_decode_bool(arr[2]),
+      enableDeltaTCues: dco_decode_bool(arr[3]),
+      enableCoastingCues: dco_decode_bool(arr[4]),
+      enableGripLimitCues: dco_decode_bool(arr[5]),
+      enableTrailBrakingCues: dco_decode_bool(arr[6]),
+      enableJerkCues: dco_decode_bool(arr[7]),
+      deltaTThresholdS: dco_decode_f_64(arr[8]),
+      coastingThreshold: dco_decode_f_32(arr[9]),
+      overDrivingThreshold: dco_decode_f_32(arr[10]),
+      brakingDeltaThresholdM: dco_decode_f_32(arr[11]),
+      cornerSpeedThresholdKmh: dco_decode_f_32(arr[12]),
+      perCornerCooldownS: dco_decode_f_32(arr[13]),
+      perTypeCooldownS: dco_decode_f_32(arr[14]),
     );
   }
 
@@ -737,6 +833,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Float32List dco_decode_list_prim_f_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Float32List;
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
@@ -752,6 +854,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<TelemetryInput> dco_decode_list_telemetry_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_telemetry_input).toList();
+  }
+
+  @protected
+  CueConfig? dco_decode_opt_box_autoadd_cue_config(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_cue_config(raw);
   }
 
   @protected
@@ -937,6 +1045,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CueConfig sse_decode_box_autoadd_cue_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_cue_config(deserializer));
+  }
+
+  @protected
   double sse_decode_box_autoadd_f_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_f_32(deserializer));
@@ -1026,6 +1140,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       entry: var_entry,
       apex: var_apex,
       exit: var_exit,
+    );
+  }
+
+  @protected
+  CueConfig sse_decode_cue_config(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_verbosity = sse_decode_u_8(deserializer);
+    var var_enableBrakingCues = sse_decode_bool(deserializer);
+    var var_enableCornerSpeedCues = sse_decode_bool(deserializer);
+    var var_enableDeltaTCues = sse_decode_bool(deserializer);
+    var var_enableCoastingCues = sse_decode_bool(deserializer);
+    var var_enableGripLimitCues = sse_decode_bool(deserializer);
+    var var_enableTrailBrakingCues = sse_decode_bool(deserializer);
+    var var_enableJerkCues = sse_decode_bool(deserializer);
+    var var_deltaTThresholdS = sse_decode_f_64(deserializer);
+    var var_coastingThreshold = sse_decode_f_32(deserializer);
+    var var_overDrivingThreshold = sse_decode_f_32(deserializer);
+    var var_brakingDeltaThresholdM = sse_decode_f_32(deserializer);
+    var var_cornerSpeedThresholdKmh = sse_decode_f_32(deserializer);
+    var var_perCornerCooldownS = sse_decode_f_32(deserializer);
+    var var_perTypeCooldownS = sse_decode_f_32(deserializer);
+    return CueConfig(
+      verbosity: var_verbosity,
+      enableBrakingCues: var_enableBrakingCues,
+      enableCornerSpeedCues: var_enableCornerSpeedCues,
+      enableDeltaTCues: var_enableDeltaTCues,
+      enableCoastingCues: var_enableCoastingCues,
+      enableGripLimitCues: var_enableGripLimitCues,
+      enableTrailBrakingCues: var_enableTrailBrakingCues,
+      enableJerkCues: var_enableJerkCues,
+      deltaTThresholdS: var_deltaTThresholdS,
+      coastingThreshold: var_coastingThreshold,
+      overDrivingThreshold: var_overDrivingThreshold,
+      brakingDeltaThresholdM: var_brakingDeltaThresholdM,
+      cornerSpeedThresholdKmh: var_cornerSpeedThresholdKmh,
+      perCornerCooldownS: var_perCornerCooldownS,
+      perTypeCooldownS: var_perTypeCooldownS,
     );
   }
 
@@ -1206,6 +1357,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getFloat32List(len_);
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -1236,6 +1394,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_telemetry_input(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  CueConfig? sse_decode_opt_box_autoadd_cue_config(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_cue_config(deserializer));
+    } else {
+      return null;
+    }
   }
 
   @protected
@@ -1435,6 +1606,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_cue_config(
+    CueConfig self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_cue_config(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_f_32(double self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_32(self, serializer);
@@ -1504,6 +1684,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_lat_lng(self.entry, serializer);
     sse_encode_lat_lng(self.apex, serializer);
     sse_encode_lat_lng(self.exit, serializer);
+  }
+
+  @protected
+  void sse_encode_cue_config(CueConfig self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_8(self.verbosity, serializer);
+    sse_encode_bool(self.enableBrakingCues, serializer);
+    sse_encode_bool(self.enableCornerSpeedCues, serializer);
+    sse_encode_bool(self.enableDeltaTCues, serializer);
+    sse_encode_bool(self.enableCoastingCues, serializer);
+    sse_encode_bool(self.enableGripLimitCues, serializer);
+    sse_encode_bool(self.enableTrailBrakingCues, serializer);
+    sse_encode_bool(self.enableJerkCues, serializer);
+    sse_encode_f_64(self.deltaTThresholdS, serializer);
+    sse_encode_f_32(self.coastingThreshold, serializer);
+    sse_encode_f_32(self.overDrivingThreshold, serializer);
+    sse_encode_f_32(self.brakingDeltaThresholdM, serializer);
+    sse_encode_f_32(self.cornerSpeedThresholdKmh, serializer);
+    sse_encode_f_32(self.perCornerCooldownS, serializer);
+    sse_encode_f_32(self.perTypeCooldownS, serializer);
   }
 
   @protected
@@ -1643,6 +1843,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_prim_f_32_strict(
+    Float32List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putFloat32List(self);
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -1673,6 +1883,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_telemetry_input(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_cue_config(
+    CueConfig? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_cue_config(self, serializer);
     }
   }
 

@@ -73,7 +73,7 @@ fn make_input(
 fn test_create_session_and_process_frames() {
     // Create session
     let config = make_session_config();
-    let created = coaching_api::create_session(config);
+    let created = coaching_api::create_session(config, None);
     assert!(created, "Session should be created");
 
     // Process a few frames — should not panic
@@ -107,7 +107,7 @@ fn test_process_frame_without_session_returns_default() {
 #[test]
 fn test_reset_lap_clears_state() {
     let config = make_session_config();
-    coaching_api::create_session(config);
+    coaching_api::create_session(config, None);
 
     // Process frames to accumulate distance
     for i in 0..5 {
@@ -136,7 +136,7 @@ fn test_reset_lap_clears_state() {
 #[test]
 fn test_get_ml_features_returns_empty_before_window_full() {
     let config = make_session_config();
-    coaching_api::create_session(config);
+    coaching_api::create_session(config, None);
 
     // Process fewer frames than the window size (25)
     for i in 0..5 {
@@ -154,7 +154,7 @@ fn test_get_ml_features_returns_empty_before_window_full() {
 #[test]
 fn test_get_ml_features_returns_features_after_window() {
     let config = make_session_config();
-    coaching_api::create_session(config);
+    coaching_api::create_session(config, None);
 
     // Process enough frames to fill the window (default 25)
     for i in 0..30 {
@@ -183,7 +183,7 @@ fn test_get_ml_features_returns_features_after_window() {
 #[test]
 fn test_braking_generates_cue_through_cue_engine() {
     let config = make_session_config();
-    coaching_api::create_session(config);
+    coaching_api::create_session(config, None);
 
     // Start braking: sustained negative G for several frames
     for i in 0..10 {
@@ -215,7 +215,7 @@ fn test_braking_generates_cue_through_cue_engine() {
 #[test]
 fn test_friction_circle_updates_grip_utilization() {
     let config = make_session_config();
-    coaching_api::create_session(config);
+    coaching_api::create_session(config, None);
 
     // High G-force frames to establish g_max
     for i in 0..10 {
@@ -240,7 +240,7 @@ fn test_friction_circle_updates_grip_utilization() {
 fn test_analyzer_enable_disable_via_config() {
     // Create with trail_braking disabled (default)
     let config = make_session_config();
-    coaching_api::create_session(config);
+    coaching_api::create_session(config, None);
 
     let analyzers = coaching_api::list_analyzers();
     let trail_braking = analyzers.iter().find(|a| a.id == "trail_braking");
@@ -266,7 +266,7 @@ fn test_analyzer_enable_disable_via_config() {
     let mut config2 = make_session_config();
     config2.analysis.trail_braking = true;
     config2.analysis.jerk_analysis = true;
-    coaching_api::create_session(config2);
+    coaching_api::create_session(config2, None);
 
     let analyzers2 = coaching_api::list_analyzers();
     let trail_braking2 = analyzers2.iter().find(|a| a.id == "trail_braking");

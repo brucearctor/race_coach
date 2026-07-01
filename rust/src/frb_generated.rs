@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1496912356;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1071520897;
 
 // Section: executor
 
@@ -138,11 +138,14 @@ fn wire__crate__api__coaching_api__create_session_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_config = <crate::types::SessionConfig>::sse_decode(&mut deserializer);
+            let api_cue_config = <Option<crate::types::CueConfig>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, ()>((move || {
-                    let output_ok =
-                        Result::<_, ()>::Ok(crate::api::coaching_api::create_session(api_config))?;
+                    let output_ok = Result::<_, ()>::Ok(crate::api::coaching_api::create_session(
+                        api_config,
+                        api_cue_config,
+                    ))?;
                     Ok(output_ok)
                 })())
             }
@@ -177,6 +180,39 @@ fn wire__crate__api__coaching_api__destroy_session_impl(
                     let output_ok = Result::<_, ()>::Ok({
                         crate::api::coaching_api::destroy_session();
                     })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__coaching_api__get_ml_features_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_ml_features",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok =
+                        Result::<_, ()>::Ok(crate::api::coaching_api::get_ml_features())?;
                     Ok(output_ok)
                 })())
             }
@@ -416,6 +452,41 @@ fn wire__crate__api__coaching_api__set_analysis_config_impl(
         },
     )
 }
+fn wire__crate__api__coaching_api__set_cue_config_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_cue_config",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_config = <crate::types::CueConfig>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Result::<_, ()>::Ok({
+                        crate::api::coaching_api::set_cue_config(api_config);
+                    })?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__coaching_api__set_reference_lap_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -574,6 +645,44 @@ impl SseDecode for crate::types::Corner {
             entry: var_entry,
             apex: var_apex,
             exit: var_exit,
+        };
+    }
+}
+
+impl SseDecode for crate::types::CueConfig {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_verbosity = <u8>::sse_decode(deserializer);
+        let mut var_enableBrakingCues = <bool>::sse_decode(deserializer);
+        let mut var_enableCornerSpeedCues = <bool>::sse_decode(deserializer);
+        let mut var_enableDeltaTCues = <bool>::sse_decode(deserializer);
+        let mut var_enableCoastingCues = <bool>::sse_decode(deserializer);
+        let mut var_enableGripLimitCues = <bool>::sse_decode(deserializer);
+        let mut var_enableTrailBrakingCues = <bool>::sse_decode(deserializer);
+        let mut var_enableJerkCues = <bool>::sse_decode(deserializer);
+        let mut var_deltaTThresholdS = <f64>::sse_decode(deserializer);
+        let mut var_coastingThreshold = <f32>::sse_decode(deserializer);
+        let mut var_overDrivingThreshold = <f32>::sse_decode(deserializer);
+        let mut var_brakingDeltaThresholdM = <f32>::sse_decode(deserializer);
+        let mut var_cornerSpeedThresholdKmh = <f32>::sse_decode(deserializer);
+        let mut var_perCornerCooldownS = <f32>::sse_decode(deserializer);
+        let mut var_perTypeCooldownS = <f32>::sse_decode(deserializer);
+        return crate::types::CueConfig {
+            verbosity: var_verbosity,
+            enable_braking_cues: var_enableBrakingCues,
+            enable_corner_speed_cues: var_enableCornerSpeedCues,
+            enable_delta_t_cues: var_enableDeltaTCues,
+            enable_coasting_cues: var_enableCoastingCues,
+            enable_grip_limit_cues: var_enableGripLimitCues,
+            enable_trail_braking_cues: var_enableTrailBrakingCues,
+            enable_jerk_cues: var_enableJerkCues,
+            delta_t_threshold_s: var_deltaTThresholdS,
+            coasting_threshold: var_coastingThreshold,
+            over_driving_threshold: var_overDrivingThreshold,
+            braking_delta_threshold_m: var_brakingDeltaThresholdM,
+            corner_speed_threshold_kmh: var_cornerSpeedThresholdKmh,
+            per_corner_cooldown_s: var_perCornerCooldownS,
+            per_type_cooldown_s: var_perTypeCooldownS,
         };
     }
 }
@@ -788,6 +897,18 @@ impl SseDecode for Vec<crate::types::LatLng> {
     }
 }
 
+impl SseDecode for Vec<f32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<f32>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -821,6 +942,17 @@ impl SseDecode for Vec<crate::types::TelemetryInput> {
             ans_.push(<crate::types::TelemetryInput>::sse_decode(deserializer));
         }
         return ans_;
+    }
+}
+
+impl SseDecode for Option<crate::types::CueConfig> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::types::CueConfig>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
     }
 }
 
@@ -994,23 +1126,29 @@ fn pde_ffi_dispatcher_primary_impl(
         4 => {
             wire__crate__api__coaching_api__destroy_session_impl(port, ptr, rust_vec_len, data_len)
         }
-        6 => wire__crate__api__coaching_api__has_reference_lap_impl(
+        5 => {
+            wire__crate__api__coaching_api__get_ml_features_impl(port, ptr, rust_vec_len, data_len)
+        }
+        7 => wire__crate__api__coaching_api__has_reference_lap_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        7 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__coaching_api__list_analyzers_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__coaching_api__process_frame_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__coaching_api__reset_lap_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__coaching_api__set_analysis_config_impl(
+        8 => wire__crate__api__simple__init_app_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__coaching_api__list_analyzers_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__coaching_api__process_frame_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__coaching_api__reset_lap_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__coaching_api__set_analysis_config_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        12 => wire__crate__api__coaching_api__set_reference_lap_impl(
+        13 => {
+            wire__crate__api__coaching_api__set_cue_config_impl(port, ptr, rust_vec_len, data_len)
+        }
+        14 => wire__crate__api__coaching_api__set_reference_lap_impl(
             port,
             ptr,
             rust_vec_len,
@@ -1028,7 +1166,7 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        5 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__simple__greet_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1143,6 +1281,35 @@ impl flutter_rust_bridge::IntoDart for crate::types::Corner {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::types::Corner {}
 impl flutter_rust_bridge::IntoIntoDart<crate::types::Corner> for crate::types::Corner {
     fn into_into_dart(self) -> crate::types::Corner {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::types::CueConfig {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.verbosity.into_into_dart().into_dart(),
+            self.enable_braking_cues.into_into_dart().into_dart(),
+            self.enable_corner_speed_cues.into_into_dart().into_dart(),
+            self.enable_delta_t_cues.into_into_dart().into_dart(),
+            self.enable_coasting_cues.into_into_dart().into_dart(),
+            self.enable_grip_limit_cues.into_into_dart().into_dart(),
+            self.enable_trail_braking_cues.into_into_dart().into_dart(),
+            self.enable_jerk_cues.into_into_dart().into_dart(),
+            self.delta_t_threshold_s.into_into_dart().into_dart(),
+            self.coasting_threshold.into_into_dart().into_dart(),
+            self.over_driving_threshold.into_into_dart().into_dart(),
+            self.braking_delta_threshold_m.into_into_dart().into_dart(),
+            self.corner_speed_threshold_kmh.into_into_dart().into_dart(),
+            self.per_corner_cooldown_s.into_into_dart().into_dart(),
+            self.per_type_cooldown_s.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::types::CueConfig {}
+impl flutter_rust_bridge::IntoIntoDart<crate::types::CueConfig> for crate::types::CueConfig {
+    fn into_into_dart(self) -> crate::types::CueConfig {
         self
     }
 }
@@ -1458,6 +1625,27 @@ impl SseEncode for crate::types::Corner {
     }
 }
 
+impl SseEncode for crate::types::CueConfig {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u8>::sse_encode(self.verbosity, serializer);
+        <bool>::sse_encode(self.enable_braking_cues, serializer);
+        <bool>::sse_encode(self.enable_corner_speed_cues, serializer);
+        <bool>::sse_encode(self.enable_delta_t_cues, serializer);
+        <bool>::sse_encode(self.enable_coasting_cues, serializer);
+        <bool>::sse_encode(self.enable_grip_limit_cues, serializer);
+        <bool>::sse_encode(self.enable_trail_braking_cues, serializer);
+        <bool>::sse_encode(self.enable_jerk_cues, serializer);
+        <f64>::sse_encode(self.delta_t_threshold_s, serializer);
+        <f32>::sse_encode(self.coasting_threshold, serializer);
+        <f32>::sse_encode(self.over_driving_threshold, serializer);
+        <f32>::sse_encode(self.braking_delta_threshold_m, serializer);
+        <f32>::sse_encode(self.corner_speed_threshold_kmh, serializer);
+        <f32>::sse_encode(self.per_corner_cooldown_s, serializer);
+        <f32>::sse_encode(self.per_type_cooldown_s, serializer);
+    }
+}
+
 impl SseEncode for crate::types::CuePriority {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1628,6 +1816,16 @@ impl SseEncode for Vec<crate::types::LatLng> {
     }
 }
 
+impl SseEncode for Vec<f32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <f32>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1654,6 +1852,16 @@ impl SseEncode for Vec<crate::types::TelemetryInput> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::types::TelemetryInput>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::types::CueConfig> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::types::CueConfig>::sse_encode(value, serializer);
         }
     }
 }

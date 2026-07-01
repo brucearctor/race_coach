@@ -14,12 +14,24 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 ///
 /// Call this once at session start. Registers all analyzers and
 /// auto-configures based on available data.
-Future<bool> createSession({required SessionConfig config}) =>
-    RustLib.instance.api.crateApiCoachingApiCreateSession(config: config);
+Future<bool> createSession({
+  required SessionConfig config,
+  CueConfig? cueConfig,
+}) => RustLib.instance.api.crateApiCoachingApiCreateSession(
+  config: config,
+  cueConfig: cueConfig,
+);
 
 /// Destroy the current session and free resources.
 Future<void> destroySession() =>
     RustLib.instance.api.crateApiCoachingApiDestroySession();
+
+/// Update the coaching cue configuration at runtime.
+///
+/// Adjusts verbosity, cue-type toggles, thresholds, and cooldowns
+/// without interrupting the active session.
+Future<void> setCueConfig({required CueConfig config}) =>
+    RustLib.instance.api.crateApiCoachingApiSetCueConfig(config: config);
 
 /// Process one telemetry frame and return analysis results.
 ///
@@ -65,6 +77,12 @@ Future<ImuBias?> calibrateImu({required List<ImuSample> samples}) =>
 
 /// Reset the lap (distance back to zero, reset analyzers, keep reference).
 Future<void> resetLap() => RustLib.instance.api.crateApiCoachingApiResetLap();
+
+/// Get the current ML feature vector (if the window is full).
+///
+/// Returns a flat Vec<f32> of features, or empty if not enough frames yet.
+Future<Float32List> getMlFeatures() =>
+    RustLib.instance.api.crateApiCoachingApiGetMlFeatures();
 
 /// Info about a registered analyzer (returned by list_analyzers).
 class AnalyzerInfo {

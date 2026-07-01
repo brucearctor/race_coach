@@ -10,9 +10,11 @@
 //!
 //! All cues are routed through the PriorityQueue for rate limiting.
 
-use crate::coaching::priority::PriorityQueue;
+use crate::coaching::priority::{PriorityQueue, PriorityQueueConfig};
 use crate::registry::AnalysisResult;
-use crate::types::{BrakingState, CoachingCue, CuePriority, CueType, FrictionCircleState};
+use crate::types::{
+    BrakingState, CoachingCue, CueConfig, CuePriority, CueType, FrictionCircleState,
+};
 
 /// Thresholds for generating coaching cues.
 #[derive(Debug, Clone)]
@@ -53,6 +55,7 @@ pub struct FrameAnalysis {
 pub struct CueEngine {
     config: CueEngineConfig,
     queue: PriorityQueue,
+    cue_config: CueConfig,
     /// Track whether we already announced a braking cue this zone.
     braking_cue_emitted: bool,
     /// Track previous braking state for edge detection.
@@ -64,6 +67,7 @@ impl CueEngine {
         Self {
             config: CueEngineConfig::default(),
             queue: PriorityQueue::new(),
+            cue_config: CueConfig::default(),
             braking_cue_emitted: false,
             was_braking: false,
         }
@@ -73,9 +77,51 @@ impl CueEngine {
         Self {
             config,
             queue: PriorityQueue::new(),
+            cue_config: CueConfig::default(),
             braking_cue_emitted: false,
             was_braking: false,
         }
+    }
+
+    /// Build a fully-configured engine from a [`CueConfig`].
+    ///
+    /// Extracts thresholds into [`CueEngineConfig`] and cooldowns into
+    /// [`PriorityQueueConfig`] so a single source of truth drives everything.
+    pub fn with_cue_config(cue_config: CueConfig) -> Self {
+        let engine_config = CueEngineConfig {
+            delta_t_threshold_s: cue_config.delta_t_threshold_s,
+            coasting_threshold: cue_config.coasting_threshold,
+            over_driving_threshold: cue_config.over_driving_threshold,
+            braking_delta_threshold_m: cue_config.braking_delta_threshold_m,
+        };
+        let queue_config = PriorityQueueConfig {
+            max_queue_depth: 8,
+            per_corner_cooldown_frames: cue_config.per_corner_cooldown_frames(),
+            per_type_cooldown_frames: cue_config.per_type_cooldown_frames(),
+        };
+        Self {
+            config: engine_config,
+            queue: PriorityQueue::with_config(queue_config),
+            cue_config,
+            braking_cue_emitted: false,
+            was_braking: false,
+        }
+    }
+
+    /// Update configuration at runtime without resetting engine state.
+    pub fn apply_cue_config(&mut self, cue_config: &CueConfig) {
+        self.config.delta_t_threshold_s = cue_config.delta_t_threshold_s;
+        self.config.coasting_threshold = cue_config.coasting_threshold;
+        self.config.over_driving_threshold = cue_config.over_driving_threshold;
+        self.config.braking_delta_threshold_m = cue_config.braking_delta_threshold_m;
+
+        let queue_config = PriorityQueueConfig {
+            max_queue_depth: 8,
+            per_corner_cooldown_frames: cue_config.per_corner_cooldown_frames(),
+            per_type_cooldown_frames: cue_config.per_type_cooldown_frames(),
+        };
+        self.queue.update_config(queue_config);
+        self.cue_config = cue_config.clone();
     }
 
     /// Process a batch of analysis results from one frame and return
@@ -105,21 +151,32 @@ impl CueEngine {
             }
         }
 
-        // Generate cues from heuristics
-        self.evaluate_braking(&analysis);
+        // Generate cues from heuristics (gated by toggles)
+        if self.cue_config.enable_braking_cues {
+            self.evaluate_braking(&analysis);
+        }
         self.evaluate_friction(&analysis);
-        self.evaluate_delta_t(&analysis);
+        if self.cue_config.enable_delta_t_cues {
+            self.evaluate_delta_t(&analysis);
+        }
 
-        // Enqueue direct cues from analyzers (e.g., CornerSpeedComparison)
+        // Enqueue direct cues from analyzers, filtered by toggle
+        let min_priority = self.cue_config.min_priority();
         for cue in analysis.direct_cues {
-            self.queue.enqueue(cue);
+            if self.cue_config.is_cue_type_enabled(&cue.cue_type) && cue.priority >= min_priority {
+                self.queue.enqueue(cue);
+            }
         }
 
         // Update state
         self.was_braking = analysis.braking.is_braking;
 
-        // Drain the queue — Dart will speak the highest priority first
-        self.queue.drain()
+        // Drain the queue, then filter by verbosity
+        self.queue
+            .drain()
+            .into_iter()
+            .filter(|c| c.priority >= min_priority)
+            .collect()
     }
 
     /// Evaluate braking onset delta vs reference.
@@ -166,7 +223,10 @@ impl CueEngine {
     fn evaluate_friction(&mut self, analysis: &FrameAnalysis) {
         let util = analysis.friction.utilization;
 
-        if analysis.friction.is_coasting && util < self.config.coasting_threshold {
+        if self.cue_config.enable_coasting_cues
+            && analysis.friction.is_coasting
+            && util < self.config.coasting_threshold
+        {
             self.queue.enqueue(CoachingCue {
                 cue_type: CueType::Coasting,
                 message: "Coasting detected — maintain throttle or brake".to_string(),
@@ -177,7 +237,7 @@ impl CueEngine {
             });
         }
 
-        if util > self.config.over_driving_threshold {
+        if self.cue_config.enable_grip_limit_cues && util > self.config.over_driving_threshold {
             self.queue.enqueue(CoachingCue {
                 cue_type: CueType::GripUtilization,
                 message: "Smooth the inputs — near grip limit".to_string(),
@@ -237,6 +297,7 @@ impl Default for CueEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::CueConfig;
 
     #[test]
     fn test_no_results_no_cues() {
@@ -247,7 +308,11 @@ mod tests {
 
     #[test]
     fn test_large_delta_t_generates_cue() {
-        let mut engine = CueEngine::new();
+        let cfg = CueConfig {
+            verbosity: 2,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
         let results = vec![AnalysisResult::DeltaT {
             seconds: 1.5,
             trend: 0.1,
@@ -260,7 +325,11 @@ mod tests {
 
     #[test]
     fn test_gaining_time_cue() {
-        let mut engine = CueEngine::new();
+        let cfg = CueConfig {
+            verbosity: 2,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
         let results = vec![AnalysisResult::DeltaT {
             seconds: -0.8,
             trend: -0.1,
@@ -299,7 +368,11 @@ mod tests {
 
     #[test]
     fn test_coasting_cue() {
-        let mut engine = CueEngine::new();
+        let cfg = CueConfig {
+            verbosity: 2,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
         let results = vec![AnalysisResult::FrictionUpdate(FrictionCircleState {
             g_total: 0.1,
             g_max: 1.5,
@@ -369,5 +442,188 @@ mod tests {
         // After reset, was_braking should be false
         assert!(!engine.was_braking);
         assert!(!engine.braking_cue_emitted);
+    }
+
+    // ── CueConfig tests ──────────────────────────────────────────────
+
+    #[test]
+    fn test_verbosity_low_filters_medium_and_low() {
+        let cfg = CueConfig {
+            verbosity: 0,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+        // Delta-T of 1.5 s triggers a LapTime cue with Low priority
+        let results = vec![AnalysisResult::DeltaT {
+            seconds: 1.5,
+            trend: 0.1,
+        }];
+        let cues = engine.process_results(&results);
+        // Low-priority cue should be filtered at verbosity 0
+        assert!(
+            cues.is_empty(),
+            "Low-priority delta-T cue should be filtered at verbosity 0"
+        );
+    }
+
+    #[test]
+    fn test_verbosity_high_passes_all() {
+        let cfg = CueConfig {
+            verbosity: 2,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+        let results = vec![AnalysisResult::DeltaT {
+            seconds: 1.5,
+            trend: 0.1,
+        }];
+        let cues = engine.process_results(&results);
+        assert_eq!(cues.len(), 1, "All cues should pass at verbosity 2");
+    }
+
+    #[test]
+    fn test_disabled_braking_cue_not_emitted() {
+        let cfg = CueConfig {
+            enable_braking_cues: false,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+
+        // Start braking
+        engine.process_results(&[AnalysisResult::BrakingUpdate(BrakingState {
+            is_braking: true,
+            braking_g: 0.8,
+            distance_since_onset: 0.0,
+            reference_onset_delta_m: Some(8.0),
+        })]);
+
+        // Stop braking — should NOT generate cue because braking is disabled
+        let cues = engine.process_results(&[AnalysisResult::BrakingUpdate(BrakingState {
+            is_braking: false,
+            braking_g: 0.0,
+            distance_since_onset: 0.0,
+            reference_onset_delta_m: Some(8.0),
+        })]);
+        assert!(cues.is_empty(), "Braking cue should not emit when disabled");
+    }
+
+    #[test]
+    fn test_disabled_coasting_cue_not_emitted() {
+        let cfg = CueConfig {
+            enable_coasting_cues: false,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+        let results = vec![AnalysisResult::FrictionUpdate(FrictionCircleState {
+            g_total: 0.1,
+            g_max: 1.5,
+            utilization: 0.05,
+            is_coasting: true,
+            is_trail_braking: false,
+        })];
+        let cues = engine.process_results(&results);
+        assert!(
+            cues.is_empty(),
+            "Coasting cue should not emit when disabled"
+        );
+    }
+
+    #[test]
+    fn test_custom_threshold_overrides_default() {
+        let cfg = CueConfig {
+            delta_t_threshold_s: 2.0,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+        // 1.5s delta is below the 2.0s custom threshold
+        let results = vec![AnalysisResult::DeltaT {
+            seconds: 1.5,
+            trend: 0.1,
+        }];
+        let cues = engine.process_results(&results);
+        assert!(
+            cues.is_empty(),
+            "1.5s delta should not trigger with 2.0s threshold"
+        );
+    }
+
+    #[test]
+    fn test_cooldown_from_seconds_conversion() {
+        let cfg = CueConfig {
+            per_corner_cooldown_s: 5.0,
+            per_type_cooldown_s: 2.0,
+            ..CueConfig::default()
+        };
+        assert_eq!(cfg.per_corner_cooldown_frames(), 125);
+        assert_eq!(cfg.per_type_cooldown_frames(), 50);
+    }
+
+    #[test]
+    fn test_apply_cue_config_updates_engine() {
+        let cfg = CueConfig {
+            verbosity: 2,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+        // Default threshold is 0.5 — 1.5s should trigger
+        let results = vec![AnalysisResult::DeltaT {
+            seconds: 1.5,
+            trend: 0.1,
+        }];
+        let cues = engine.process_results(&results);
+        assert_eq!(cues.len(), 1);
+
+        // Now raise the threshold mid-session
+        let new_cfg = CueConfig {
+            verbosity: 2,
+            delta_t_threshold_s: 2.0,
+            ..CueConfig::default()
+        };
+        engine.apply_cue_config(&new_cfg);
+
+        // Reset cooldowns so the cue type can fire again
+        engine.reset();
+        let cues = engine.process_results(&results);
+        assert!(
+            cues.is_empty(),
+            "After threshold increase, 1.5s should not trigger"
+        );
+    }
+
+    #[test]
+    fn test_cue_config_default_matches_current_behavior() {
+        // Default CueConfig engine should behave identically to CueEngine::new()
+        let mut default_engine = CueEngine::new();
+        let mut config_engine = CueEngine::with_cue_config(CueConfig::default());
+
+        let results = vec![AnalysisResult::DeltaT {
+            seconds: 1.5,
+            trend: 0.1,
+        }];
+        let default_cues = default_engine.process_results(&results);
+        let config_cues = config_engine.process_results(&results);
+        assert_eq!(default_cues.len(), config_cues.len());
+    }
+
+    #[test]
+    fn test_direct_cue_filtered_by_toggle() {
+        let cfg = CueConfig {
+            enable_corner_speed_cues: false,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+        let results = vec![AnalysisResult::Cue(CoachingCue {
+            cue_type: CueType::Speed,
+            message: "Turn 3: carry 5 more speed".to_string(),
+            priority: CuePriority::Medium,
+            corner_number: Some(3),
+            delta_seconds: None,
+            distance_delta_m: None,
+        })];
+        let cues = engine.process_results(&results);
+        assert!(
+            cues.is_empty(),
+            "Speed cue should be filtered when corner_speed disabled"
+        );
     }
 }
