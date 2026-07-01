@@ -36,9 +36,14 @@ class SessionMetaStorage {
 
   /// Write or overwrite metadata for a session.
   ///
-  /// Sets `updated_at` to the current time automatically.
+  /// Sets `created_at` on first write (if unset) and `updated_at` to the
+  /// current time automatically.
   Future<void> save(String sessionId, SessionMeta meta) async {
-    meta.updatedAt = _timestampNow();
+    final now = _timestampNow();
+    if (!meta.hasCreatedAt() || meta.createdAt.seconds == Int64.ZERO) {
+      meta.createdAt = now;
+    }
+    meta.updatedAt = now;
     final file = await _metaFile(sessionId);
     await file.parent.create(recursive: true);
     await file.writeAsBytes(meta.writeToBuffer());

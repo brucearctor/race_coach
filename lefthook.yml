@@ -28,31 +28,41 @@ pre-commit:
 
 # =============================================================================
 # pre-push — thorough checks (<30s total). Runs before push.
+#
+# Proto codegen runs first (it deletes/regenerates .rs files), then rust
+# and flutter run in parallel afterward.
 # =============================================================================
 pre-push:
-  parallel: true
+  piped: true
   commands:
-    flutter-test:
-      glob: "*.dart"
-      run: flutter test
-
-    rust-clippy:
-      glob: "*.rs"
-      run: cd rust && cargo clippy --all-targets -- -D warnings
-
-    rust-test:
-      glob: "*.rs"
-      run: cd rust && cargo test
-
+    # Group 1: Proto codegen freshness (must complete before rust compiles).
     proto-codegen-fresh:
       glob: "*.proto"
+      priority: 1
       run: |
+        set -e
         # Verify committed generated files match what buf generate produces.
         # Fails if someone edited .proto but forgot to run `make proto`.
-        make proto 2>/dev/null
+        make proto
         if ! git diff --quiet lib/generated/ rust/src/generated/; then
           echo "ERROR: Proto codegen is stale. Run 'make proto' and commit the result."
           git diff --stat lib/generated/ rust/src/generated/
           git checkout -- lib/generated/ rust/src/generated/
           exit 1
         fi
+
+    # Group 2: Everything else runs after proto is done.
+    flutter-test:
+      glob: "*.dart"
+      priority: 2
+      run: flutter test
+
+    rust-clippy:
+      glob: "*.rs"
+      priority: 2
+      run: cd rust && cargo clippy --all-targets -- -D warnings
+
+    rust-test:
+      glob: "*.rs"
+      priority: 2
+      run: cd rust && cargo test

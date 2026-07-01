@@ -156,7 +156,11 @@ class SessionUploader {
       }
       if (meta.vehicle.name.isNotEmpty) {
         firestoreData['vehicleName'] = meta.vehicle.name;
+      }
+      if (meta.vehicle.make.isNotEmpty) {
         firestoreData['vehicleMake'] = meta.vehicle.make;
+      }
+      if (meta.vehicle.model.isNotEmpty) {
         firestoreData['vehicleModel'] = meta.vehicle.model;
       }
       if (meta.conditions.surface !=

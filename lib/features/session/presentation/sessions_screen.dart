@@ -151,14 +151,12 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => SessionMetaEditor(
-          sessionId: session.sessionId,
-          meta: existingMeta,
-        ),
+        builder: (_) =>
+            SessionMetaEditor(sessionId: session.sessionId, meta: existingMeta),
       ),
     );
 
-    if (saved == true) {
+    if (saved == true && mounted) {
       // Refresh the list to pick up updated metadata.
       ref.invalidate(sessionListProvider);
     }
@@ -359,8 +357,11 @@ class _SessionCard extends StatelessWidget {
                   children: [
                     const SizedBox(width: 26), // align with track name
                     if (session.driverName != null) ...[
-                      Icon(Icons.person_outline,
-                          size: 14, color: AppColors.textDim),
+                      Icon(
+                        Icons.person_outline,
+                        size: 14,
+                        color: AppColors.textDim,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         session.driverName!,
@@ -374,8 +375,11 @@ class _SessionCard extends StatelessWidget {
                         session.vehicleName != null)
                       const SizedBox(width: 12),
                     if (session.vehicleName != null) ...[
-                      Icon(Icons.directions_car_outlined,
-                          size: 14, color: AppColors.textDim),
+                      Icon(
+                        Icons.directions_car_outlined,
+                        size: 14,
+                        color: AppColors.textDim,
+                      ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
@@ -398,8 +402,11 @@ class _SessionCard extends StatelessWidget {
                 Row(
                   children: [
                     const SizedBox(width: 26),
-                    Icon(Icons.add_circle_outline,
-                        size: 14, color: AppColors.textDim),
+                    Icon(
+                      Icons.add_circle_outline,
+                      size: 14,
+                      color: AppColors.textDim,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Add session details',
@@ -418,7 +425,10 @@ class _SessionCard extends StatelessWidget {
               // ── Stats row ──────────────────────────────
               Row(
                 children: [
-                  _StatChip(icon: Icons.flag, label: '${session.lapCount} laps'),
+                  _StatChip(
+                    icon: Icons.flag,
+                    label: '${session.lapCount} laps',
+                  ),
                   const SizedBox(width: 16),
                   if (session.bestLap != null)
                     _StatChip(
@@ -468,7 +478,9 @@ class _SessionCard extends StatelessWidget {
                     IconButton(
                       icon: Icon(
                         Icons.cloud_upload_outlined,
-                        color: isSignedIn ? AppColors.primary : AppColors.textDim,
+                        color: isSignedIn
+                            ? AppColors.primary
+                            : AppColors.textDim,
                         size: 24,
                       ),
                       tooltip: isSignedIn

@@ -53,6 +53,10 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
   int _countdown = 5;
   Timer? _countdownTimer;
   bool _countdownCancelled = false;
+  bool _submitted = false;
+
+  // Track which controllers have had listeners attached to avoid accumulation.
+  final Set<TextEditingController> _listenersAttached = {};
 
   @override
   void initState() {
@@ -135,11 +139,15 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
   }
 
   void _submit() {
+    if (_submitted) return; // Guard against double-submit.
+    _submitted = true;
     _countdownTimer?.cancel();
     final meta = _buildMeta();
 
-    // Save as defaults for next session (fire-and-forget).
-    SessionDefaults.save(meta);
+    // Save as defaults for next session.
+    SessionDefaults.save(meta).catchError((_) {
+      // Best-effort — don't block recording on defaults persistence failure.
+    });
 
     Navigator.pop(context, meta);
   }
@@ -180,8 +188,7 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
               ? const SizedBox(
                   height: 200,
                   child: Center(
-                    child:
-                        CircularProgressIndicator(color: AppColors.primary),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   ),
                 )
               : SingleChildScrollView(
@@ -296,8 +303,13 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
         if (textController.text.isEmpty && controller.text.isNotEmpty) {
           textController.text = controller.text;
         }
-        // Keep our controller in sync.
-        textController.addListener(() => controller.text = textController.text);
+        // Keep our controller in sync — attach listener only once per instance.
+        if (!_listenersAttached.contains(textController)) {
+          _listenersAttached.add(textController);
+          textController.addListener(
+            () => controller.text = textController.text,
+          );
+        }
 
         return TextField(
           controller: textController,
@@ -314,8 +326,10 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide.none,
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
           ),
         );
       },
@@ -373,10 +387,7 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
                 const SizedBox(width: 4),
                 Text(
                   'Vehicle details',
-                  style: TextStyle(
-                    color: AppColors.textDim,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: AppColors.textDim, fontSize: 13),
                 ),
               ],
             ),
@@ -427,15 +438,20 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
       style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        labelStyle: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+        ),
         filled: true,
         fillColor: AppColors.surfaceLight,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -531,8 +547,9 @@ class _PreSessionCardState extends ConsumerState<PreSessionCard> {
 
   Widget _buildStartButton() {
     final showCountdown = !_countdownCancelled && _countdown > 0;
-    final label =
-        showCountdown ? 'Starting in $_countdown…' : 'Start Recording';
+    final label = showCountdown
+        ? 'Starting in $_countdown…'
+        : 'Start Recording';
 
     return FilledButton.icon(
       onPressed: _submit,

@@ -9,6 +9,7 @@ import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 import 'package:race_coach/generated/racecoach/v1/telemetry.pb.dart';
 import 'package:race_coach/features/session/data/session_defaults.dart';
+import 'package:race_coach/features/session/data/session_meta_storage.dart';
 import 'package:race_coach/features/session/domain/raw_frame_list.dart';
 import 'package:race_coach/features/telemetry/data/telemetry_bus.dart';
 import 'package:race_coach/features/telemetry/domain/telemetry_state.dart';
@@ -128,9 +129,7 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
     if (meta != null) {
       meta.sessionId = sessionId;
       meta.createdAt = _timestampFromDateTime(now);
-      meta.updatedAt = _timestampFromDateTime(now);
-      final metaFile = File('${dir.path}/meta.pb');
-      await metaFile.writeAsBytes(meta.writeToBuffer());
+      await SessionMetaStorage().save(sessionId, meta);
 
       // Save as defaults for next session pre-population.
       await SessionDefaults.save(meta);

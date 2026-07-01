@@ -1,5 +1,7 @@
+import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/session/data/session_meta_storage.dart';
@@ -25,11 +27,7 @@ import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 /// ));
 /// ```
 class SessionMetaEditor extends ConsumerStatefulWidget {
-  const SessionMetaEditor({
-    super.key,
-    required this.sessionId,
-    this.meta,
-  });
+  const SessionMetaEditor({super.key, required this.sessionId, this.meta});
 
   final String sessionId;
   final SessionMeta? meta;
@@ -81,30 +79,40 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
     _vehicleNameController = TextEditingController(text: v.name);
     _makeController = TextEditingController(text: v.make);
     _modelController = TextEditingController(text: v.model);
-    _yearController =
-        TextEditingController(text: v.year > 0 ? v.year.toString() : '');
+    _yearController = TextEditingController(
+      text: v.year > 0 ? v.year.toString() : '',
+    );
     _classController = TextEditingController(text: v.vehicleClass);
     _weightController = TextEditingController(
-        text: v.weightKg > 0 ? v.weightKg.toStringAsFixed(0) : '');
+      text: v.weightKg > 0 ? v.weightKg.toStringAsFixed(0) : '',
+    );
     _powerController = TextEditingController(
-        text: v.powerHp > 0 ? v.powerHp.toStringAsFixed(0) : '');
+      text: v.powerHp > 0 ? v.powerHp.toStringAsFixed(0) : '',
+    );
     _tireCompoundController = TextEditingController(text: v.tireCompound);
     _tireFLController = TextEditingController(
-        text: tp.frontLeftPsi > 0 ? tp.frontLeftPsi.toStringAsFixed(1) : '');
+      text: tp.frontLeftPsi > 0 ? tp.frontLeftPsi.toStringAsFixed(1) : '',
+    );
     _tireFRController = TextEditingController(
-        text: tp.frontRightPsi > 0 ? tp.frontRightPsi.toStringAsFixed(1) : '');
+      text: tp.frontRightPsi > 0 ? tp.frontRightPsi.toStringAsFixed(1) : '',
+    );
     _tireRLController = TextEditingController(
-        text: tp.rearLeftPsi > 0 ? tp.rearLeftPsi.toStringAsFixed(1) : '');
+      text: tp.rearLeftPsi > 0 ? tp.rearLeftPsi.toStringAsFixed(1) : '',
+    );
     _tireRRController = TextEditingController(
-        text: tp.rearRightPsi > 0 ? tp.rearRightPsi.toStringAsFixed(1) : '');
+      text: tp.rearRightPsi > 0 ? tp.rearRightPsi.toStringAsFixed(1) : '',
+    );
 
     _surface = c.surface;
     _ambientTempController = TextEditingController(
-        text: c.ambientTempC != 0 ? c.ambientTempC.toStringAsFixed(1) : '');
+      text: c.ambientTempC != 0 ? c.ambientTempC.toStringAsFixed(1) : '',
+    );
     _trackTempController = TextEditingController(
-        text: c.trackTempC != 0 ? c.trackTempC.toStringAsFixed(1) : '');
+      text: c.trackTempC != 0 ? c.trackTempC.toStringAsFixed(1) : '',
+    );
     _humidityController = TextEditingController(
-        text: c.humidityPct != 0 ? c.humidityPct.toStringAsFixed(0) : '');
+      text: c.humidityPct != 0 ? c.humidityPct.toStringAsFixed(0) : '',
+    );
 
     _sessionType = m.sessionType;
     _notesController = TextEditingController(text: m.notes);
@@ -138,6 +146,16 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
     meta.driverName = _driverController.text.trim();
     meta.sessionType = _sessionType;
     meta.notes = _notesController.text.trim();
+
+    // Set createdAt for new metadata (old sessions getting metadata added).
+    if (widget.meta == null) {
+      final now = DateTime.now();
+      final ms = now.millisecondsSinceEpoch;
+      meta.createdAt = Timestamp(
+        seconds: Int64(ms ~/ 1000),
+        nanos: (ms % 1000) * 1000000,
+      );
+    }
 
     // Vehicle.
     final vehicle = meta.ensureVehicle()
@@ -245,15 +263,21 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
           // ── Driver ──────────────────────────────────────────────────
           _buildSectionHeader('Driver'),
           const SizedBox(height: 8),
-          _buildField(_driverController, 'Driver name',
-              icon: Icons.person_outline),
+          _buildField(
+            _driverController,
+            'Driver name',
+            icon: Icons.person_outline,
+          ),
           const SizedBox(height: 24),
 
           // ── Vehicle ─────────────────────────────────────────────────
           _buildSectionHeader('Vehicle'),
           const SizedBox(height: 8),
-          _buildField(_vehicleNameController, 'Vehicle name',
-              icon: Icons.directions_car_outlined),
+          _buildField(
+            _vehicleNameController,
+            'Vehicle name',
+            icon: Icons.directions_car_outlined,
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -263,8 +287,11 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
               const SizedBox(width: 8),
               SizedBox(
                 width: 80,
-                child: _buildField(_yearController, 'Year',
-                    keyboard: TextInputType.number),
+                child: _buildField(
+                  _yearController,
+                  'Year',
+                  keyboard: TextInputType.number,
+                ),
               ),
             ],
           ),
@@ -274,13 +301,19 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
               Expanded(child: _buildField(_classController, 'Class')),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildField(_weightController, 'Weight (kg)',
-                    keyboard: TextInputType.number),
+                child: _buildField(
+                  _weightController,
+                  'Weight (kg)',
+                  keyboard: TextInputType.number,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildField(_powerController, 'Power (hp)',
-                    keyboard: TextInputType.number),
+                child: _buildField(
+                  _powerController,
+                  'Power (hp)',
+                  keyboard: TextInputType.number,
+                ),
               ),
             ],
           ),
@@ -292,20 +325,36 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
           Row(
             children: [
               Expanded(
-                  child: _buildField(_tireFLController, 'FL',
-                      keyboard: TextInputType.number)),
+                child: _buildField(
+                  _tireFLController,
+                  'FL',
+                  keyboard: TextInputType.number,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _buildField(_tireFRController, 'FR',
-                      keyboard: TextInputType.number)),
+                child: _buildField(
+                  _tireFRController,
+                  'FR',
+                  keyboard: TextInputType.number,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _buildField(_tireRLController, 'RL',
-                      keyboard: TextInputType.number)),
+                child: _buildField(
+                  _tireRLController,
+                  'RL',
+                  keyboard: TextInputType.number,
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _buildField(_tireRRController, 'RR',
-                      keyboard: TextInputType.number)),
+                child: _buildField(
+                  _tireRRController,
+                  'RR',
+                  keyboard: TextInputType.number,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -367,8 +416,10 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide.none,
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 14,
+              ),
             ),
           ),
           const SizedBox(height: 32),
@@ -396,10 +447,7 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
   Widget _buildSectionLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
-        color: AppColors.textSecondary,
-        fontSize: 13,
-      ),
+      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
     );
   }
 
@@ -415,18 +463,23 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
       style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle:
-            const TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        prefixIcon:
-            icon != null ? Icon(icon, color: AppColors.textDim, size: 20) : null,
+        labelStyle: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 13,
+        ),
+        prefixIcon: icon != null
+            ? Icon(icon, color: AppColors.textDim, size: 20)
+            : null,
         filled: true,
         fillColor: AppColors.surfaceLight,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -483,7 +536,7 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
         ),
         ButtonSegment(
           value: SessionType.SESSION_TYPE_QUALIFYING,
-          label: Text('Quali'),
+          label: Text('Qualifying'),
         ),
         ButtonSegment(
           value: SessionType.SESSION_TYPE_RACE,
