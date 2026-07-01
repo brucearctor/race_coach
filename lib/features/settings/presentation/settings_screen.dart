@@ -8,6 +8,7 @@ import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/settings/presentation/coaching_preferences_widget.dart';
 import 'package:race_coach/features/track/presentation/track_selector_widget.dart';
 import 'package:race_coach/features/coaching/data/debug_providers.dart';
+import 'package:race_coach/features/coaching/data/cue_config_repository.dart';
 
 // ── Settings State ─────────────────────────────────────────────────────
 
@@ -26,8 +27,6 @@ class SettingsState {
     this.speedUnit = SpeedUnit.mph,
     this.tempUnit = TempUnit.fahrenheit,
     this.audioEnabled = true,
-    this.volume = 1.0,
-    this.speechRate = 0.5,
     this.gpsSource = GpsSource.racebox,
     this.finishLineSet = false,
   });
@@ -35,8 +34,6 @@ class SettingsState {
   final SpeedUnit speedUnit;
   final TempUnit tempUnit;
   final bool audioEnabled;
-  final double volume;
-  final double speechRate;
   final GpsSource gpsSource;
   final bool finishLineSet;
 
@@ -44,8 +41,6 @@ class SettingsState {
     SpeedUnit? speedUnit,
     TempUnit? tempUnit,
     bool? audioEnabled,
-    double? volume,
-    double? speechRate,
     GpsSource? gpsSource,
     bool? finishLineSet,
   }) {
@@ -53,8 +48,6 @@ class SettingsState {
       speedUnit: speedUnit ?? this.speedUnit,
       tempUnit: tempUnit ?? this.tempUnit,
       audioEnabled: audioEnabled ?? this.audioEnabled,
-      volume: volume ?? this.volume,
-      speechRate: speechRate ?? this.speechRate,
       gpsSource: gpsSource ?? this.gpsSource,
       finishLineSet: finishLineSet ?? this.finishLineSet,
     );
@@ -72,10 +65,6 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   void setAudioEnabled(bool enabled) =>
       state = state.copyWith(audioEnabled: enabled);
-
-  void setVolume(double volume) => state = state.copyWith(volume: volume);
-
-  void setSpeechRate(double rate) => state = state.copyWith(speechRate: rate);
 
   void setGpsSource(GpsSource source) =>
       state = state.copyWith(gpsSource: source);
@@ -274,14 +263,20 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.volume_up_rounded,
             title: 'Volume',
-            subtitle: '${(settings.volume * 100).round()}%',
+            subtitle: '${(ref.watch(cueConfigProvider).volume * 100).round()}%',
             trailing: SizedBox(
               width: 150,
               child: Slider(
-                value: settings.volume,
+                value: ref.watch(cueConfigProvider).volume,
                 onChanged: (value) {
-                  notifier.setVolume(value);
+                  // Apply immediately to TTS engine.
                   ref.read(audioCoachProvider).setVolume(value);
+                  // Persist via cueConfigProvider (survives restart).
+                  ref
+                      .read(cueConfigProvider.notifier)
+                      .update(
+                        ref.read(cueConfigProvider).copyWith(volume: value),
+                      );
                 },
                 activeColor: AppColors.primary,
                 inactiveColor: AppColors.divider,
@@ -292,14 +287,21 @@ class SettingsScreen extends ConsumerWidget {
           _SettingsTile(
             icon: Icons.speed_rounded,
             title: 'Speech Rate',
-            subtitle: '${(settings.speechRate * 100).round()}%',
+            subtitle:
+                '${(ref.watch(cueConfigProvider).speechRate * 100).round()}%',
             trailing: SizedBox(
               width: 150,
               child: Slider(
-                value: settings.speechRate,
+                value: ref.watch(cueConfigProvider).speechRate,
                 onChanged: (value) {
-                  notifier.setSpeechRate(value);
+                  // Apply immediately to TTS engine.
                   ref.read(audioCoachProvider).setSpeechRate(value);
+                  // Persist via cueConfigProvider (survives restart).
+                  ref
+                      .read(cueConfigProvider.notifier)
+                      .update(
+                        ref.read(cueConfigProvider).copyWith(speechRate: value),
+                      );
                 },
                 activeColor: AppColors.primary,
                 inactiveColor: AppColors.divider,
