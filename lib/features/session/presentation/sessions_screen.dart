@@ -5,8 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:race_coach/core/router/app_router.dart';
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/auth/data/auth_service.dart';
+import 'package:race_coach/features/session/data/session_meta_storage.dart';
 import 'package:race_coach/features/session/data/session_storage.dart';
 import 'package:race_coach/features/session/data/session_uploader.dart';
+import 'package:race_coach/features/session/presentation/session_meta_editor.dart';
+import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 
 // =============================================================================
 // Sessions Screen — list, upload, and manage recorded sessions
@@ -138,6 +141,29 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     }
   }
 
+  Future<void> _openMetaEditor(SessionSummary session) async {
+    // Load existing metadata (if any).
+    final metaStorage = ref.read(sessionMetaStorageProvider);
+    final existingMeta = await metaStorage.load(session.sessionId);
+
+    if (!mounted) return;
+
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => SessionMetaEditor(
+          sessionId: session.sessionId,
+          meta: existingMeta,
+        ),
+      ),
+    );
+
+    if (saved == true) {
+      // Refresh the list to pick up updated metadata.
+      ref.invalidate(sessionListProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final sessionsAsync = ref.watch(sessionListProvider);
@@ -243,6 +269,7 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
                 isSignedIn: user != null,
                 onUpload: () => _uploadSession(session.sessionId),
                 onDelete: () => _deleteSession(session.sessionId),
+                onEditMeta: () => _openMetaEditor(session),
               );
             },
           );
@@ -265,6 +292,7 @@ class _SessionCard extends StatelessWidget {
     required this.isSignedIn,
     required this.onUpload,
     required this.onDelete,
+    required this.onEditMeta,
   });
 
   final SessionSummary session;
@@ -274,124 +302,201 @@ class _SessionCard extends StatelessWidget {
   final bool isSignedIn;
   final VoidCallback onUpload;
   final VoidCallback onDelete;
+  final VoidCallback onEditMeta;
 
   @override
   Widget build(BuildContext context) {
+    final hasMetadata =
+        session.driverName != null || session.vehicleName != null;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       color: AppColors.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Header: Track name + date ──────────────
-            Row(
-              children: [
-                const Icon(
-                  Icons.location_on,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    session.trackName.isNotEmpty
-                        ? session.trackName
-                        : 'Unknown Track',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onEditMeta,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Header: Track name + date ──────────────
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      session.trackName.isNotEmpty
+                          ? session.trackName
+                          : 'Unknown Track',
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                Text(
-                  _formatDate(session.date),
-                  style: const TextStyle(
-                    color: AppColors.textDim,
-                    fontSize: 12,
+                  Text(
+                    _formatDate(session.date),
+                    style: const TextStyle(
+                      color: AppColors.textDim,
+                      fontSize: 12,
+                    ),
                   ),
+                ],
+              ),
+
+              // ── Metadata subtitle (driver / vehicle) ──
+              if (hasMetadata) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const SizedBox(width: 26), // align with track name
+                    if (session.driverName != null) ...[
+                      Icon(Icons.person_outline,
+                          size: 14, color: AppColors.textDim),
+                      const SizedBox(width: 4),
+                      Text(
+                        session.driverName!,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    if (session.driverName != null &&
+                        session.vehicleName != null)
+                      const SizedBox(width: 12),
+                    if (session.vehicleName != null) ...[
+                      Icon(Icons.directions_car_outlined,
+                          size: 14, color: AppColors.textDim),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          session.vehicleName!,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
-            ),
 
-            const SizedBox(height: 12),
-
-            // ── Stats row ──────────────────────────────
-            Row(
-              children: [
-                _StatChip(icon: Icons.flag, label: '${session.lapCount} laps'),
-                const SizedBox(width: 16),
-                if (session.bestLap != null)
-                  _StatChip(
-                    icon: Icons.timer,
-                    label: _formatDuration(session.bestLap!),
-                    color: AppColors.success,
-                  ),
-                const Spacer(),
-
-                // ── Upload button ──────────────────────
-                if (isUploading)
-                  const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.primary,
+              // ── "Add session details" for old sessions ─
+              if (!hasMetadata) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const SizedBox(width: 26),
+                    Icon(Icons.add_circle_outline,
+                        size: 14, color: AppColors.textDim),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Add session details',
+                      style: TextStyle(
+                        color: AppColors.textDim,
+                        fontSize: 12,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                  )
-                else if (isUploaded)
-                  const Icon(
-                    Icons.cloud_done,
-                    color: AppColors.success,
-                    size: 24,
-                  )
-                else if (isFailed)
+                  ],
+                ),
+              ],
+
+              const SizedBox(height: 12),
+
+              // ── Stats row ──────────────────────────────
+              Row(
+                children: [
+                  _StatChip(icon: Icons.flag, label: '${session.lapCount} laps'),
+                  const SizedBox(width: 16),
+                  if (session.bestLap != null)
+                    _StatChip(
+                      icon: Icons.timer,
+                      label: _formatDuration(session.bestLap!),
+                      color: AppColors.success,
+                    ),
+                  if (session.sessionType != null) ...[
+                    const SizedBox(width: 16),
+                    _StatChip(
+                      icon: Icons.sports_score,
+                      label: _sessionTypeLabel(session.sessionType!),
+                      color: AppColors.info,
+                    ),
+                  ],
+                  const Spacer(),
+
+                  // ── Upload button ──────────────────────
+                  if (isUploading)
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    )
+                  else if (isUploaded)
+                    const Icon(
+                      Icons.cloud_done,
+                      color: AppColors.success,
+                      size: 24,
+                    )
+                  else if (isFailed)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.cloud_off,
+                        color: AppColors.error,
+                        size: 24,
+                      ),
+                      tooltip: 'Retry upload',
+                      onPressed: isSignedIn ? onUpload : null,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    )
+                  else
+                    IconButton(
+                      icon: Icon(
+                        Icons.cloud_upload_outlined,
+                        color: isSignedIn ? AppColors.primary : AppColors.textDim,
+                        size: 24,
+                      ),
+                      tooltip: isSignedIn
+                          ? 'Upload to cloud'
+                          : 'Sign in to upload',
+                      onPressed: isSignedIn ? onUpload : null,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+
+                  const SizedBox(width: 8),
+
+                  // ── Delete button ──────────────────────
                   IconButton(
                     icon: const Icon(
-                      Icons.cloud_off,
-                      color: AppColors.error,
-                      size: 24,
+                      Icons.delete_outline,
+                      color: AppColors.textDim,
+                      size: 22,
                     ),
-                    tooltip: 'Retry upload',
-                    onPressed: isSignedIn ? onUpload : null,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  )
-                else
-                  IconButton(
-                    icon: Icon(
-                      Icons.cloud_upload_outlined,
-                      color: isSignedIn ? AppColors.primary : AppColors.textDim,
-                      size: 24,
-                    ),
-                    tooltip: isSignedIn
-                        ? 'Upload to cloud'
-                        : 'Sign in to upload',
-                    onPressed: isSignedIn ? onUpload : null,
+                    tooltip: 'Delete session',
+                    onPressed: onDelete,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
-
-                const SizedBox(width: 8),
-
-                // ── Delete button ──────────────────────
-                IconButton(
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: AppColors.textDim,
-                    size: 22,
-                  ),
-                  tooltip: 'Delete session',
-                  onPressed: onDelete,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -424,6 +529,21 @@ class _SessionCard extends StatelessWidget {
       return '$minutes:${seconds.toString().padLeft(2, '0')}.$tenths';
     }
     return '$seconds.$tenths';
+  }
+
+  String _sessionTypeLabel(SessionType type) {
+    switch (type) {
+      case SessionType.SESSION_TYPE_PRACTICE:
+        return 'Practice';
+      case SessionType.SESSION_TYPE_QUALIFYING:
+        return 'Qualifying';
+      case SessionType.SESSION_TYPE_RACE:
+        return 'Race';
+      case SessionType.SESSION_TYPE_TEST:
+        return 'Test';
+      default:
+        return '';
+    }
   }
 }
 
