@@ -9,9 +9,7 @@
 // during FRB codegen.
 #[cfg(not(feature = "frb_codegen"))]
 use crate::generated::proto::{
-    CoachingCue as ProtoCoachingCue, CoachingCueType as ProtoCueType, Corner as ProtoCorner,
-    CuePriority as ProtoCuePriority, GpsData, SectorSplit as ProtoSectorSplit, Track as ProtoTrack,
-    TrackConfiguration as ProtoTrackConfiguration,
+    CoachingCueType as ProtoCueType, CuePriority as ProtoCuePriority, GpsData,
 };
 
 // ─── FFI-boundary types (Dart ↔ Rust) ────────────────────────────────────

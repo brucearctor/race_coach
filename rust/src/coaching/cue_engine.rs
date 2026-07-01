@@ -13,7 +13,7 @@
 use crate::coaching::priority::{PriorityQueue, PriorityQueueConfig};
 use crate::registry::AnalysisResult;
 use crate::types::{
-    BrakingState, CoachingCue, CooldownInfo, CueConfig, CuePriority, CueType, DebugEngineState,
+    BrakingState, CoachingCue, CueConfig, CuePriority, CueType, DebugEngineState,
     FrictionCircleState,
 };
 

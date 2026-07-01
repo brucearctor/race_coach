@@ -20,6 +20,7 @@ mod frb_generated; /* AUTO-GENERATED — do not edit */
 /// Proto-generated types — excluded during FRB codegen via feature gate.
 /// Contains `r#type` raw identifiers and duplicate type names that break FRB.
 #[cfg(not(feature = "frb_codegen"))]
+#[allow(dead_code)]
 mod generated;
 pub mod math;
 pub mod ml;
