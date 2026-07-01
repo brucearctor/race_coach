@@ -161,6 +161,30 @@ impl PriorityQueue {
     pub fn is_empty(&self) -> bool {
         self.pending.is_empty()
     }
+
+    // ── Debug HUD accessors ──────────────────────────────────────────
+
+    /// Current number of pending cues in the queue.
+    pub fn queue_depth(&self) -> usize {
+        self.pending.len()
+    }
+
+    /// Configured maximum queue depth.
+    pub fn max_depth(&self) -> usize {
+        self.config.max_queue_depth
+    }
+
+    /// Active cooldowns with frames remaining, for the debug overlay.
+    pub fn active_cooldowns(&self) -> Vec<crate::types::CooldownInfo> {
+        self.cooldowns
+            .iter()
+            .filter(|(_, remaining)| **remaining > 0)
+            .map(|(key, remaining)| crate::types::CooldownInfo {
+                cue_type: format!("{:?}", key.cue_type),
+                frames_remaining: *remaining,
+            })
+            .collect()
+    }
 }
 
 impl Default for PriorityQueue {

@@ -4,8 +4,11 @@
 //! proto2type and re-exported from `crate::generated::proto`. This file keeps
 //! only the analysis-engine-specific types that have no proto equivalent.
 
-// Re-export proto-generated types used by the engine.
-pub use crate::generated::proto::{
+// Re-export proto-generated types used by the engine (file-private).
+// Gated behind not(frb_codegen) since the generated module is excluded
+// during FRB codegen.
+#[cfg(not(feature = "frb_codegen"))]
+use crate::generated::proto::{
     CoachingCue as ProtoCoachingCue, CoachingCueType as ProtoCueType, Corner as ProtoCorner,
     CuePriority as ProtoCuePriority, GpsData, SectorSplit as ProtoSectorSplit, Track as ProtoTrack,
     TrackConfiguration as ProtoTrackConfiguration,
@@ -104,6 +107,7 @@ pub enum CueType {
     MlThrottle,
 }
 
+#[cfg(not(feature = "frb_codegen"))]
 impl From<ProtoCueType> for CueType {
     fn from(proto: ProtoCueType) -> Self {
         match proto {
@@ -128,6 +132,7 @@ pub enum CuePriority {
     Critical = 3,
 }
 
+#[cfg(not(feature = "frb_codegen"))]
 impl From<ProtoCuePriority> for CuePriority {
     fn from(proto: ProtoCuePriority) -> Self {
         match proto {
@@ -231,6 +236,7 @@ pub struct LatLng {
     pub lng: f64,
 }
 
+#[cfg(not(feature = "frb_codegen"))]
 impl From<&GpsData> for LatLng {
     fn from(gps: &GpsData) -> Self {
         Self {
@@ -379,4 +385,28 @@ impl CueConfig {
             _ => CuePriority::Low,
         }
     }
+}
+
+// ─── Debug / diagnostic types ────────────────────────────────────────────
+
+/// Snapshot of the CueEngine's internal state for the debug HUD.
+///
+/// Returned by `get_debug_state()` — called from Dart only when the
+/// developer overlay is visible.
+#[derive(Debug, Clone, Default)]
+pub struct DebugEngineState {
+    pub queue_depth: u8,
+    pub max_queue_depth: u8,
+    pub cues_emitted_lap: u32,
+    pub cues_filtered_lap: u32,
+    pub cues_emitted_session: u32,
+    pub cues_filtered_session: u32,
+    pub active_cooldowns: Vec<CooldownInfo>,
+}
+
+/// A single active cooldown entry for the debug HUD.
+#[derive(Debug, Clone)]
+pub struct CooldownInfo {
+    pub cue_type: String,
+    pub frames_remaining: u32,
 }

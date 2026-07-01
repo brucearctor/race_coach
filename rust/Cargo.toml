@@ -17,6 +17,12 @@ chrono = { version = "0.4", features = ["serde"] }
 approx = "0.5"
 serial_test = "3"
 
+[features]
+# Used by flutter_rust_bridge_codegen during `cargo expand` to exclude the
+# proto-generated module, which contains r#type raw identifiers and duplicate
+# type names that break FRB's parser.
+frb_codegen = []
+
 [profile.release]
 lto = true
 codegen-units = 1

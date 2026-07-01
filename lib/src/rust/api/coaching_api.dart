@@ -84,6 +84,16 @@ Future<void> resetLap() => RustLib.instance.api.crateApiCoachingApiResetLap();
 Future<Float32List> getMlFeatures() =>
     RustLib.instance.api.crateApiCoachingApiGetMlFeatures();
 
+/// Return a JSON snapshot of the CueEngine's internal state for the debug
+/// overlay.
+///
+/// Uses a JSON String return to avoid adding new types to the FRB boundary
+/// (codegen is currently broken). Dart parses the JSON on receipt.
+///
+/// Only called when the developer HUD is visible.
+Future<String> getDebugStateJson() =>
+    RustLib.instance.api.crateApiCoachingApiGetDebugStateJson();
+
 /// Info about a registered analyzer (returned by list_analyzers).
 class AnalyzerInfo {
   final String id;

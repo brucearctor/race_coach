@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/features/coaching/data/audio_coach.dart';
+import 'package:race_coach/features/coaching/data/debug_providers.dart';
 import 'package:race_coach/features/coaching/data/rust_bridge_provider.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/coaching/domain/coaching_cue.dart';
@@ -21,10 +22,7 @@ import 'package:race_coach/src/rust/types.dart' as rust;
 /// 3. Updates [rustFrameOutputProvider] with the result
 /// 4. Routes coaching cues to [AudioCoach] for TTS
 class CoachModeBridge {
-  CoachModeBridge({
-    required this.ref,
-    required this.audioCoach,
-  });
+  CoachModeBridge({required this.ref, required this.audioCoach});
 
   final Ref ref;
   final AudioCoach audioCoach;
@@ -50,6 +48,10 @@ class CoachModeBridge {
     for (final cue in output.coachingCues) {
       audioCoach.speak(_toDartCue(cue));
     }
+
+    // Piggyback debug state polling on the frame loop (no new timer).
+    // This is fire-and-forget — errors are swallowed inside pollDebugState.
+    pollDebugState(ref);
   }
 
   /// Called when a new lap starts (finish line crossing detected).
