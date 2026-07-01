@@ -1,0 +1,58 @@
+# lefthook.yml — local git hooks for race_coach
+#
+# Install: brew install lefthook && lefthook install
+# Skip once: git commit --no-verify (but don't make a habit of it)
+
+# =============================================================================
+# pre-commit — fast checks only (<10s total). Runs on every commit.
+# =============================================================================
+pre-commit:
+  parallel: true
+  commands:
+    dart-format:
+      glob: "*.dart"
+      run: dart format --set-exit-if-changed {staged_files}
+      stage_fixed: true    # auto-stage reformatted files
+
+    rust-format:
+      glob: "*.rs"
+      run: cd rust && cargo fmt --check
+
+    proto-lint:
+      glob: "*.proto"
+      run: buf lint
+
+    flutter-analyze:
+      glob: "*.dart"
+      run: flutter analyze --no-fatal-infos
+
+# =============================================================================
+# pre-push — thorough checks (<30s total). Runs before push.
+# =============================================================================
+pre-push:
+  parallel: true
+  commands:
+    flutter-test:
+      glob: "*.dart"
+      run: flutter test
+
+    rust-clippy:
+      glob: "*.rs"
+      run: cd rust && cargo clippy --all-targets -- -D warnings
+
+    rust-test:
+      glob: "*.rs"
+      run: cd rust && cargo test
+
+    proto-codegen-fresh:
+      glob: "*.proto"
+      run: |
+        # Verify committed generated files match what buf generate produces.
+        # Fails if someone edited .proto but forgot to run `make proto`.
+        make proto 2>/dev/null
+        if ! git diff --quiet lib/generated/ rust/src/generated/; then
+          echo "ERROR: Proto codegen is stale. Run 'make proto' and commit the result."
+          git diff --stat lib/generated/ rust/src/generated/
+          git checkout -- lib/generated/ rust/src/generated/
+          exit 1
+        fi

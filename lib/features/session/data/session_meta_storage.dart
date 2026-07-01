@@ -70,10 +70,7 @@ class SessionMetaStorage {
   static Timestamp _timestampNow() {
     final now = DateTime.now();
     final ms = now.millisecondsSinceEpoch;
-    return Timestamp(
-      seconds: Int64(ms ~/ 1000),
-      nanos: (ms % 1000) * 1000000,
-    );
+    return Timestamp(seconds: Int64(ms ~/ 1000), nanos: (ms % 1000) * 1000000);
   }
 }
 
