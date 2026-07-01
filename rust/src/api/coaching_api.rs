@@ -367,15 +367,22 @@ pub fn get_ml_features() -> Vec<f32> {
 /// Return a JSON snapshot of the CueEngine's internal state for the debug
 /// overlay.
 ///
-/// Uses a JSON String return to avoid adding new types to the FRB boundary
-/// (codegen is currently broken). Dart parses the JSON on receipt.
+/// Uses a JSON String return to avoid adding new types to the FRB boundary.
+/// Dart parses the JSON on receipt.
 ///
-/// Only called when the developer HUD is visible.
+/// Acquires `SESSION` briefly to call [`CueEngine::debug_state()`], then
+/// releases the lock before formatting the JSON string.
 pub fn get_debug_state_json() -> String {
-    let guard = SESSION.lock().unwrap();
-    match guard.as_ref() {
-        Some(session) => {
-            let state = session.cue_engine.debug_state();
+    // Snapshot inside the lock — release before formatting.
+    let state = {
+        let guard = SESSION.lock().unwrap();
+        guard
+            .as_ref()
+            .map(|session| session.cue_engine.debug_state())
+    };
+
+    match state {
+        Some(state) => {
             // Manual JSON serialization (no serde dependency needed)
             let cooldowns: Vec<String> = state
                 .active_cooldowns

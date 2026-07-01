@@ -178,11 +178,14 @@ impl CueEngine {
             self.evaluate_delta_t(&analysis);
         }
 
-        // Enqueue direct cues from analyzers, filtered by toggle + verbosity
-        let min_priority = self.cue_config.min_priority();
+        // Enqueue direct cues from analyzers, filtered by toggle + verbosity.
+        // Routed through enqueue_if_allowed so filtered cues are counted.
         for cue in analysis.direct_cues {
-            if self.cue_config.is_cue_type_enabled(&cue.cue_type) && cue.priority >= min_priority {
-                self.queue.enqueue(cue);
+            if self.cue_config.is_cue_type_enabled(&cue.cue_type) {
+                self.enqueue_if_allowed(cue);
+            } else {
+                self.cues_filtered_lap += 1;
+                self.cues_filtered_session += 1;
             }
         }
 

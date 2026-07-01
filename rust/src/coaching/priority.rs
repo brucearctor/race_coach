@@ -175,15 +175,20 @@ impl PriorityQueue {
     }
 
     /// Active cooldowns with frames remaining, for the debug overlay.
+    ///
+    /// Sorted by cue type for deterministic display order at 25 Hz.
     pub fn active_cooldowns(&self) -> Vec<crate::types::CooldownInfo> {
-        self.cooldowns
+        let mut cooldowns: Vec<_> = self
+            .cooldowns
             .iter()
             .filter(|(_, remaining)| **remaining > 0)
             .map(|(key, remaining)| crate::types::CooldownInfo {
                 cue_type: format!("{:?}", key.cue_type),
                 frames_remaining: *remaining,
             })
-            .collect()
+            .collect();
+        cooldowns.sort_by(|a, b| a.cue_type.cmp(&b.cue_type));
+        cooldowns
     }
 }
 

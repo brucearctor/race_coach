@@ -389,8 +389,8 @@ impl CueConfig {
 
 /// Snapshot of the CueEngine's internal state for the debug HUD.
 ///
-/// Returned by `get_debug_state()` — called from Dart only when the
-/// developer overlay is visible.
+/// Built by [`CueEngine::debug_state()`] and serialized to JSON via
+/// [`get_debug_state_json()`] for the Dart overlay.
 #[derive(Debug, Clone, Default)]
 pub struct DebugEngineState {
     pub queue_depth: u8,

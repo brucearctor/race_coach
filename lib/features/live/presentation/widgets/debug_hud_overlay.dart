@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/coaching/data/debug_providers.dart';
 import 'package:race_coach/features/coaching/data/rust_bridge_provider.dart';
+import 'package:race_coach/src/rust/types.dart' as rust;
 
 /// Semi-transparent debug overlay shown during a live session when
 /// developer mode is active.
@@ -203,7 +204,7 @@ class DebugHudOverlay extends ConsumerWidget {
     );
   }
 
-  Widget _buildFramePanel(dynamic frame) {
+  Widget _buildFramePanel(rust.FrameOutput? frame) {
     if (frame == null) {
       return _Panel(
         label: 'FRAME',
