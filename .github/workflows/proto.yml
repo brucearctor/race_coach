@@ -50,7 +50,7 @@ jobs:
           cache: true
 
       - name: Install Dart protobuf plugin
-        run: dart pub global activate protoc_plugin 21.1.2
+        run: dart pub global activate protoc_plugin 25.0.0
 
       - name: Regenerate Dart protos
         run: |
