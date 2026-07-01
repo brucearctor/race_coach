@@ -25,15 +25,23 @@ class CueConfigNotifier extends StateNotifier<DartCueConfig> {
   /// (e.g. during session creation).
   late final Future<void> _initialized;
 
+  /// Whether persisted preferences have been loaded.
+  bool _isInitialized = false;
+
   /// Public accessor so callers can await initialization.
   Future<void> get initialized => _initialized;
 
   Future<void> _loadSaved() async {
     state = await DartCueConfig.load();
+    _isInitialized = true;
   }
 
   /// Update the config, persist, and push to Rust.
+  ///
+  /// No-op if called before initialization completes (prevents
+  /// overwriting persisted preferences with defaults).
   Future<void> update(DartCueConfig config) async {
+    if (!_isInitialized) return;
     if (state == config) return;
     state = config;
     await config.save();

@@ -52,11 +52,13 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
   final rustCueConfig = toRustCueConfig(cueConfig);
 
   await rust.createSession(config: rustConfig, cueConfig: rustCueConfig);
-  ref.read(rustSessionActiveProvider.notifier).state = true;
 
   // Apply Dart-side audio settings (minInterval, speechRate, volume)
   // from the persisted config so they survive app restarts.
-  ref.read(audioCoachProvider).applyConfig(cueConfig);
+  // Await before marking session active so early cues use correct settings.
+  await ref.read(audioCoachProvider).applyConfig(cueConfig);
+
+  ref.read(rustSessionActiveProvider.notifier).state = true;
 
   // Auto-load the best reference lap for this track.
   final trackName = '${track.name} ${config.name}'.trim();
