@@ -7,6 +7,7 @@ import 'package:race_coach/features/coaching/data/audio_coach.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/settings/presentation/coaching_preferences_widget.dart';
 import 'package:race_coach/features/track/presentation/track_selector_widget.dart';
+import 'package:race_coach/features/coaching/data/debug_providers.dart';
 
 // ── Settings State ─────────────────────────────────────────────────────
 
@@ -440,6 +441,24 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
             ),
+
+          const Divider(indent: 16, endIndent: 16),
+
+          // ── Developer Section ──────────────────────────────
+          _SectionHeader(title: 'Developer'),
+
+          _SettingsTile(
+            icon: Icons.bug_report_rounded,
+            title: 'Developer Mode',
+            subtitle: 'Show debug HUD overlay during sessions',
+            trailing: Switch(
+              value: ref.watch(developerModeProvider),
+              onChanged: (value) {
+                ref.read(developerModeProvider.notifier).state = value;
+              },
+              activeThumbColor: AppColors.warning,
+            ),
+          ),
 
           const Divider(indent: 16, endIndent: 16),
 

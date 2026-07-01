@@ -59,13 +59,13 @@ pub struct TelemetryFrame {
     pub device_timestamp: DateTime<Utc>,
     pub arrival_timestamp: DateTime<Utc>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub gps: Option<Box<GpsData>>,
+    pub gps: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub motion: Option<Box<MotionData>>,
+    pub motion: Option<MotionData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub engine: Option<Box<EngineData>>,
+    pub engine: Option<EngineData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fuel: Option<Box<FuelData>>,
+    pub fuel: Option<FuelData>,
     pub source_type: SourceType,
     pub source_device_id: String,
     pub raw_payload: Vec<u8>,

@@ -145,7 +145,7 @@ pub struct Session {
     #[serde(default)]
     pub laps: Vec<Lap>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub config: Option<Box<SessionConfig>>,
+    pub config: Option<SessionConfig>,
     #[serde(default)]
     pub active_sources: Vec<SourceType>,
 }
@@ -173,9 +173,9 @@ pub struct Lap {
 #[non_exhaustive]
 pub struct SessionConfig {
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub finish_line_point_a: Option<Box<GpsData>>,
+    pub finish_line_point_a: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub finish_line_point_b: Option<Box<GpsData>>,
+    pub finish_line_point_b: Option<GpsData>,
     #[serde(default)]
     pub sector_lines: Vec<SectorLine>,
     pub speed_unit: SpeedUnit,
@@ -191,9 +191,9 @@ pub struct SessionConfig {
 pub struct SectorLine {
     pub sector_number: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub point_a: Option<Box<GpsData>>,
+    pub point_a: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub point_b: Option<Box<GpsData>>,
+    pub point_b: Option<GpsData>,
 }
 
 /// Domain representation of racecoach.v1.SessionMeta.
@@ -205,12 +205,12 @@ pub struct SessionMeta {
     pub session_id: String,
     pub driver_name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub vehicle: Option<Box<Vehicle>>,
+    pub vehicle: Option<Vehicle>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub conditions: Option<Box<Conditions>>,
+    pub conditions: Option<Conditions>,
     pub session_type: SessionType,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub device_info: Option<Box<DeviceInfo>>,
+    pub device_info: Option<DeviceInfo>,
     pub notes: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -231,7 +231,7 @@ pub struct Vehicle {
     pub power_hp: f32,
     pub tire_compound: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tire_pressures: Option<Box<TirePressures>>,
+    pub tire_pressures: Option<TirePressures>,
     pub notes: String,
 }
 

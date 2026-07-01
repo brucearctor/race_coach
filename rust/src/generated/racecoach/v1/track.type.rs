@@ -45,7 +45,7 @@ pub struct Track {
     pub country: String,
     pub region: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub center: Option<Box<GpsData>>,
+    pub center: Option<GpsData>,
     pub auto_detect_radius_meters: f32,
     #[serde(default)]
     pub configurations: Vec<TrackConfiguration>,
@@ -62,9 +62,9 @@ pub struct TrackConfiguration {
     pub length_meters: f32,
     pub direction: Direction,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub finish_line_a: Option<Box<GpsData>>,
+    pub finish_line_a: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub finish_line_b: Option<Box<GpsData>>,
+    pub finish_line_b: Option<GpsData>,
     #[serde(default)]
     pub sectors: Vec<SectorSplit>,
     #[serde(default)]
@@ -82,9 +82,9 @@ pub struct SectorSplit {
     pub sector_number: u32,
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub point_a: Option<Box<GpsData>>,
+    pub point_a: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub point_b: Option<Box<GpsData>>,
+    pub point_b: Option<GpsData>,
 }
 
 /// Domain representation of racecoach.v1.Corner.
@@ -96,11 +96,11 @@ pub struct Corner {
     pub number: u32,
     pub name: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub apex: Option<Box<GpsData>>,
+    pub apex: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub entry: Option<Box<GpsData>>,
+    pub entry: Option<GpsData>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub exit: Option<Box<GpsData>>,
+    pub exit: Option<GpsData>,
 }
 
 /// Domain representation of racecoach.v1.TrackLibraryManifest.
@@ -125,7 +125,7 @@ pub struct TrackSummary {
     pub country: String,
     pub region: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub center: Option<Box<GpsData>>,
+    pub center: Option<GpsData>,
     #[serde(default)]
     pub configuration_names: Vec<String>,
     pub version: u64,

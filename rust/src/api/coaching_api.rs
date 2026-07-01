@@ -362,6 +362,53 @@ pub fn get_ml_features() -> Vec<f32> {
     }
 }
 
+// ─── Debug HUD ────────────────────────────────────────────────────────────
+
+/// Return a JSON snapshot of the CueEngine's internal state for the debug
+/// overlay.
+///
+/// Uses a JSON String return to avoid adding new types to the FRB boundary.
+/// Dart parses the JSON on receipt.
+///
+/// Acquires `SESSION` briefly to call [`CueEngine::debug_state()`], then
+/// releases the lock before formatting the JSON string.
+pub fn get_debug_state_json() -> String {
+    // Snapshot inside the lock — release before formatting.
+    let state = {
+        let guard = SESSION.lock().unwrap();
+        guard
+            .as_ref()
+            .map(|session| session.cue_engine.debug_state())
+    };
+
+    match state {
+        Some(state) => {
+            // Manual JSON serialization (no serde dependency needed)
+            let cooldowns: Vec<String> = state
+                .active_cooldowns
+                .iter()
+                .map(|c| {
+                    format!(
+                        r#"{{"cueType":"{}","framesRemaining":{}}}"#,
+                        c.cue_type, c.frames_remaining
+                    )
+                })
+                .collect();
+            format!(
+                r#"{{"queueDepth":{},"maxQueueDepth":{},"cuesEmittedLap":{},"cuesFilteredLap":{},"cuesEmittedSession":{},"cuesFilteredSession":{},"activeCooldowns":[{}]}}"#,
+                state.queue_depth,
+                state.max_queue_depth,
+                state.cues_emitted_lap,
+                state.cues_filtered_lap,
+                state.cues_emitted_session,
+                state.cues_filtered_session,
+                cooldowns.join(",")
+            )
+        }
+        None => r#"{"queueDepth":0,"maxQueueDepth":8,"cuesEmittedLap":0,"cuesFilteredLap":0,"cuesEmittedSession":0,"cuesFilteredSession":0,"activeCooldowns":[]}"#.to_string(),
+    }
+}
+
 // ─── Types for the API ────────────────────────────────────────────────────
 
 /// Info about a registered analyzer (returned by list_analyzers).

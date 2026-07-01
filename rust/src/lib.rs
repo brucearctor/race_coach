@@ -17,9 +17,11 @@ pub mod coaching;
 pub mod distance;
 pub mod dynamics;
 mod frb_generated; /* AUTO-GENERATED — do not edit */
-/// flutter_rust_bridge:ignore — hides proto types (CoachingCueType, CuePriority,
-/// SessionConfig, etc.) that would collide with engine types in types.rs.
-pub mod generated;
+/// Proto-generated types — excluded during FRB codegen via feature gate.
+/// Contains `r#type` raw identifiers and duplicate type names that break FRB.
+#[cfg(not(feature = "frb_codegen"))]
+#[allow(dead_code)]
+mod generated;
 pub mod math;
 pub mod ml;
 pub mod reference;
@@ -27,8 +29,7 @@ pub mod registry;
 pub mod timing;
 pub mod types;
 
-// Re-exports for convenience
+// Re-exports for convenience (explicit, no wildcard to avoid FRB type conflicts)
 pub use calibration::imu_bias::{apply_bias, ImuCalibrator};
 pub use reference::reference_lap::ReferenceLap;
 pub use registry::{AnalysisContext, AnalysisRegistry, AnalysisResult, TelemetryAnalyzer};
-pub use types::*;

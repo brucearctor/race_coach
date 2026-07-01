@@ -206,7 +206,7 @@ class Corner {
 /// Covers verbosity level, per-cue-type enable/disable toggles,
 /// detection thresholds, and cooldown durations.
 class CueConfig {
-  /// 0 = Low (Critical + High only), 1 = Medium (default), 2 = High (all)
+  /// 0 = Low (Critical + High only), 1 = Medium, 2 = High (default, all)
   final int verbosity;
   final bool enableBrakingCues;
   final bool enableCornerSpeedCues;

@@ -13,7 +13,8 @@
 use crate::coaching::priority::{PriorityQueue, PriorityQueueConfig};
 use crate::registry::AnalysisResult;
 use crate::types::{
-    BrakingState, CoachingCue, CueConfig, CuePriority, CueType, FrictionCircleState,
+    BrakingState, CoachingCue, CueConfig, CuePriority, CueType, DebugEngineState,
+    FrictionCircleState,
 };
 
 /// Thresholds for generating coaching cues.
@@ -60,6 +61,11 @@ pub struct CueEngine {
     braking_cue_emitted: bool,
     /// Track previous braking state for edge detection.
     was_braking: bool,
+    // ── Debug counters ───────────────────────────────────────────
+    cues_emitted_lap: u32,
+    cues_filtered_lap: u32,
+    cues_emitted_session: u32,
+    cues_filtered_session: u32,
 }
 
 impl CueEngine {
@@ -70,6 +76,10 @@ impl CueEngine {
             cue_config: CueConfig::default(),
             braking_cue_emitted: false,
             was_braking: false,
+            cues_emitted_lap: 0,
+            cues_filtered_lap: 0,
+            cues_emitted_session: 0,
+            cues_filtered_session: 0,
         }
     }
 
@@ -80,6 +90,10 @@ impl CueEngine {
             cue_config: CueConfig::default(),
             braking_cue_emitted: false,
             was_braking: false,
+            cues_emitted_lap: 0,
+            cues_filtered_lap: 0,
+            cues_emitted_session: 0,
+            cues_filtered_session: 0,
         }
     }
 
@@ -105,6 +119,10 @@ impl CueEngine {
             cue_config,
             braking_cue_emitted: false,
             was_braking: false,
+            cues_emitted_lap: 0,
+            cues_filtered_lap: 0,
+            cues_emitted_session: 0,
+            cues_filtered_session: 0,
         }
     }
 
@@ -160,11 +178,14 @@ impl CueEngine {
             self.evaluate_delta_t(&analysis);
         }
 
-        // Enqueue direct cues from analyzers, filtered by toggle + verbosity
-        let min_priority = self.cue_config.min_priority();
+        // Enqueue direct cues from analyzers, filtered by toggle + verbosity.
+        // Routed through enqueue_if_allowed so filtered cues are counted.
         for cue in analysis.direct_cues {
-            if self.cue_config.is_cue_type_enabled(&cue.cue_type) && cue.priority >= min_priority {
-                self.queue.enqueue(cue);
+            if self.cue_config.is_cue_type_enabled(&cue.cue_type) {
+                self.enqueue_if_allowed(cue);
+            } else {
+                self.cues_filtered_lap += 1;
+                self.cues_filtered_session += 1;
             }
         }
 
@@ -173,7 +194,11 @@ impl CueEngine {
 
         // Drain the queue (heuristic cues were already verbosity-filtered
         // before enqueue via enqueue_if_allowed, so no post-drain filter needed).
-        self.queue.drain()
+        let drained = self.queue.drain();
+        let emitted = drained.len() as u32;
+        self.cues_emitted_lap += emitted;
+        self.cues_emitted_session += emitted;
+        drained
     }
 
     /// Evaluate braking onset delta vs reference.
@@ -277,11 +302,13 @@ impl CueEngine {
         }
     }
 
-    /// Reset all state (new lap).
+    /// Reset per-lap state (new lap). Session counters are preserved.
     pub fn reset(&mut self) {
         self.queue.reset();
         self.braking_cue_emitted = false;
         self.was_braking = false;
+        self.cues_emitted_lap = 0;
+        self.cues_filtered_lap = 0;
     }
 
     /// Enqueue a cue only if it passes the verbosity filter.
@@ -292,6 +319,22 @@ impl CueEngine {
         let min_priority = self.cue_config.min_priority();
         if cue.priority >= min_priority {
             self.queue.enqueue(cue);
+        } else {
+            self.cues_filtered_lap += 1;
+            self.cues_filtered_session += 1;
+        }
+    }
+
+    /// Snapshot of internal state for the debug HUD.
+    pub fn debug_state(&self) -> DebugEngineState {
+        DebugEngineState {
+            queue_depth: self.queue.queue_depth() as u8,
+            max_queue_depth: self.queue.max_depth() as u8,
+            cues_emitted_lap: self.cues_emitted_lap,
+            cues_filtered_lap: self.cues_filtered_lap,
+            cues_emitted_session: self.cues_emitted_session,
+            cues_filtered_session: self.cues_filtered_session,
+            active_cooldowns: self.queue.active_cooldowns(),
         }
     }
 }

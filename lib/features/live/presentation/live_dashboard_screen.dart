@@ -22,6 +22,7 @@ import 'package:race_coach/features/live/presentation/widgets/track_map_widget.d
 import 'package:race_coach/features/live/presentation/widgets/delta_t_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/sector_bar_widget.dart';
 import 'package:race_coach/features/live/presentation/widgets/braking_indicator_widget.dart';
+import 'package:race_coach/features/live/presentation/widgets/debug_hud_overlay.dart';
 
 /// Main live dashboard screen – the primary view while on track.
 ///
@@ -123,7 +124,11 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
       ),
 
       // ── Body ─────────────────────────────────────────────────────────
-      body: isConnected ? _buildDashboard(isRecording) : _buildEmptyState(),
+      body: isConnected
+          ? Stack(
+              children: [_buildDashboard(isRecording), const DebugHudOverlay()],
+            )
+          : _buildEmptyState(),
 
       // ── Session recording FAB (only when connected) ──────────────────
       floatingActionButton: isConnected
