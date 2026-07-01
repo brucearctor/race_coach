@@ -466,6 +466,603 @@ class SectorLine extends $pb.GeneratedMessage {
   $1.GpsData ensurePointB() => $_ensure(2);
 }
 
+/// Who was driving, what car, what conditions — snapshotted at session start.
+class SessionMeta extends $pb.GeneratedMessage {
+  factory SessionMeta({
+    $core.String? sessionId,
+    $core.String? driverName,
+    Vehicle? vehicle,
+    Conditions? conditions,
+    SessionType? sessionType,
+    DeviceInfo? deviceInfo,
+    $core.String? notes,
+    $0.Timestamp? createdAt,
+    $0.Timestamp? updatedAt,
+  }) {
+    final result = create();
+    if (sessionId != null) result.sessionId = sessionId;
+    if (driverName != null) result.driverName = driverName;
+    if (vehicle != null) result.vehicle = vehicle;
+    if (conditions != null) result.conditions = conditions;
+    if (sessionType != null) result.sessionType = sessionType;
+    if (deviceInfo != null) result.deviceInfo = deviceInfo;
+    if (notes != null) result.notes = notes;
+    if (createdAt != null) result.createdAt = createdAt;
+    if (updatedAt != null) result.updatedAt = updatedAt;
+    return result;
+  }
+
+  SessionMeta._();
+
+  factory SessionMeta.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory SessionMeta.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'SessionMeta',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'racecoach.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'sessionId')
+    ..aOS(2, _omitFieldNames ? '' : 'driverName')
+    ..aOM<Vehicle>(3, _omitFieldNames ? '' : 'vehicle',
+        subBuilder: Vehicle.create)
+    ..aOM<Conditions>(4, _omitFieldNames ? '' : 'conditions',
+        subBuilder: Conditions.create)
+    ..aE<SessionType>(5, _omitFieldNames ? '' : 'sessionType',
+        enumValues: SessionType.values)
+    ..aOM<DeviceInfo>(6, _omitFieldNames ? '' : 'deviceInfo',
+        subBuilder: DeviceInfo.create)
+    ..aOS(7, _omitFieldNames ? '' : 'notes')
+    ..aOM<$0.Timestamp>(8, _omitFieldNames ? '' : 'createdAt',
+        subBuilder: $0.Timestamp.create)
+    ..aOM<$0.Timestamp>(9, _omitFieldNames ? '' : 'updatedAt',
+        subBuilder: $0.Timestamp.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SessionMeta clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  SessionMeta copyWith(void Function(SessionMeta) updates) =>
+      super.copyWith((message) => updates(message as SessionMeta))
+          as SessionMeta;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static SessionMeta create() => SessionMeta._();
+  @$core.override
+  SessionMeta createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static SessionMeta getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<SessionMeta>(create);
+  static SessionMeta? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get sessionId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set sessionId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSessionId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSessionId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get driverName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set driverName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDriverName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDriverName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  Vehicle get vehicle => $_getN(2);
+  @$pb.TagNumber(3)
+  set vehicle(Vehicle value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasVehicle() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearVehicle() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Vehicle ensureVehicle() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  Conditions get conditions => $_getN(3);
+  @$pb.TagNumber(4)
+  set conditions(Conditions value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasConditions() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearConditions() => $_clearField(4);
+  @$pb.TagNumber(4)
+  Conditions ensureConditions() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  SessionType get sessionType => $_getN(4);
+  @$pb.TagNumber(5)
+  set sessionType(SessionType value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSessionType() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSessionType() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  DeviceInfo get deviceInfo => $_getN(5);
+  @$pb.TagNumber(6)
+  set deviceInfo(DeviceInfo value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasDeviceInfo() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearDeviceInfo() => $_clearField(6);
+  @$pb.TagNumber(6)
+  DeviceInfo ensureDeviceInfo() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  $core.String get notes => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set notes($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasNotes() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearNotes() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $0.Timestamp get createdAt => $_getN(7);
+  @$pb.TagNumber(8)
+  set createdAt($0.Timestamp value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasCreatedAt() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearCreatedAt() => $_clearField(8);
+  @$pb.TagNumber(8)
+  $0.Timestamp ensureCreatedAt() => $_ensure(7);
+
+  @$pb.TagNumber(9)
+  $0.Timestamp get updatedAt => $_getN(8);
+  @$pb.TagNumber(9)
+  set updatedAt($0.Timestamp value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasUpdatedAt() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearUpdatedAt() => $_clearField(9);
+  @$pb.TagNumber(9)
+  $0.Timestamp ensureUpdatedAt() => $_ensure(8);
+}
+
+/// Vehicle metadata, snapshotted at session start.
+class Vehicle extends $pb.GeneratedMessage {
+  factory Vehicle({
+    $core.String? name,
+    $core.String? make,
+    $core.String? model,
+    $core.int? year,
+    $core.String? vehicleClass,
+    $core.double? weightKg,
+    $core.double? powerHp,
+    $core.String? tireCompound,
+    TirePressures? tirePressures,
+    $core.String? notes,
+  }) {
+    final result = create();
+    if (name != null) result.name = name;
+    if (make != null) result.make = make;
+    if (model != null) result.model = model;
+    if (year != null) result.year = year;
+    if (vehicleClass != null) result.vehicleClass = vehicleClass;
+    if (weightKg != null) result.weightKg = weightKg;
+    if (powerHp != null) result.powerHp = powerHp;
+    if (tireCompound != null) result.tireCompound = tireCompound;
+    if (tirePressures != null) result.tirePressures = tirePressures;
+    if (notes != null) result.notes = notes;
+    return result;
+  }
+
+  Vehicle._();
+
+  factory Vehicle.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory Vehicle.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'Vehicle',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'racecoach.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'make')
+    ..aOS(3, _omitFieldNames ? '' : 'model')
+    ..aI(4, _omitFieldNames ? '' : 'year', fieldType: $pb.PbFieldType.OU3)
+    ..aOS(5, _omitFieldNames ? '' : 'vehicleClass')
+    ..aD(6, _omitFieldNames ? '' : 'weightKg', fieldType: $pb.PbFieldType.OF)
+    ..aD(7, _omitFieldNames ? '' : 'powerHp', fieldType: $pb.PbFieldType.OF)
+    ..aOS(8, _omitFieldNames ? '' : 'tireCompound')
+    ..aOM<TirePressures>(9, _omitFieldNames ? '' : 'tirePressures',
+        subBuilder: TirePressures.create)
+    ..aOS(10, _omitFieldNames ? '' : 'notes')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Vehicle clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Vehicle copyWith(void Function(Vehicle) updates) =>
+      super.copyWith((message) => updates(message as Vehicle)) as Vehicle;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Vehicle create() => Vehicle._();
+  @$core.override
+  Vehicle createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static Vehicle getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Vehicle>(create);
+  static Vehicle? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get make => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set make($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMake() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMake() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get model => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set model($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasModel() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearModel() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get year => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set year($core.int value) => $_setUnsignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasYear() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearYear() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get vehicleClass => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set vehicleClass($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasVehicleClass() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearVehicleClass() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.double get weightKg => $_getN(5);
+  @$pb.TagNumber(6)
+  set weightKg($core.double value) => $_setFloat(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasWeightKg() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearWeightKg() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.double get powerHp => $_getN(6);
+  @$pb.TagNumber(7)
+  set powerHp($core.double value) => $_setFloat(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasPowerHp() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearPowerHp() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.String get tireCompound => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set tireCompound($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasTireCompound() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearTireCompound() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  TirePressures get tirePressures => $_getN(8);
+  @$pb.TagNumber(9)
+  set tirePressures(TirePressures value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasTirePressures() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearTirePressures() => $_clearField(9);
+  @$pb.TagNumber(9)
+  TirePressures ensureTirePressures() => $_ensure(8);
+
+  @$pb.TagNumber(10)
+  $core.String get notes => $_getSZ(9);
+  @$pb.TagNumber(10)
+  set notes($core.String value) => $_setString(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasNotes() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearNotes() => $_clearField(10);
+}
+
+/// Cold tire pressures at session start.
+class TirePressures extends $pb.GeneratedMessage {
+  factory TirePressures({
+    $core.double? frontLeftPsi,
+    $core.double? frontRightPsi,
+    $core.double? rearLeftPsi,
+    $core.double? rearRightPsi,
+  }) {
+    final result = create();
+    if (frontLeftPsi != null) result.frontLeftPsi = frontLeftPsi;
+    if (frontRightPsi != null) result.frontRightPsi = frontRightPsi;
+    if (rearLeftPsi != null) result.rearLeftPsi = rearLeftPsi;
+    if (rearRightPsi != null) result.rearRightPsi = rearRightPsi;
+    return result;
+  }
+
+  TirePressures._();
+
+  factory TirePressures.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory TirePressures.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'TirePressures',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'racecoach.v1'),
+      createEmptyInstance: create)
+    ..aD(1, _omitFieldNames ? '' : 'frontLeftPsi',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(2, _omitFieldNames ? '' : 'frontRightPsi',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(3, _omitFieldNames ? '' : 'rearLeftPsi', fieldType: $pb.PbFieldType.OF)
+    ..aD(4, _omitFieldNames ? '' : 'rearRightPsi',
+        fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TirePressures clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TirePressures copyWith(void Function(TirePressures) updates) =>
+      super.copyWith((message) => updates(message as TirePressures))
+          as TirePressures;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static TirePressures create() => TirePressures._();
+  @$core.override
+  TirePressures createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static TirePressures getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TirePressures>(create);
+  static TirePressures? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.double get frontLeftPsi => $_getN(0);
+  @$pb.TagNumber(1)
+  set frontLeftPsi($core.double value) => $_setFloat(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasFrontLeftPsi() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFrontLeftPsi() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get frontRightPsi => $_getN(1);
+  @$pb.TagNumber(2)
+  set frontRightPsi($core.double value) => $_setFloat(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasFrontRightPsi() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearFrontRightPsi() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get rearLeftPsi => $_getN(2);
+  @$pb.TagNumber(3)
+  set rearLeftPsi($core.double value) => $_setFloat(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasRearLeftPsi() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearRearLeftPsi() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get rearRightPsi => $_getN(3);
+  @$pb.TagNumber(4)
+  set rearRightPsi($core.double value) => $_setFloat(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasRearRightPsi() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearRearRightPsi() => $_clearField(4);
+}
+
+/// Track/weather conditions at session time.
+class Conditions extends $pb.GeneratedMessage {
+  factory Conditions({
+    SurfaceCondition? surface,
+    $core.double? ambientTempC,
+    $core.double? trackTempC,
+    $core.double? humidityPct,
+  }) {
+    final result = create();
+    if (surface != null) result.surface = surface;
+    if (ambientTempC != null) result.ambientTempC = ambientTempC;
+    if (trackTempC != null) result.trackTempC = trackTempC;
+    if (humidityPct != null) result.humidityPct = humidityPct;
+    return result;
+  }
+
+  Conditions._();
+
+  factory Conditions.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory Conditions.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'Conditions',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'racecoach.v1'),
+      createEmptyInstance: create)
+    ..aE<SurfaceCondition>(1, _omitFieldNames ? '' : 'surface',
+        enumValues: SurfaceCondition.values)
+    ..aD(2, _omitFieldNames ? '' : 'ambientTempC',
+        fieldType: $pb.PbFieldType.OF)
+    ..aD(3, _omitFieldNames ? '' : 'trackTempC', fieldType: $pb.PbFieldType.OF)
+    ..aD(4, _omitFieldNames ? '' : 'humidityPct', fieldType: $pb.PbFieldType.OF)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Conditions clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Conditions copyWith(void Function(Conditions) updates) =>
+      super.copyWith((message) => updates(message as Conditions)) as Conditions;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Conditions create() => Conditions._();
+  @$core.override
+  Conditions createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static Conditions getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<Conditions>(create);
+  static Conditions? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  SurfaceCondition get surface => $_getN(0);
+  @$pb.TagNumber(1)
+  set surface(SurfaceCondition value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSurface() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSurface() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get ambientTempC => $_getN(1);
+  @$pb.TagNumber(2)
+  set ambientTempC($core.double value) => $_setFloat(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasAmbientTempC() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAmbientTempC() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.double get trackTempC => $_getN(2);
+  @$pb.TagNumber(3)
+  set trackTempC($core.double value) => $_setFloat(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTrackTempC() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTrackTempC() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.double get humidityPct => $_getN(3);
+  @$pb.TagNumber(4)
+  set humidityPct($core.double value) => $_setFloat(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasHumidityPct() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearHumidityPct() => $_clearField(4);
+}
+
+/// Data source device info.
+class DeviceInfo extends $pb.GeneratedMessage {
+  factory DeviceInfo({
+    $core.String? deviceModel,
+    $core.String? firmwareVersion,
+    $core.int? sampleRateHz,
+  }) {
+    final result = create();
+    if (deviceModel != null) result.deviceModel = deviceModel;
+    if (firmwareVersion != null) result.firmwareVersion = firmwareVersion;
+    if (sampleRateHz != null) result.sampleRateHz = sampleRateHz;
+    return result;
+  }
+
+  DeviceInfo._();
+
+  factory DeviceInfo.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DeviceInfo.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeviceInfo',
+      package: const $pb.PackageName(_omitMessageNames ? '' : 'racecoach.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'deviceModel')
+    ..aOS(2, _omitFieldNames ? '' : 'firmwareVersion')
+    ..aI(3, _omitFieldNames ? '' : 'sampleRateHz',
+        fieldType: $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeviceInfo clone() => deepCopy();
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeviceInfo copyWith(void Function(DeviceInfo) updates) =>
+      super.copyWith((message) => updates(message as DeviceInfo)) as DeviceInfo;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DeviceInfo create() => DeviceInfo._();
+  @$core.override
+  DeviceInfo createEmptyInstance() => create();
+  @$core.pragma('dart2js:noInline')
+  static DeviceInfo getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeviceInfo>(create);
+  static DeviceInfo? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get deviceModel => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set deviceModel($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDeviceModel() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDeviceModel() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get firmwareVersion => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set firmwareVersion($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasFirmwareVersion() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearFirmwareVersion() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get sampleRateHz => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set sampleRateHz($core.int value) => $_setUnsignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSampleRateHz() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSampleRateHz() => $_clearField(3);
+}
+
 const $core.bool _omitFieldNames =
     $core.bool.fromEnvironment('protobuf.omit_field_names');
 const $core.bool _omitMessageNames =

@@ -58,5 +58,59 @@ class TemperatureUnit extends $pb.ProtobufEnum {
   const TemperatureUnit._(super.value, super.name);
 }
 
+class SurfaceCondition extends $pb.ProtobufEnum {
+  static const SurfaceCondition SURFACE_CONDITION_UNSPECIFIED =
+      SurfaceCondition._(
+          0, _omitEnumNames ? '' : 'SURFACE_CONDITION_UNSPECIFIED');
+  static const SurfaceCondition SURFACE_CONDITION_DRY =
+      SurfaceCondition._(1, _omitEnumNames ? '' : 'SURFACE_CONDITION_DRY');
+  static const SurfaceCondition SURFACE_CONDITION_DAMP =
+      SurfaceCondition._(2, _omitEnumNames ? '' : 'SURFACE_CONDITION_DAMP');
+  static const SurfaceCondition SURFACE_CONDITION_WET =
+      SurfaceCondition._(3, _omitEnumNames ? '' : 'SURFACE_CONDITION_WET');
+
+  static const $core.List<SurfaceCondition> values = <SurfaceCondition>[
+    SURFACE_CONDITION_UNSPECIFIED,
+    SURFACE_CONDITION_DRY,
+    SURFACE_CONDITION_DAMP,
+    SURFACE_CONDITION_WET,
+  ];
+
+  static final $core.List<SurfaceCondition?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static SurfaceCondition? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const SurfaceCondition._(super.value, super.name);
+}
+
+class SessionType extends $pb.ProtobufEnum {
+  static const SessionType SESSION_TYPE_UNSPECIFIED =
+      SessionType._(0, _omitEnumNames ? '' : 'SESSION_TYPE_UNSPECIFIED');
+  static const SessionType SESSION_TYPE_PRACTICE =
+      SessionType._(1, _omitEnumNames ? '' : 'SESSION_TYPE_PRACTICE');
+  static const SessionType SESSION_TYPE_QUALIFYING =
+      SessionType._(2, _omitEnumNames ? '' : 'SESSION_TYPE_QUALIFYING');
+  static const SessionType SESSION_TYPE_RACE =
+      SessionType._(3, _omitEnumNames ? '' : 'SESSION_TYPE_RACE');
+  static const SessionType SESSION_TYPE_TEST =
+      SessionType._(4, _omitEnumNames ? '' : 'SESSION_TYPE_TEST');
+
+  static const $core.List<SessionType> values = <SessionType>[
+    SESSION_TYPE_UNSPECIFIED,
+    SESSION_TYPE_PRACTICE,
+    SESSION_TYPE_QUALIFYING,
+    SESSION_TYPE_RACE,
+    SESSION_TYPE_TEST,
+  ];
+
+  static final $core.List<SessionType?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 4);
+  static SessionType? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const SessionType._(super.value, super.name);
+}
+
 const $core.bool _omitEnumNames =
     $core.bool.fromEnvironment('protobuf.omit_enum_names');

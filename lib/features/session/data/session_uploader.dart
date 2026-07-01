@@ -96,6 +96,22 @@ class SessionUploader {
       );
     }
 
+    // Upload meta.pb if it exists.
+    final metaFile = File('${sessionDir.path}/meta.pb');
+    SessionMeta? meta;
+    if (metaFile.existsSync()) {
+      final metaRef = _storage.ref('$storagePath/meta.pb');
+      await metaRef.putFile(
+        metaFile,
+        SettableMetadata(contentType: 'application/x-protobuf'),
+      );
+      try {
+        meta = SessionMeta.fromBuffer(await metaFile.readAsBytes());
+      } catch (_) {
+        // Corrupted meta — upload the file but skip Firestore merge.
+      }
+    }
+
     // Derive metadata from session proto.
     DateTime sessionDate;
     if (session.hasStartTime()) {
@@ -124,14 +140,38 @@ class SessionUploader {
         .collection('sessions')
         .doc(sessionId);
 
-    await docRef.set({
+    final firestoreData = <String, dynamic>{
       'trackName': session.trackName,
       'date': Timestamp.fromDate(sessionDate),
       'lapCount': session.laps.length,
       'bestLapMs': bestLapMs,
       'uploadedAt': FieldValue.serverTimestamp(),
       'storagePath': storagePath,
-    });
+    };
+
+    // Merge session metadata fields if meta.pb was present.
+    if (meta != null) {
+      if (meta.driverName.isNotEmpty) {
+        firestoreData['driverName'] = meta.driverName;
+      }
+      if (meta.vehicle.name.isNotEmpty) {
+        firestoreData['vehicleName'] = meta.vehicle.name;
+        firestoreData['vehicleMake'] = meta.vehicle.make;
+        firestoreData['vehicleModel'] = meta.vehicle.model;
+      }
+      if (meta.conditions.surface !=
+          SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED) {
+        firestoreData['surface'] = meta.conditions.surface.name;
+      }
+      if (meta.sessionType != SessionType.SESSION_TYPE_UNSPECIFIED) {
+        firestoreData['sessionType'] = meta.sessionType.name;
+      }
+      if (meta.notes.isNotEmpty) {
+        firestoreData['notes'] = meta.notes;
+      }
+    }
+
+    await docRef.set(firestoreData);
   }
 
   // ---------------------------------------------------------------------------

@@ -8,6 +8,7 @@ import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
 
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 import 'package:race_coach/generated/racecoach/v1/telemetry.pb.dart';
+import 'package:race_coach/features/session/data/session_defaults.dart';
 import 'package:race_coach/features/session/domain/raw_frame_list.dart';
 import 'package:race_coach/features/telemetry/data/telemetry_bus.dart';
 import 'package:race_coach/features/telemetry/domain/telemetry_state.dart';
@@ -104,7 +105,11 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
   ///
   /// Creates the session directory tree under the app documents folder and
   /// initialises internal buffers.
-  Future<void> startRecording() async {
+  ///
+  /// If [meta] is provided (from the pre-session card), it will be written
+  /// as `meta.pb` alongside the session files and saved as defaults for the
+  /// next recording.
+  Future<void> startRecording({SessionMeta? meta}) async {
     if (state.isRecording) return; // Already recording.
 
     final now = DateTime.now();
@@ -118,6 +123,18 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
     // Ensure the session directory exists.
     final dir = await _sessionDirectory(sessionId);
     await dir.create(recursive: true);
+
+    // Write meta.pb if metadata was provided.
+    if (meta != null) {
+      meta.sessionId = sessionId;
+      meta.createdAt = _timestampFromDateTime(now);
+      meta.updatedAt = _timestampFromDateTime(now);
+      final metaFile = File('${dir.path}/meta.pb');
+      await metaFile.writeAsBytes(meta.writeToBuffer());
+
+      // Save as defaults for next session pre-population.
+      await SessionDefaults.save(meta);
+    }
 
     state = SessionRecorderState(
       isRecording: true,

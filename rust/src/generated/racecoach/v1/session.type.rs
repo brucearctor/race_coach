@@ -63,6 +63,75 @@ impl std::fmt::Display for TemperatureUnit {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[repr(i32)]
+pub enum SurfaceCondition {
+    #[default]
+    Unspecified = 0,
+    Dry = 1,
+    Damp = 2,
+    Wet = 3,
+}
+
+impl SurfaceCondition {
+    pub fn from_i32(value: i32) -> Option<Self> {
+        match value {
+            0 => Some(Self::Unspecified),
+            1 => Some(Self::Dry),
+            2 => Some(Self::Damp),
+            3 => Some(Self::Wet),
+            _ => None,
+        }
+    }
+}
+
+impl std::fmt::Display for SurfaceCondition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unspecified => write!(f, "SURFACE_CONDITION_UNSPECIFIED"),
+            Self::Dry => write!(f, "SURFACE_CONDITION_DRY"),
+            Self::Damp => write!(f, "SURFACE_CONDITION_DAMP"),
+            Self::Wet => write!(f, "SURFACE_CONDITION_WET"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[repr(i32)]
+pub enum SessionType {
+    #[default]
+    Unspecified = 0,
+    Practice = 1,
+    Qualifying = 2,
+    Race = 3,
+    Test = 4,
+}
+
+impl SessionType {
+    pub fn from_i32(value: i32) -> Option<Self> {
+        match value {
+            0 => Some(Self::Unspecified),
+            1 => Some(Self::Practice),
+            2 => Some(Self::Qualifying),
+            3 => Some(Self::Race),
+            4 => Some(Self::Test),
+            _ => None,
+        }
+    }
+}
+
+impl std::fmt::Display for SessionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Unspecified => write!(f, "SESSION_TYPE_UNSPECIFIED"),
+            Self::Practice => write!(f, "SESSION_TYPE_PRACTICE"),
+            Self::Qualifying => write!(f, "SESSION_TYPE_QUALIFYING"),
+            Self::Race => write!(f, "SESSION_TYPE_RACE"),
+            Self::Test => write!(f, "SESSION_TYPE_TEST"),
+        }
+    }
+}
+
 /// Domain representation of racecoach.v1.Session.
 ///
 /// A complete driving session (one outing at a track).
@@ -125,5 +194,79 @@ pub struct SectorLine {
     pub point_a: Option<Box<GpsData>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub point_b: Option<Box<GpsData>>,
+}
+
+/// Domain representation of racecoach.v1.SessionMeta.
+///
+/// Who was driving, what car, what conditions — snapshotted at session start.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct SessionMeta {
+    pub session_id: String,
+    pub driver_name: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub vehicle: Option<Box<Vehicle>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub conditions: Option<Box<Conditions>>,
+    pub session_type: SessionType,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub device_info: Option<Box<DeviceInfo>>,
+    pub notes: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Domain representation of racecoach.v1.Vehicle.
+///
+/// Vehicle metadata, snapshotted at session start.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct Vehicle {
+    pub name: String,
+    pub make: String,
+    pub model: String,
+    pub year: u32,
+    pub vehicle_class: String,
+    pub weight_kg: f32,
+    pub power_hp: f32,
+    pub tire_compound: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tire_pressures: Option<Box<TirePressures>>,
+    pub notes: String,
+}
+
+/// Domain representation of racecoach.v1.TirePressures.
+///
+/// Cold tire pressures at session start.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct TirePressures {
+    pub front_left_psi: f32,
+    pub front_right_psi: f32,
+    pub rear_left_psi: f32,
+    pub rear_right_psi: f32,
+}
+
+/// Domain representation of racecoach.v1.Conditions.
+///
+/// Track/weather conditions at session time.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct Conditions {
+    pub surface: SurfaceCondition,
+    pub ambient_temp_c: f32,
+    pub track_temp_c: f32,
+    pub humidity_pct: f32,
+}
+
+/// Domain representation of racecoach.v1.DeviceInfo.
+///
+/// Data source device info.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub struct DeviceInfo {
+    pub device_model: String,
+    pub firmware_version: String,
+    pub sample_rate_hz: u32,
 }
 
