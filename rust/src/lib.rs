@@ -17,6 +17,8 @@ pub mod coaching;
 pub mod distance;
 pub mod dynamics;
 mod frb_generated; /* AUTO-GENERATED — do not edit */
+/// flutter_rust_bridge:ignore — hides proto types (CoachingCueType, CuePriority,
+/// SessionConfig, etc.) that would collide with engine types in types.rs.
 pub mod generated;
 pub mod math;
 pub mod ml;

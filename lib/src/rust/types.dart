@@ -123,6 +123,9 @@ class BrakingState {
 }
 
 /// A coaching cue to be spoken via TTS.
+///
+/// Uses engine-specific [CueType] which is a superset of the proto's
+/// CoachingCueType (adds ML and dynamics-specific cue types).
 class CoachingCue {
   final CueType cueType;
   final String message;
@@ -198,10 +201,93 @@ class Corner {
           exit == other.exit;
 }
 
+/// User-configurable coaching cue settings, passed from Dart via FFI.
+///
+/// Covers verbosity level, per-cue-type enable/disable toggles,
+/// detection thresholds, and cooldown durations.
+class CueConfig {
+  /// 0 = Low (Critical + High only), 1 = Medium (default), 2 = High (all)
+  final int verbosity;
+  final bool enableBrakingCues;
+  final bool enableCornerSpeedCues;
+  final bool enableDeltaTCues;
+  final bool enableCoastingCues;
+  final bool enableGripLimitCues;
+  final bool enableTrailBrakingCues;
+  final bool enableJerkCues;
+  final double deltaTThresholdS;
+  final double coastingThreshold;
+  final double overDrivingThreshold;
+  final double brakingDeltaThresholdM;
+  final double cornerSpeedThresholdKmh;
+  final double perCornerCooldownS;
+  final double perTypeCooldownS;
+
+  const CueConfig({
+    required this.verbosity,
+    required this.enableBrakingCues,
+    required this.enableCornerSpeedCues,
+    required this.enableDeltaTCues,
+    required this.enableCoastingCues,
+    required this.enableGripLimitCues,
+    required this.enableTrailBrakingCues,
+    required this.enableJerkCues,
+    required this.deltaTThresholdS,
+    required this.coastingThreshold,
+    required this.overDrivingThreshold,
+    required this.brakingDeltaThresholdM,
+    required this.cornerSpeedThresholdKmh,
+    required this.perCornerCooldownS,
+    required this.perTypeCooldownS,
+  });
+
+  @override
+  int get hashCode =>
+      verbosity.hashCode ^
+      enableBrakingCues.hashCode ^
+      enableCornerSpeedCues.hashCode ^
+      enableDeltaTCues.hashCode ^
+      enableCoastingCues.hashCode ^
+      enableGripLimitCues.hashCode ^
+      enableTrailBrakingCues.hashCode ^
+      enableJerkCues.hashCode ^
+      deltaTThresholdS.hashCode ^
+      coastingThreshold.hashCode ^
+      overDrivingThreshold.hashCode ^
+      brakingDeltaThresholdM.hashCode ^
+      cornerSpeedThresholdKmh.hashCode ^
+      perCornerCooldownS.hashCode ^
+      perTypeCooldownS.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CueConfig &&
+          runtimeType == other.runtimeType &&
+          verbosity == other.verbosity &&
+          enableBrakingCues == other.enableBrakingCues &&
+          enableCornerSpeedCues == other.enableCornerSpeedCues &&
+          enableDeltaTCues == other.enableDeltaTCues &&
+          enableCoastingCues == other.enableCoastingCues &&
+          enableGripLimitCues == other.enableGripLimitCues &&
+          enableTrailBrakingCues == other.enableTrailBrakingCues &&
+          enableJerkCues == other.enableJerkCues &&
+          deltaTThresholdS == other.deltaTThresholdS &&
+          coastingThreshold == other.coastingThreshold &&
+          overDrivingThreshold == other.overDrivingThreshold &&
+          brakingDeltaThresholdM == other.brakingDeltaThresholdM &&
+          cornerSpeedThresholdKmh == other.cornerSpeedThresholdKmh &&
+          perCornerCooldownS == other.perCornerCooldownS &&
+          perTypeCooldownS == other.perTypeCooldownS;
+}
+
 /// Priority level for coaching cues.
 enum CuePriority { low, medium, high, critical }
 
-/// Type of coaching cue.
+/// Type of coaching cue — superset of proto CoachingCueType.
+///
+/// Extends the proto enum with analysis-engine-specific cue types
+/// (Coasting, TrailBraking, GripUtilization, ML variants).
 enum CueType {
   braking,
   throttle,
@@ -342,7 +428,10 @@ class ImuBias {
           sampleCount == other.sampleCount;
 }
 
-/// A GPS coordinate pair.
+/// A GPS coordinate pair — lightweight, stack-allocated.
+///
+/// Uses f64 for precision in distance calculations.
+/// For serializable GPS data, see proto-generated [GpsData].
 class LatLng {
   final double lat;
   final double lng;
@@ -412,6 +501,9 @@ class SessionConfig {
 }
 
 /// Raw telemetry input — what Dart sends to Rust each frame (25 Hz).
+///
+/// This is a flattened version of the proto TelemetryFrame, optimized for
+/// the FFI boundary (no nesting, no Option, no heap allocation).
 class TelemetryInput {
   final BigInt timestampMs;
   final double latitude;

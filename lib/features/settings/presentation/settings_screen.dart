@@ -5,6 +5,7 @@ import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/auth/presentation/auth_button_widget.dart';
 import 'package:race_coach/features/coaching/data/audio_coach.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
+import 'package:race_coach/features/settings/presentation/coaching_preferences_widget.dart';
 import 'package:race_coach/features/track/presentation/track_selector_widget.dart';
 
 // ── Settings State ─────────────────────────────────────────────────────
@@ -336,6 +337,13 @@ class SettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
+
+          const Divider(indent: 16, endIndent: 16),
+
+          // ── Coaching Preferences Section ─────────────────────────
+          _SectionHeader(title: 'Coaching Preferences'),
+
+          const CoachingPreferencesWidget(),
 
           const Divider(indent: 16, endIndent: 16),
 

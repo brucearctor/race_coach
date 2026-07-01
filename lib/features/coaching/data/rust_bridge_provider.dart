@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:race_coach/generated/racecoach/v1/track.pb.dart';
+import 'package:race_coach/features/coaching/data/cue_config_repository.dart';
 import 'package:race_coach/features/coaching/data/reference_lap_service.dart';
 import 'package:race_coach/features/coaching/domain/audio_mode.dart';
 import 'package:race_coach/features/track/data/track_service.dart';
@@ -43,7 +44,13 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
     useMph: true, // TODO: read from user settings
   );
 
-  await rust.createSession(config: rustConfig);
+  // Ensure persisted coaching preferences are loaded before session creation.
+  await ref.read(cueConfigProvider.notifier).initialized;
+
+  final cueConfig = ref.read(cueConfigProvider);
+  final rustCueConfig = toRustCueConfig(cueConfig);
+
+  await rust.createSession(config: rustConfig, cueConfig: rustCueConfig);
   ref.read(rustSessionActiveProvider.notifier).state = true;
 
   // Auto-load the best reference lap for this track.
@@ -53,14 +60,19 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
         .read(referenceLapServiceProvider.notifier)
         .autoLoadForTrack(trackName)
         .then((loaded) {
-      if (loaded) {
-        debugPrint('[RustBridge] Auto-loaded reference lap for "$trackName"');
-      } else {
-        debugPrint('[RustBridge] No reference lap available for "$trackName"');
-      }
-    }).catchError((Object e) {
-      debugPrint('[RustBridge] Error auto-loading reference lap: $e');
-    }),
+          if (loaded) {
+            debugPrint(
+              '[RustBridge] Auto-loaded reference lap for "$trackName"',
+            );
+          } else {
+            debugPrint(
+              '[RustBridge] No reference lap available for "$trackName"',
+            );
+          }
+        })
+        .catchError((Object e) {
+          debugPrint('[RustBridge] Error auto-loading reference lap: $e');
+        }),
   );
 }
 
@@ -145,21 +157,35 @@ rust.TrackConfig _toRustTrackConfig(Track track, TrackConfiguration config) {
       lat: config.finishLineB.latitude,
       lng: config.finishLineB.longitude,
     ),
-    corners: config.corners.map((c) => rust.Corner(
-      number: c.number,
-      name: c.name,
-      entry: rust.LatLng(lat: c.entry.latitude, lng: c.entry.longitude),
-      apex: rust.LatLng(lat: c.apex.latitude, lng: c.apex.longitude),
-      exit: rust.LatLng(lat: c.exit.latitude, lng: c.exit.longitude),
-    )).toList(),
-    sectorSplits: config.sectors.map((s) => rust.SectorSplit(
-      sectorNumber: s.sectorNumber,
-      pointA: rust.LatLng(lat: s.pointA.latitude, lng: s.pointA.longitude),
-      pointB: rust.LatLng(lat: s.pointB.latitude, lng: s.pointB.longitude),
-    )).toList(),
-    centerline: config.centerline.map((p) => rust.LatLng(
-      lat: p.latitude, lng: p.longitude,
-    )).toList(),
+    corners: config.corners
+        .map(
+          (c) => rust.Corner(
+            number: c.number,
+            name: c.name,
+            entry: rust.LatLng(lat: c.entry.latitude, lng: c.entry.longitude),
+            apex: rust.LatLng(lat: c.apex.latitude, lng: c.apex.longitude),
+            exit: rust.LatLng(lat: c.exit.latitude, lng: c.exit.longitude),
+          ),
+        )
+        .toList(),
+    sectorSplits: config.sectors
+        .map(
+          (s) => rust.SectorSplit(
+            sectorNumber: s.sectorNumber,
+            pointA: rust.LatLng(
+              lat: s.pointA.latitude,
+              lng: s.pointA.longitude,
+            ),
+            pointB: rust.LatLng(
+              lat: s.pointB.latitude,
+              lng: s.pointB.longitude,
+            ),
+          ),
+        )
+        .toList(),
+    centerline: config.centerline
+        .map((p) => rust.LatLng(lat: p.latitude, lng: p.longitude))
+        .toList(),
     trackLengthM: config.hasLengthMeters()
         ? config.lengthMeters.toDouble()
         : null,

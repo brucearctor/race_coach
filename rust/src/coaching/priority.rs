@@ -65,6 +65,11 @@ impl PriorityQueue {
         }
     }
 
+    /// Update configuration at runtime without clearing the queue.
+    pub fn update_config(&mut self, config: PriorityQueueConfig) {
+        self.config = config;
+    }
+
     /// Attempt to enqueue a cue. Returns false if blocked by cooldown or queue full.
     pub fn enqueue(&mut self, cue: CoachingCue) -> bool {
         let key = CooldownKey {

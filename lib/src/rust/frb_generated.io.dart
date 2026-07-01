@@ -36,6 +36,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnalysisConfig dco_decode_box_autoadd_analysis_config(dynamic raw);
 
   @protected
+  CueConfig dco_decode_box_autoadd_cue_config(dynamic raw);
+
+  @protected
   double dco_decode_box_autoadd_f_32(dynamic raw);
 
   @protected
@@ -61,6 +64,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Corner dco_decode_corner(dynamic raw);
+
+  @protected
+  CueConfig dco_decode_cue_config(dynamic raw);
 
   @protected
   CuePriority dco_decode_cue_priority(dynamic raw);
@@ -108,6 +114,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LatLng> dco_decode_list_lat_lng(dynamic raw);
 
   @protected
+  Float32List dco_decode_list_prim_f_32_strict(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -115,6 +124,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TelemetryInput> dco_decode_list_telemetry_input(dynamic raw);
+
+  @protected
+  CueConfig? dco_decode_opt_box_autoadd_cue_config(dynamic raw);
 
   @protected
   double? dco_decode_opt_box_autoadd_f_32(dynamic raw);
@@ -170,6 +182,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  CueConfig sse_decode_box_autoadd_cue_config(SseDeserializer deserializer);
+
+  @protected
   double sse_decode_box_autoadd_f_32(SseDeserializer deserializer);
 
   @protected
@@ -199,6 +214,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Corner sse_decode_corner(SseDeserializer deserializer);
+
+  @protected
+  CueConfig sse_decode_cue_config(SseDeserializer deserializer);
 
   @protected
   CuePriority sse_decode_cue_priority(SseDeserializer deserializer);
@@ -250,6 +268,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<LatLng> sse_decode_list_lat_lng(SseDeserializer deserializer);
 
   @protected
+  Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -257,6 +278,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TelemetryInput> sse_decode_list_telemetry_input(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  CueConfig? sse_decode_opt_box_autoadd_cue_config(
     SseDeserializer deserializer,
   );
 
@@ -318,6 +344,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_cue_config(
+    CueConfig self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_f_32(double self, SseSerializer serializer);
 
   @protected
@@ -349,6 +381,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_corner(Corner self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_cue_config(CueConfig self, SseSerializer serializer);
 
   @protected
   void sse_encode_cue_priority(CuePriority self, SseSerializer serializer);
@@ -408,6 +443,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_lat_lng(List<LatLng> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_prim_f_32_strict(
+    Float32List self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -422,6 +463,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_telemetry_input(
     List<TelemetryInput> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_cue_config(
+    CueConfig? self,
     SseSerializer serializer,
   );
 

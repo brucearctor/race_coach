@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
 import 'package:race_coach/features/coaching/domain/coaching_cue.dart';
+import 'package:race_coach/features/coaching/domain/cue_config.dart';
 
 /// Text-to-speech wrapper that manages a priority queue of coaching cues,
 /// prevents overlapping speech, and enforces a minimum interval between cues.
@@ -123,6 +124,14 @@ class AudioCoach {
   Future<void> setPitch(double value) async {
     _pitch = value.clamp(0.5, 2.0);
     await _tts.setPitch(_pitch);
+  }
+
+  /// Apply coaching cue configuration (Dart-side audio settings).
+  Future<void> applyConfig(DartCueConfig config) async {
+    minInterval = Duration(seconds: config.minCueIntervalS);
+    await setVolume(config.volume);
+    await setSpeechRate(config.speechRate);
+    _processQueue(); // Re-evaluate pending cues with new settings
   }
 
   // ── Public API ─────────────────────────────────────────────────────

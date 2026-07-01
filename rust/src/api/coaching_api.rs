@@ -25,6 +25,7 @@ use crate::reference::reference_lap::ReferenceLap;
 use crate::registry::{AnalysisContext, AnalysisRegistry, AnalysisResult, DataRequirement};
 use crate::timing::delta_t::DeltaT;
 use crate::timing::sector_timer::SectorTimer;
+use crate::types::CueConfig;
 use crate::types::*;
 
 // ─── Session state ────────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ static SESSION: Mutex<Option<Session>> = Mutex::new(None);
 ///
 /// Call this once at session start. Registers all analyzers and
 /// auto-configures based on available data.
-pub fn create_session(config: SessionConfig) -> bool {
+pub fn create_session(config: SessionConfig, cue_config: Option<CueConfig>) -> bool {
     let mut registry = AnalysisRegistry::new();
 
     // Register all analyzers
@@ -101,7 +102,7 @@ pub fn create_session(config: SessionConfig) -> bool {
 
     let session = Session {
         registry,
-        cue_engine: CueEngine::new(),
+        cue_engine: CueEngine::with_cue_config(cue_config.unwrap_or_default()),
         feature_extractor: FeatureExtractor::new(),
         reference_lap: None,
         imu_bias: None,
@@ -121,6 +122,17 @@ pub fn create_session(config: SessionConfig) -> bool {
 pub fn destroy_session() {
     let mut guard = SESSION.lock().unwrap();
     *guard = None;
+}
+
+/// Update the coaching cue configuration at runtime.
+///
+/// Adjusts verbosity, cue-type toggles, thresholds, and cooldowns
+/// without interrupting the active session.
+pub fn set_cue_config(config: CueConfig) {
+    let mut guard = SESSION.lock().unwrap();
+    if let Some(session) = guard.as_mut() {
+        session.cue_engine.apply_cue_config(&config);
+    }
 }
 
 // ─── Hot path (called 25x/sec) ────────────────────────────────────────────
