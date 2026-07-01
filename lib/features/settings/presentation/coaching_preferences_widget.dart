@@ -53,12 +53,10 @@ class _CoachingPreferencesState
                     ButtonSegment(value: 1, label: Text('Medium')),
                     ButtonSegment(value: 2, label: Text('High')),
                   ],
-                  selected: {config.verbosity.clamp(0, 2)},
+                  selected: {config.verbosity.clamp(0, 2).toInt()},
                   onSelectionChanged: (selected) {
                     notifier.applyPreset(selected.first);
-                    ref
-                        .read(audioCoachProvider)
-                        .applyConfig(ref.read(cueConfigProvider));
+                    _applyMinInterval();
                   },
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.resolveWith((states) {
@@ -133,6 +131,13 @@ class _CoachingPreferencesState
           value: config.enableTrailBrakingCues,
           onChanged: (v) => _update(config.copyWith(enableTrailBrakingCues: v)),
         ),
+        _cueToggle(
+          icon: Icons.vibration_rounded,
+          label: 'Jerk',
+          subtitle: 'Abrupt input detection cues',
+          value: config.enableJerkCues,
+          onChanged: (v) => _update(config.copyWith(enableJerkCues: v)),
+        ),
 
         const SizedBox(height: 8),
 
@@ -148,9 +153,7 @@ class _CoachingPreferencesState
           divisions: 9,
           onChanged: (v) {
             _update(config.copyWith(minCueIntervalS: v.round()));
-            ref
-                .read(audioCoachProvider)
-                .applyConfig(ref.read(cueConfigProvider));
+            _applyMinInterval();
           },
         ),
 
@@ -270,9 +273,7 @@ class _CoachingPreferencesState
             onPressed: () async {
               await notifier.resetToDefaults();
               if (mounted) {
-                ref
-                    .read(audioCoachProvider)
-                    .applyConfig(ref.read(cueConfigProvider));
+                _applyMinInterval();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Coaching preferences reset to defaults'),
@@ -297,6 +298,15 @@ class _CoachingPreferencesState
 
   Future<void> _update(DartCueConfig config) async {
     await ref.read(cueConfigProvider.notifier).update(config);
+  }
+
+  /// Only sync the min-interval setting to AudioCoach, preserving the
+  /// existing volume / speech-rate that the Audio Coaching sliders control.
+  void _applyMinInterval() {
+    final config = ref.read(cueConfigProvider);
+    ref.read(audioCoachProvider).minInterval = Duration(
+      seconds: config.minCueIntervalS,
+    );
   }
 
   String _verbosityDescription(int verbosity) {

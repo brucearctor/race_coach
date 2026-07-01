@@ -160,7 +160,7 @@ impl CueEngine {
             self.evaluate_delta_t(&analysis);
         }
 
-        // Enqueue direct cues from analyzers, filtered by toggle
+        // Enqueue direct cues from analyzers, filtered by toggle + verbosity
         let min_priority = self.cue_config.min_priority();
         for cue in analysis.direct_cues {
             if self.cue_config.is_cue_type_enabled(&cue.cue_type) && cue.priority >= min_priority {
@@ -171,12 +171,9 @@ impl CueEngine {
         // Update state
         self.was_braking = analysis.braking.is_braking;
 
-        // Drain the queue, then filter by verbosity
-        self.queue
-            .drain()
-            .into_iter()
-            .filter(|c| c.priority >= min_priority)
-            .collect()
+        // Drain the queue (heuristic cues were already verbosity-filtered
+        // before enqueue via enqueue_if_allowed, so no post-drain filter needed).
+        self.queue.drain()
     }
 
     /// Evaluate braking onset delta vs reference.
@@ -205,7 +202,7 @@ impl CueEngine {
                         )
                     };
 
-                    self.queue.enqueue(CoachingCue {
+                    self.enqueue_if_allowed(CoachingCue {
                         cue_type: CueType::Braking,
                         message,
                         priority,
@@ -227,7 +224,7 @@ impl CueEngine {
             && analysis.friction.is_coasting
             && util < self.config.coasting_threshold
         {
-            self.queue.enqueue(CoachingCue {
+            self.enqueue_if_allowed(CoachingCue {
                 cue_type: CueType::Coasting,
                 message: "Coasting detected — maintain throttle or brake".to_string(),
                 priority: CuePriority::Low,
@@ -238,7 +235,7 @@ impl CueEngine {
         }
 
         if self.cue_config.enable_grip_limit_cues && util > self.config.over_driving_threshold {
-            self.queue.enqueue(CoachingCue {
+            self.enqueue_if_allowed(CoachingCue {
                 cue_type: CueType::GripUtilization,
                 message: "Smooth the inputs — near grip limit".to_string(),
                 priority: CuePriority::High,
@@ -269,7 +266,7 @@ impl CueEngine {
                 )
             };
 
-            self.queue.enqueue(CoachingCue {
+            self.enqueue_if_allowed(CoachingCue {
                 cue_type: CueType::LapTime,
                 message,
                 priority,
@@ -285,6 +282,17 @@ impl CueEngine {
         self.queue.reset();
         self.braking_cue_emitted = false;
         self.was_braking = false;
+    }
+
+    /// Enqueue a cue only if it passes the verbosity filter.
+    ///
+    /// This prevents filtered-out cues from consuming cooldowns, which would
+    /// block future emissions of the same cue type.
+    fn enqueue_if_allowed(&mut self, cue: CoachingCue) {
+        let min_priority = self.cue_config.min_priority();
+        if cue.priority >= min_priority {
+            self.queue.enqueue(cue);
+        }
     }
 }
 
@@ -624,6 +632,48 @@ mod tests {
         assert!(
             cues.is_empty(),
             "Speed cue should be filtered when corner_speed disabled"
+        );
+    }
+
+    #[test]
+    fn test_heuristic_cue_filtered_by_verbosity_does_not_consume_cooldown() {
+        // Regression: at verbosity 0, a low-priority heuristic delta-T cue
+        // should NOT be enqueued at all, so it shouldn't set a cooldown that
+        // blocks the same cue type when verbosity is later raised.
+        let cfg = CueConfig {
+            verbosity: 0,
+            ..CueConfig::default()
+        };
+        let mut engine = CueEngine::with_cue_config(cfg);
+
+        // Emit a low-priority delta-T cue at verbosity 0 → should be filtered
+        let results = vec![AnalysisResult::DeltaT {
+            seconds: 1.5,
+            trend: 0.1,
+        }];
+        let cues = engine.process_results(&results);
+        assert!(
+            cues.is_empty(),
+            "Low-priority cue should be filtered at verbosity 0"
+        );
+
+        // Now raise verbosity to 2 (High) WITHOUT resetting cooldowns
+        let new_cfg = CueConfig {
+            verbosity: 2,
+            ..CueConfig::default()
+        };
+        engine.apply_cue_config(&new_cfg);
+
+        // Tick enough frames to clear any cooldown (if one was erroneously set)
+        for _ in 0..100 {
+            engine.queue.tick();
+        }
+
+        // Same delta-T cue should now pass at high verbosity
+        let cues = engine.process_results(&results);
+        assert!(
+            !cues.is_empty(),
+            "After raising verbosity, delta-T cue should emit (no stale cooldown)"
         );
     }
 }

@@ -174,7 +174,7 @@ class DartCueConfig {
   factory DartCueConfig.fromJson(Map<String, dynamic> json) {
     const defaults = DartCueConfig();
     return DartCueConfig(
-      verbosity: json['verbosity'] as int? ?? defaults.verbosity,
+      verbosity: (json['verbosity'] as int? ?? defaults.verbosity).clamp(0, 2),
       enableBrakingCues:
           json['enableBrakingCues'] as bool? ?? defaults.enableBrakingCues,
       enableCornerSpeedCues:
@@ -192,31 +192,45 @@ class DartCueConfig {
       enableJerkCues:
           json['enableJerkCues'] as bool? ?? defaults.enableJerkCues,
       deltaTThresholdS:
-          (json['deltaTThresholdS'] as num?)?.toDouble() ??
-          defaults.deltaTThresholdS,
+          ((json['deltaTThresholdS'] as num?)?.toDouble() ??
+                  defaults.deltaTThresholdS)
+              .clamp(0.1, 10.0),
       coastingThreshold:
-          (json['coastingThreshold'] as num?)?.toDouble() ??
-          defaults.coastingThreshold,
+          ((json['coastingThreshold'] as num?)?.toDouble() ??
+                  defaults.coastingThreshold)
+              .clamp(0.01, 1.0),
       overDrivingThreshold:
-          (json['overDrivingThreshold'] as num?)?.toDouble() ??
-          defaults.overDrivingThreshold,
+          ((json['overDrivingThreshold'] as num?)?.toDouble() ??
+                  defaults.overDrivingThreshold)
+              .clamp(0.5, 1.0),
       brakingDeltaThresholdM:
-          (json['brakingDeltaThresholdM'] as num?)?.toDouble() ??
-          defaults.brakingDeltaThresholdM,
+          ((json['brakingDeltaThresholdM'] as num?)?.toDouble() ??
+                  defaults.brakingDeltaThresholdM)
+              .clamp(1.0, 50.0),
       cornerSpeedThresholdKmh:
-          (json['cornerSpeedThresholdKmh'] as num?)?.toDouble() ??
-          defaults.cornerSpeedThresholdKmh,
+          ((json['cornerSpeedThresholdKmh'] as num?)?.toDouble() ??
+                  defaults.cornerSpeedThresholdKmh)
+              .clamp(1.0, 30.0),
       perCornerCooldownS:
-          (json['perCornerCooldownS'] as num?)?.toDouble() ??
-          defaults.perCornerCooldownS,
+          ((json['perCornerCooldownS'] as num?)?.toDouble() ??
+                  defaults.perCornerCooldownS)
+              .clamp(0.5, 30.0),
       perTypeCooldownS:
-          (json['perTypeCooldownS'] as num?)?.toDouble() ??
-          defaults.perTypeCooldownS,
+          ((json['perTypeCooldownS'] as num?)?.toDouble() ??
+                  defaults.perTypeCooldownS)
+              .clamp(0.5, 15.0),
       minCueIntervalS:
-          json['minCueIntervalS'] as int? ?? defaults.minCueIntervalS,
+          (json['minCueIntervalS'] as int? ?? defaults.minCueIntervalS).clamp(
+            1,
+            30,
+          ),
       speechRate:
-          (json['speechRate'] as num?)?.toDouble() ?? defaults.speechRate,
-      volume: (json['volume'] as num?)?.toDouble() ?? defaults.volume,
+          ((json['speechRate'] as num?)?.toDouble() ?? defaults.speechRate)
+              .clamp(0.0, 1.0),
+      volume: ((json['volume'] as num?)?.toDouble() ?? defaults.volume).clamp(
+        0.0,
+        1.0,
+      ),
     );
   }
 

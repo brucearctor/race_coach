@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -15,8 +17,16 @@ import 'package:race_coach/src/rust/types.dart' as rust;
 /// via `setCueConfig()`.
 class CueConfigNotifier extends StateNotifier<DartCueConfig> {
   CueConfigNotifier() : super(const DartCueConfig()) {
-    _loadSaved();
+    _initialized = _loadSaved();
   }
+
+  /// Completes when persisted config has been loaded from SharedPreferences.
+  /// Await this before reading state if you need the persisted values
+  /// (e.g. during session creation).
+  late final Future<void> _initialized;
+
+  /// Public accessor so callers can await initialization.
+  Future<void> get initialized => _initialized;
 
   Future<void> _loadSaved() async {
     state = await DartCueConfig.load();

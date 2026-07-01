@@ -131,6 +131,7 @@ class AudioCoach {
     minInterval = Duration(seconds: config.minCueIntervalS);
     await setVolume(config.volume);
     await setSpeechRate(config.speechRate);
+    _processQueue(); // Re-evaluate pending cues with new settings
   }
 
   // ── Public API ─────────────────────────────────────────────────────

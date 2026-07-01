@@ -294,7 +294,7 @@ pub struct ImuBias {
 #[derive(Debug, Clone)]
 pub struct CueConfig {
     // ── Verbosity ────────────────────────────────────────────────
-    /// 0 = Low (Critical + High only), 1 = Medium (default), 2 = High (all)
+    /// 0 = Low (Critical + High only), 1 = Medium, 2 = High (default, all)
     pub verbosity: u8,
 
     // ── Per-cue-type toggles ─────────────────────────────────────

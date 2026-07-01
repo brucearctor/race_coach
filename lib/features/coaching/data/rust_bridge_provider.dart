@@ -44,6 +44,9 @@ Future<void> _createRustSession(Ref ref, TrackState trackState) async {
     useMph: true, // TODO: read from user settings
   );
 
+  // Ensure persisted coaching preferences are loaded before session creation.
+  await ref.read(cueConfigProvider.notifier).initialized;
+
   final cueConfig = ref.read(cueConfigProvider);
   final rustCueConfig = toRustCueConfig(cueConfig);
 
