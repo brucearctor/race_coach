@@ -11,6 +11,10 @@ import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 
 /// A lightweight summary of a saved session, used for listing without loading
 /// the full proto (which may contain many megabytes of telemetry data).
+///
+/// Metadata fields (driver, vehicle, surface, sessionType) are populated from
+/// `meta.pb` if it exists. Old sessions without metadata will have these as
+/// `null`.
 class SessionSummary {
   const SessionSummary({
     required this.sessionId,
@@ -18,6 +22,10 @@ class SessionSummary {
     required this.date,
     required this.lapCount,
     this.bestLap,
+    this.driverName,
+    this.vehicleName,
+    this.surface,
+    this.sessionType,
   });
 
   final String sessionId;
@@ -28,10 +36,22 @@ class SessionSummary {
   /// Best (fastest) lap time, or `null` if no completed laps.
   final Duration? bestLap;
 
+  /// Driver name from session metadata, or `null` for old sessions.
+  final String? driverName;
+
+  /// Vehicle name from session metadata, or `null` for old sessions.
+  final String? vehicleName;
+
+  /// Track surface condition, or `null` for old sessions.
+  final SurfaceCondition? surface;
+
+  /// Session type (practice/qualifying/race/test), or `null` for old sessions.
+  final SessionType? sessionType;
+
   @override
   String toString() =>
       'SessionSummary($sessionId, $trackName, laps: $lapCount, '
-      'best: ${bestLap?.inMilliseconds}ms)';
+      'best: ${bestLap?.inMilliseconds}ms, driver: $driverName)';
 }
 
 // =============================================================================
@@ -67,7 +87,19 @@ class SessionStorage {
       try {
         final bytes = await sessionFile.readAsBytes();
         final session = Session.fromBuffer(bytes);
-        summaries.add(_summaryFromSession(sessionId, session));
+
+        // Read metadata from meta.pb if it exists.
+        final metaFile = File('${entity.path}/meta.pb');
+        SessionMeta? meta;
+        if (metaFile.existsSync()) {
+          try {
+            meta = SessionMeta.fromBuffer(await metaFile.readAsBytes());
+          } catch (_) {
+            // Corrupted meta — ignore, summary still works without it.
+          }
+        }
+
+        summaries.add(_summaryFromSession(sessionId, session, meta: meta));
       } catch (_) {
         // Skip corrupted or unreadable files.
         continue;
@@ -119,8 +151,13 @@ class SessionStorage {
     return File('${dir.path}/session.pb');
   }
 
-  /// Build a [SessionSummary] from a parsed [Session] proto.
-  SessionSummary _summaryFromSession(String sessionId, Session session) {
+  /// Build a [SessionSummary] from a parsed [Session] proto and optional
+  /// [SessionMeta].
+  SessionSummary _summaryFromSession(
+    String sessionId,
+    Session session, {
+    SessionMeta? meta,
+  }) {
     // Derive the date from the proto start_time, falling back to parsing the
     // session id prefix (YYYY-MM-DD_...).
     DateTime date;
@@ -152,6 +189,22 @@ class SessionStorage {
       date: date,
       lapCount: session.laps.length,
       bestLap: bestLap,
+      driverName:
+          meta != null && meta.driverName.isNotEmpty ? meta.driverName : null,
+      vehicleName:
+          meta != null && meta.vehicle.name.isNotEmpty
+              ? meta.vehicle.name
+              : null,
+      surface:
+          meta != null &&
+                  meta.conditions.surface != SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
+              ? meta.conditions.surface
+              : null,
+      sessionType:
+          meta != null &&
+                  meta.sessionType != SessionType.SESSION_TYPE_UNSPECIFIED
+              ? meta.sessionType
+              : null,
     );
   }
 

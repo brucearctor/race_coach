@@ -30,3 +30,39 @@ jobs:
       - name: Check for breaking changes
         if: github.event_name == 'pull_request'
         run: buf breaking --against 'https://github.com/${{ github.repository }}.git#branch=main,subdir=proto'
+
+  codegen-fresh:
+    name: Codegen Freshness
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Buf
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dart protobuf plugin
+        run: dart pub global activate protoc_plugin 25.0.0
+
+      - name: Regenerate Dart protos
+        run: |
+          # Run buf generate for Dart only (Rust needs proto2type, a local tool).
+          buf generate --template buf.gen.ci.yaml
+
+      - name: Check for differences
+        run: |
+          if ! git diff --quiet lib/generated/; then
+            echo "::error::Dart proto codegen is stale. Run 'make proto' and commit the result."
+            git diff --stat lib/generated/
+            git diff lib/generated/
+            exit 1
+          fi
+          echo "✅ Dart proto codegen is up to date"

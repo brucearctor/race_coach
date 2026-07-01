@@ -70,3 +70,73 @@ enum TemperatureUnit {
   TEMPERATURE_UNIT_CELSIUS = 1;
   TEMPERATURE_UNIT_FAHRENHEIT = 2;
 }
+
+// ---------------------------------------------------------------------------
+// Session metadata — stored as a separate meta.pb file alongside session.pb.
+// Small (~200 bytes), editable post-session without rewriting telemetry.
+// ---------------------------------------------------------------------------
+
+// Who was driving, what car, what conditions — snapshotted at session start.
+message SessionMeta {
+  string session_id = 1;
+  string driver_name = 2;
+  Vehicle vehicle = 3;
+  Conditions conditions = 4;
+  SessionType session_type = 5;
+  DeviceInfo device_info = 6;
+  string notes = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// Vehicle metadata, snapshotted at session start.
+message Vehicle {
+  string name = 1;            // User-facing label, e.g. "My Miata"
+  string make = 2;            // "Mazda"
+  string model = 3;           // "MX-5 ND"
+  uint32 year = 4;            // 2024
+  string vehicle_class = 5;   // "Spec Miata" / "NASA ST5" / "Street"
+  float weight_kg = 6;        // Curb weight
+  float power_hp = 7;         // Peak HP
+  string tire_compound = 8;   // "RE-71RS 200tw"
+  TirePressures tire_pressures = 9;
+  string notes = 10;          // Setup notes
+}
+
+// Cold tire pressures at session start.
+message TirePressures {
+  float front_left_psi = 1;
+  float front_right_psi = 2;
+  float rear_left_psi = 3;
+  float rear_right_psi = 4;
+}
+
+// Track/weather conditions at session time.
+message Conditions {
+  SurfaceCondition surface = 1;
+  float ambient_temp_c = 2;
+  float track_temp_c = 3;
+  float humidity_pct = 4;     // 0-100
+}
+
+// Data source device info.
+message DeviceInfo {
+  string device_model = 1;      // "RaceBox Mini S"
+  string firmware_version = 2;
+  uint32 sample_rate_hz = 3;    // 10, 25
+}
+
+enum SurfaceCondition {
+  SURFACE_CONDITION_UNSPECIFIED = 0;
+  SURFACE_CONDITION_DRY = 1;
+  SURFACE_CONDITION_DAMP = 2;
+  SURFACE_CONDITION_WET = 3;
+}
+
+enum SessionType {
+  SESSION_TYPE_UNSPECIFIED = 0;
+  SESSION_TYPE_PRACTICE = 1;
+  SESSION_TYPE_QUALIFYING = 2;
+  SESSION_TYPE_RACE = 3;
+  SESSION_TYPE_TEST = 4;
+}
