@@ -664,12 +664,9 @@ mod tests {
         };
         engine.apply_cue_config(&new_cfg);
 
-        // Tick enough frames to clear any cooldown (if one was erroneously set)
-        for _ in 0..100 {
-            engine.queue.tick();
-        }
-
-        // Same delta-T cue should now pass at high verbosity
+        // Same delta-T cue should now pass immediately at high verbosity.
+        // If the old code had enqueued (and set a cooldown) for the filtered cue,
+        // this would fail because the per-type cooldown would block re-emission.
         let cues = engine.process_results(&results);
         assert!(
             !cues.is_empty(),
