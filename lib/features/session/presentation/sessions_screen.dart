@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:race_coach/core/router/app_router.dart';
 import 'package:race_coach/core/theme/app_colors.dart';
 import 'package:race_coach/features/auth/data/auth_service.dart';
+import 'package:race_coach/features/session/data/db/session_dao.dart';
 import 'package:race_coach/features/session/data/session_meta_storage.dart';
 import 'package:race_coach/features/session/data/session_storage.dart';
 import 'package:race_coach/features/session/data/session_uploader.dart';
@@ -68,6 +69,14 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
       final uploader = ref.read(sessionUploaderProvider);
       await uploader.uploadSession(sessionId);
 
+      // Mark uploaded in the DB index.
+      try {
+        final dao = ref.read(sessionDaoProvider);
+        await dao.markUploaded(sessionId);
+      } catch (e) {
+        debugPrint('[Sessions] DB markUploaded failed: $e');
+      }
+
       if (mounted) {
         setState(() {
           _uploading.remove(sessionId);
@@ -128,8 +137,13 @@ class _SessionsScreenState extends ConsumerState<SessionsScreen> {
     final storage = ref.read(sessionStorageProvider);
     await storage.deleteSession(sessionId);
 
-    // Refresh the list.
-    ref.invalidate(sessionListProvider);
+    // Also remove from DB index.
+    try {
+      final dao = ref.read(sessionDaoProvider);
+      await dao.deleteSession(sessionId);
+    } catch (e) {
+      debugPrint('[Sessions] DB delete failed: $e');
+    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

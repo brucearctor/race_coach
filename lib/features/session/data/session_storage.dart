@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
+import 'package:race_coach/features/session/data/db/session_dao.dart';
+import 'package:race_coach/features/session/data/db/race_coach_db.dart';
 
 // =============================================================================
 // SessionSummary — lightweight metadata for listing
@@ -189,22 +191,23 @@ class SessionStorage {
       date: date,
       lapCount: session.laps.length,
       bestLap: bestLap,
-      driverName:
-          meta != null && meta.driverName.isNotEmpty ? meta.driverName : null,
-      vehicleName:
-          meta != null && meta.vehicle.name.isNotEmpty
-              ? meta.vehicle.name
-              : null,
+      driverName: meta != null && meta.driverName.isNotEmpty
+          ? meta.driverName
+          : null,
+      vehicleName: meta != null && meta.vehicle.name.isNotEmpty
+          ? meta.vehicle.name
+          : null,
       surface:
           meta != null &&
-                  meta.conditions.surface != SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
-              ? meta.conditions.surface
-              : null,
+              meta.conditions.surface !=
+                  SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
+          ? meta.conditions.surface
+          : null,
       sessionType:
           meta != null &&
-                  meta.sessionType != SessionType.SESSION_TYPE_UNSPECIFIED
-              ? meta.sessionType
-              : null,
+              meta.sessionType != SessionType.SESSION_TYPE_UNSPECIFIED
+          ? meta.sessionType
+          : null,
     );
   }
 
@@ -229,11 +232,63 @@ final sessionStorageProvider = Provider<SessionStorage>((ref) {
   return SessionStorage();
 });
 
+/// Reactive session list backed by the Drift DB index.
+///
+/// Emits a new list whenever a session is added, updated, or deleted.
+/// This replaces the old [sessionListProvider] for screens that want
+/// live updates instead of manual invalidation.
+final sessionStreamProvider = StreamProvider<List<SessionSummary>>((ref) {
+  final dao = ref.watch(sessionDaoProvider);
+  return dao.watchAllSessions().map(
+    (entries) => entries.map(_summaryFromEntry).toList(),
+  );
+});
+
 /// Provides the list of saved session summaries.
 ///
-/// Invalidate this provider after recording stops or a session is deleted
-/// to refresh the list.
+/// Now backed by the reactive stream — no manual invalidation needed.
+/// Kept as FutureProvider for backward compatibility with existing consumers.
+/// Loading/error states propagate correctly to the UI.
 final sessionListProvider = FutureProvider<List<SessionSummary>>((ref) {
-  final storage = ref.watch(sessionStorageProvider);
-  return storage.listSessions();
+  return ref.watch(sessionStreamProvider.future);
 });
+
+/// Convert a Drift [SessionEntry] to a [SessionSummary].
+///
+/// Normalizes empty strings → null and unspecified enums → null to match
+/// the semantics of the filesystem-backed [_summaryFromSession].
+SessionSummary _summaryFromEntry(SessionEntry entry) {
+  return SessionSummary(
+    sessionId: entry.id,
+    trackName: entry.trackName,
+    date: DateTime.fromMillisecondsSinceEpoch(entry.dateMs),
+    lapCount: entry.lapCount,
+    bestLap: entry.bestLapMs != null
+        ? Duration(milliseconds: entry.bestLapMs!)
+        : null,
+    driverName: _nonEmpty(entry.driverName),
+    vehicleName: _nonEmpty(entry.vehicleName),
+    surface: _surfaceFromDb(entry.surface),
+    sessionType: _sessionTypeFromDb(entry.sessionType),
+  );
+}
+
+/// Returns null for null or empty strings.
+String? _nonEmpty(String? value) =>
+    value != null && value.isNotEmpty ? value : null;
+
+/// Maps DB int → [SurfaceCondition], returning null for unspecified.
+SurfaceCondition? _surfaceFromDb(int? value) {
+  if (value == null) return null;
+  final surface = SurfaceCondition.valueOf(value);
+  return surface != SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
+      ? surface
+      : null;
+}
+
+/// Maps DB int → [SessionType], returning null for unspecified.
+SessionType? _sessionTypeFromDb(int? value) {
+  if (value == null) return null;
+  final type = SessionType.valueOf(value);
+  return type != SessionType.SESSION_TYPE_UNSPECIFIED ? type : null;
+}

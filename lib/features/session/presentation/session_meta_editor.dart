@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
 
 import 'package:race_coach/core/theme/app_colors.dart';
+import 'package:race_coach/features/session/data/db/session_dao.dart';
 import 'package:race_coach/features/session/data/session_meta_storage.dart';
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 
@@ -201,6 +202,15 @@ class _SessionMetaEditorState extends ConsumerState<SessionMetaEditor> {
       final meta = _buildMeta();
       final storage = ref.read(sessionMetaStorageProvider);
       await storage.save(widget.sessionId, meta);
+
+      // Update the DB index so the reactive stream picks up the change.
+      try {
+        final dao = ref.read(sessionDaoProvider);
+        await dao.updateMeta(widget.sessionId, meta);
+      } catch (e) {
+        debugPrint('[MetaEditor] DB update failed: $e');
+      }
+
       if (mounted) {
         Navigator.of(context).pop(true); // true = saved
       }
