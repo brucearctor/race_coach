@@ -25,6 +25,9 @@ dependencies:
   # Audio coaching
   flutter_tts: ^4.2.0
 
+  # Data structures (PriorityQueue)
+  collection: ^1.18.0
+
   # Navigation
   go_router: ^14.8.1
 
