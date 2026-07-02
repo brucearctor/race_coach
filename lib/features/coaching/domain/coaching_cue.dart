@@ -66,8 +66,9 @@ class CoachingCue {
       other is CoachingCue &&
           type == other.type &&
           message == other.message &&
+          priority == other.priority &&
           timestamp == other.timestamp;
 
   @override
-  int get hashCode => Object.hash(type, message, timestamp);
+  int get hashCode => Object.hash(type, message, priority, timestamp);
 }
