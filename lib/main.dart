@@ -40,10 +40,18 @@ void main() async {
   final container = ProviderContainer();
 
   // Migrate existing protobuf sessions into the Drift DB index.
-  // Best-effort — if it fails, the app still works (filesystem is truth).
+  // Best-effort — if it fails or times out, the app still works
+  // (filesystem is truth). Timeout guards against stalled I/O
+  // (e.g. SQLite lock after hot restart).
   try {
     final migrator = container.read(dbMigratorProvider);
-    await migrator.migrateIfNeeded();
+    await migrator.migrateIfNeeded().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('[main] DB migration timed out; continuing without it');
+        return false;
+      },
+    );
   } catch (e) {
     debugPrint('[main] DB migration failed (will retry next launch): $e');
   }

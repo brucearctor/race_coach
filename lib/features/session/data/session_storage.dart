@@ -248,16 +248,15 @@ final sessionStreamProvider = StreamProvider<List<SessionSummary>>((ref) {
 ///
 /// Now backed by the reactive stream — no manual invalidation needed.
 /// Kept as FutureProvider for backward compatibility with existing consumers.
-final sessionListProvider = FutureProvider<List<SessionSummary>>((ref) async {
-  final stream = ref.watch(sessionStreamProvider);
-  return stream.when(
-    data: (sessions) => sessions,
-    loading: () => <SessionSummary>[],
-    error: (_, _) => <SessionSummary>[],
-  );
+/// Loading/error states propagate correctly to the UI.
+final sessionListProvider = FutureProvider<List<SessionSummary>>((ref) {
+  return ref.watch(sessionStreamProvider.future);
 });
 
 /// Convert a Drift [SessionEntry] to a [SessionSummary].
+///
+/// Normalizes empty strings → null and unspecified enums → null to match
+/// the semantics of the filesystem-backed [_summaryFromSession].
 SessionSummary _summaryFromEntry(SessionEntry entry) {
   return SessionSummary(
     sessionId: entry.id,
@@ -267,13 +266,29 @@ SessionSummary _summaryFromEntry(SessionEntry entry) {
     bestLap: entry.bestLapMs != null
         ? Duration(milliseconds: entry.bestLapMs!)
         : null,
-    driverName: entry.driverName,
-    vehicleName: entry.vehicleName,
-    surface: entry.surface != null
-        ? SurfaceCondition.valueOf(entry.surface!)
-        : null,
-    sessionType: entry.sessionType != null
-        ? SessionType.valueOf(entry.sessionType!)
-        : null,
+    driverName: _nonEmpty(entry.driverName),
+    vehicleName: _nonEmpty(entry.vehicleName),
+    surface: _surfaceFromDb(entry.surface),
+    sessionType: _sessionTypeFromDb(entry.sessionType),
   );
+}
+
+/// Returns null for null or empty strings.
+String? _nonEmpty(String? value) =>
+    value != null && value.isNotEmpty ? value : null;
+
+/// Maps DB int → [SurfaceCondition], returning null for unspecified.
+SurfaceCondition? _surfaceFromDb(int? value) {
+  if (value == null) return null;
+  final surface = SurfaceCondition.valueOf(value);
+  return surface != SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
+      ? surface
+      : null;
+}
+
+/// Maps DB int → [SessionType], returning null for unspecified.
+SessionType? _sessionTypeFromDb(int? value) {
+  if (value == null) return null;
+  final type = SessionType.valueOf(value);
+  return type != SessionType.SESSION_TYPE_UNSPECIFIED ? type : null;
 }
