@@ -8,6 +8,7 @@ import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart';
 
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
 import 'package:race_coach/generated/racecoach/v1/telemetry.pb.dart';
+import 'package:race_coach/features/session/data/db/session_dao.dart';
 import 'package:race_coach/features/session/data/session_defaults.dart';
 import 'package:race_coach/features/session/data/session_meta_storage.dart';
 import 'package:race_coach/features/session/domain/raw_frame_list.dart';
@@ -74,13 +75,19 @@ class SessionRecorderState {
 ///   3. [markLap]        — finalises the current lap and starts a new one.
 ///   4. [stopRecording]  — writes session.pb + raw_frames.pb to disk.
 class SessionRecorder extends StateNotifier<SessionRecorderState> {
-  SessionRecorder({required this.trackName, required this.configName})
-    : super(SessionRecorderState.idle());
+  SessionRecorder({
+    required this.trackName,
+    required this.configName,
+    required this.dao,
+  }) : super(SessionRecorderState.idle());
 
   /// Human-readable track + configuration name used for directory naming and
   /// the Session proto's `track_name` field.
   final String trackName;
   final String configName;
+
+  /// DAO for indexing sessions in the Drift DB.
+  final SessionDao dao;
 
   // ---------------------------------------------------------------------------
   // Internal buffers
@@ -152,6 +159,7 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
     if (!state.isRecording) return;
 
     final now = DateTime.now();
+    final sessionId = state.sessionId!;
 
     // Flush any remaining frames as a partial lap.
     if (_currentLapFrames.isNotEmpty) {
@@ -167,7 +175,7 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
 
     // Assemble the Session proto.
     final session = Session(
-      sessionId: state.sessionId,
+      sessionId: sessionId,
       trackName: _fullTrackName,
       startTime: _timestampFromDateTime(state.startTime!),
       endTime: _timestampFromDateTime(now),
@@ -176,6 +184,14 @@ class SessionRecorder extends StateNotifier<SessionRecorderState> {
 
     // Write files.
     await _writeSessionFiles(session);
+
+    // Index in the Drift DB (async, best-effort — proto files are truth).
+    try {
+      final meta = await SessionMetaStorage().load(sessionId);
+      await dao.indexSession(session, meta: meta);
+    } catch (e) {
+      debugPrint('[SessionRecorder] DB index failed (will reconcile): $e');
+    }
 
     // Reset state.
     _allFrames.clear();
@@ -297,8 +313,13 @@ final sessionRecorderProvider =
       final trackState = ref.read(trackServiceProvider);
       final trackName = trackState.selectedTrack?.name ?? 'unknown-track';
       final configName = trackState.selectedConfig?.name ?? '';
+      final dao = ref.watch(sessionDaoProvider);
 
-      return SessionRecorder(trackName: trackName, configName: configName);
+      return SessionRecorder(
+        trackName: trackName,
+        configName: configName,
+        dao: dao,
+      );
     });
 
 /// Bridges the [isRecordingProvider] toggle and the [telemetryBusProvider]

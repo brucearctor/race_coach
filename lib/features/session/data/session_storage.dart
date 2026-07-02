@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart';
+import 'package:race_coach/features/session/data/db/session_dao.dart';
+import 'package:race_coach/features/session/data/db/race_coach_db.dart';
 
 // =============================================================================
 // SessionSummary — lightweight metadata for listing
@@ -189,22 +191,23 @@ class SessionStorage {
       date: date,
       lapCount: session.laps.length,
       bestLap: bestLap,
-      driverName:
-          meta != null && meta.driverName.isNotEmpty ? meta.driverName : null,
-      vehicleName:
-          meta != null && meta.vehicle.name.isNotEmpty
-              ? meta.vehicle.name
-              : null,
+      driverName: meta != null && meta.driverName.isNotEmpty
+          ? meta.driverName
+          : null,
+      vehicleName: meta != null && meta.vehicle.name.isNotEmpty
+          ? meta.vehicle.name
+          : null,
       surface:
           meta != null &&
-                  meta.conditions.surface != SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
-              ? meta.conditions.surface
-              : null,
+              meta.conditions.surface !=
+                  SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED
+          ? meta.conditions.surface
+          : null,
       sessionType:
           meta != null &&
-                  meta.sessionType != SessionType.SESSION_TYPE_UNSPECIFIED
-              ? meta.sessionType
-              : null,
+              meta.sessionType != SessionType.SESSION_TYPE_UNSPECIFIED
+          ? meta.sessionType
+          : null,
     );
   }
 
@@ -229,11 +232,48 @@ final sessionStorageProvider = Provider<SessionStorage>((ref) {
   return SessionStorage();
 });
 
+/// Reactive session list backed by the Drift DB index.
+///
+/// Emits a new list whenever a session is added, updated, or deleted.
+/// This replaces the old [sessionListProvider] for screens that want
+/// live updates instead of manual invalidation.
+final sessionStreamProvider = StreamProvider<List<SessionSummary>>((ref) {
+  final dao = ref.watch(sessionDaoProvider);
+  return dao.watchAllSessions().map(
+    (entries) => entries.map(_summaryFromEntry).toList(),
+  );
+});
+
 /// Provides the list of saved session summaries.
 ///
-/// Invalidate this provider after recording stops or a session is deleted
-/// to refresh the list.
-final sessionListProvider = FutureProvider<List<SessionSummary>>((ref) {
-  final storage = ref.watch(sessionStorageProvider);
-  return storage.listSessions();
+/// Now backed by the reactive stream — no manual invalidation needed.
+/// Kept as FutureProvider for backward compatibility with existing consumers.
+final sessionListProvider = FutureProvider<List<SessionSummary>>((ref) async {
+  final stream = ref.watch(sessionStreamProvider);
+  return stream.when(
+    data: (sessions) => sessions,
+    loading: () => <SessionSummary>[],
+    error: (_, _) => <SessionSummary>[],
+  );
 });
+
+/// Convert a Drift [SessionEntry] to a [SessionSummary].
+SessionSummary _summaryFromEntry(SessionEntry entry) {
+  return SessionSummary(
+    sessionId: entry.id,
+    trackName: entry.trackName,
+    date: DateTime.fromMillisecondsSinceEpoch(entry.dateMs),
+    lapCount: entry.lapCount,
+    bestLap: entry.bestLapMs != null
+        ? Duration(milliseconds: entry.bestLapMs!)
+        : null,
+    driverName: entry.driverName,
+    vehicleName: entry.vehicleName,
+    surface: entry.surface != null
+        ? SurfaceCondition.valueOf(entry.surface!)
+        : null,
+    sessionType: entry.sessionType != null
+        ? SessionType.valueOf(entry.sessionType!)
+        : null,
+  );
+}
