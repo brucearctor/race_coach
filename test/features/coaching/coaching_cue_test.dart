@@ -250,10 +250,8 @@ void main() {
       expect(a, isNot(equals(b)));
     });
 
-    test('different priority but same type/message/timestamp → equal '
-        '(priority not in equality)', () {
-      // Note: the equality implementation does NOT include priority,
-      // only type, message, and timestamp.
+    test('different priority but same type/message/timestamp → not equal', () {
+      // Fix #12: priority is now included in equality.
       final a = CoachingCue(
         type: CoachingCueType.braking,
         message: 'Brake!',
@@ -266,7 +264,7 @@ void main() {
         priority: CuePriority.low,
         timestamp: timestamp,
       );
-      expect(a, equals(b));
+      expect(a, isNot(equals(b)));
     });
 
     test('identical reference → equal', () {

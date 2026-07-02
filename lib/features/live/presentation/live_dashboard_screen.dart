@@ -238,17 +238,28 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
   // Recording FAB
   // -----------------------------------------------------------------------
 
+  /// Debounce guard to prevent double-tap from starting then immediately
+  /// stopping a recording, which creates an empty session.
+  bool _fabDebouncing = false;
+
   Widget _buildRecordingFab(bool isRecording) {
     return FloatingActionButton.extended(
-      onPressed: () {
-        ref.read(isRecordingProvider.notifier).state = !isRecording;
+      onPressed: _fabDebouncing
+          ? null
+          : () {
+              setState(() => _fabDebouncing = true);
+              Future.delayed(const Duration(seconds: 1), () {
+                if (mounted) setState(() => _fabDebouncing = false);
+              });
 
-        if (!isRecording) {
-          ref.read(lapTimerProvider.notifier).start();
-        } else {
-          ref.read(lapTimerProvider.notifier).stop();
-        }
-      },
+              ref.read(isRecordingProvider.notifier).state = !isRecording;
+
+              if (!isRecording) {
+                ref.read(lapTimerProvider.notifier).start();
+              } else {
+                ref.read(lapTimerProvider.notifier).stop();
+              }
+            },
       backgroundColor: isRecording ? AppColors.error : AppColors.success,
       foregroundColor: Colors.white,
       icon: Icon(
