@@ -247,9 +247,9 @@ class _LiveDashboardScreenState extends ConsumerState<LiveDashboardScreen>
       onPressed: _fabDebouncing
           ? null
           : () {
-              _fabDebouncing = true;
+              setState(() => _fabDebouncing = true);
               Future.delayed(const Duration(seconds: 1), () {
-                if (mounted) _fabDebouncing = false;
+                if (mounted) setState(() => _fabDebouncing = false);
               });
 
               ref.read(isRecordingProvider.notifier).state = !isRecording;
