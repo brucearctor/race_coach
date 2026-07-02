@@ -29,29 +29,19 @@ pre-commit:
 # =============================================================================
 # pre-push — thorough checks (<30s total). Runs before push.
 #
-# Proto codegen runs first (it deletes/regenerates .rs files), then rust
-# and flutter run in parallel afterward.
+# Codegen freshness runs first (regenerates + diffs), then tests run
+# in parallel afterward.
 # =============================================================================
 pre-push:
   piped: true
   commands:
-    # Group 1: Proto codegen freshness (must complete before rust compiles).
-    proto-codegen-fresh:
-      glob: "*.proto"
+    # Group 1: All codegen freshness (proto + FRB).
+    # Must complete before rust compiles (proto deletes/regenerates .rs files).
+    codegen-fresh:
       priority: 1
-      run: |
-        set -e
-        # Verify committed generated files match what buf generate produces.
-        # Fails if someone edited .proto but forgot to run `make proto`.
-        make proto
-        if ! git diff --quiet lib/generated/ rust/src/generated/; then
-          echo "ERROR: Proto codegen is stale. Run 'make proto' and commit the result."
-          git diff --stat lib/generated/ rust/src/generated/
-          git checkout -- lib/generated/ rust/src/generated/
-          exit 1
-        fi
+      run: make gen-check
 
-    # Group 2: Everything else runs after proto is done.
+    # Group 2: Everything else runs after codegen is validated.
     flutter-test:
       glob: "*.dart"
       priority: 2
