@@ -87,10 +87,11 @@ Future<Float32List> getMlFeatures() =>
 /// Return a JSON snapshot of the CueEngine's internal state for the debug
 /// overlay.
 ///
-/// Uses a JSON String return to avoid adding new types to the FRB boundary
-/// (codegen is currently broken). Dart parses the JSON on receipt.
+/// Uses a JSON String return to avoid adding new types to the FRB boundary.
+/// Dart parses the JSON on receipt.
 ///
-/// Only called when the developer HUD is visible.
+/// Acquires `SESSION` briefly to call [`CueEngine::debug_state()`], then
+/// releases the lock before formatting the JSON string.
 Future<String> getDebugStateJson() =>
     RustLib.instance.api.crateApiCoachingApiGetDebugStateJson();
 
