@@ -55,7 +55,8 @@ class TrackMapNotifier extends StateNotifier<List<TrackPoint>> {
     if (_count < maxPoints) _count++;
 
     // Emit a new list snapshot in chronological order.
-    // Only allocates when the subscriber actually reads.
+    // Note: this allocates an O(_count) copy on every addPoint call.
+    // The ring buffer avoids the old O(n) spread-copy on insert.
     state = _orderedSnapshot();
   }
 
