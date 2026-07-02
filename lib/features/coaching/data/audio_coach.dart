@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:collection';
 
+import 'package:collection/collection.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -26,8 +26,15 @@ class AudioCoach {
   /// Whether TTS is currently speaking.
   bool _isSpeaking = false;
 
-  /// Queue of pending cues, ordered by priority then timestamp.
-  final Queue<CoachingCue> _queue = Queue<CoachingCue>();
+  /// Queue of pending cues, ordered by priority (highest first),
+  /// then by timestamp (oldest first within same priority band).
+  final PriorityQueue<CoachingCue> _queue = PriorityQueue<CoachingCue>((a, b) {
+    // Higher priority index = more urgent → should come first.
+    final priorityCompare = b.priority.index.compareTo(a.priority.index);
+    if (priorityCompare != 0) return priorityCompare;
+    // Within same priority, FIFO: earlier timestamp first.
+    return a.timestamp.compareTo(b.timestamp);
+  });
 
   /// When the last cue finished playing.
   DateTime _lastCueEnd = DateTime.fromMillisecondsSinceEpoch(0);
@@ -158,7 +165,7 @@ class AudioCoach {
       return;
     }
 
-    _queue.addLast(cue);
+    _queue.add(cue);
     _processQueue();
   }
 
