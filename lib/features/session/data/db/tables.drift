@@ -1,0 +1,79 @@
+-- tables.drift — Session index schema
+--
+-- This is an INDEX, not a data store. Protobuf files on disk remain the
+-- source of truth. This DB can be rebuilt from them at any time via
+-- DbMigrator.rebuildIndex().
+
+-- One row per recording session.
+CREATE TABLE session_index (
+  id             TEXT    NOT NULL PRIMARY KEY,
+  track_name     TEXT    NOT NULL,
+  date_ms        INT     NOT NULL,
+  lap_count      INT     NOT NULL DEFAULT 0,
+  best_lap_ms    INT,
+  driver_name    TEXT,
+  vehicle_name   TEXT,
+  session_type   INT,
+  surface        INT,
+  notes          TEXT,
+  uploaded       INT     NOT NULL DEFAULT 0,
+  created_at_ms  INT     NOT NULL,
+  updated_at_ms  INT     NOT NULL
+) AS SessionEntry;
+
+-- One row per completed lap (partial laps excluded).
+CREATE TABLE lap_index (
+  id             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  session_id     TEXT    NOT NULL,
+  lap_number     INT     NOT NULL,
+  lap_time_ms    INT     NOT NULL,
+  sector_1_ms    INT,
+  sector_2_ms    INT,
+  sector_3_ms    INT,
+  is_reference   INT     NOT NULL DEFAULT 0,
+  UNIQUE(session_id, lap_number)
+) AS LapEntry;
+
+-- Default sort order index. Add more only when profiling shows need.
+CREATE INDEX idx_session_date ON session_index (date_ms DESC);
+
+-- ── Named queries (Drift generates typed Dart methods) ──────────────
+
+-- List all sessions, newest first.
+allSessions:
+  SELECT * FROM session_index ORDER BY date_ms DESC;
+
+-- Filter by track name.
+sessionsByTrack:
+  SELECT * FROM session_index
+  WHERE track_name = :track
+  ORDER BY date_ms DESC;
+
+-- All laps for a given session.
+lapsForSession:
+  SELECT * FROM lap_index
+  WHERE session_id = :sessionId
+  ORDER BY lap_number ASC;
+
+-- Personal best lap time at a track.
+personalBestAtTrack:
+  SELECT MIN(l.lap_time_ms) AS best_ms
+  FROM lap_index l
+  INNER JOIN session_index s ON l.session_id = s.id
+  WHERE s.track_name = :track AND l.lap_time_ms > 0;
+
+-- Lap times over time for a track (for trend charts).
+lapTimeTrend:
+  SELECT l.lap_time_ms, s.date_ms, s.id AS session_id, l.lap_number
+  FROM lap_index l
+  INNER JOIN session_index s ON l.session_id = s.id
+  WHERE s.track_name = :track AND l.lap_time_ms > 0
+  ORDER BY s.date_ms ASC, l.lap_number ASC;
+
+-- Distinct track names (for filter dropdown).
+distinctTracks:
+  SELECT DISTINCT track_name FROM session_index ORDER BY track_name ASC;
+
+-- Session count (for migration reconciliation).
+sessionCount:
+  SELECT COUNT(*) AS cnt FROM session_index;

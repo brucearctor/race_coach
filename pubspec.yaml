@@ -37,6 +37,7 @@ dependencies:
 
   # Local storage
   path_provider: ^2.1.5
+  path: ^1.9.0
 
   # Protobuf runtime
   protobuf: ^6.0.0
@@ -55,6 +56,10 @@ dependencies:
   flutter_rust_bridge: 2.12.0
   shared_preferences: ^2.5.5
 
+  # Database (session index)
+  drift: 2.25.1
+  sqlite3_flutter_libs: 0.5.30
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -62,6 +67,10 @@ dev_dependencies:
 
   integration_test:
     sdk: flutter
+
+  # Code generation (Drift only)
+  build_runner: ^2.4.14
+  drift_dev: 2.25.1
 
 flutter:
   uses-material-design: true

@@ -14,15 +14,15 @@ PROTO2TYPE_BIN ?= $(shell which protoc-gen-proto2type 2>/dev/null || echo "../pr
 GENERATED_RS_DIR := rust/src/generated/racecoach/v1
 
 # Directories containing generated code (for freshness checks)
-GENERATED_DIRS := lib/generated/ lib/src/rust/ rust/src/generated/
+GENERATED_DIRS := lib/generated/ lib/src/rust/ rust/src/generated/ lib/features/session/data/db/
 
-.PHONY: gen gen-check proto proto-clean proto-gen proto-fixup frb \
+.PHONY: gen gen-check proto proto-clean proto-gen proto-fixup frb db \
         rust-test rust-check analyze check version-check
 
 # ─── Unified codegen ──────────────────────────────────────────────────
 
 ## Regenerate ALL codegen outputs in correct order
-gen: proto frb
+gen: proto frb db
 	@echo "✅ All codegen complete"
 
 ## Verify all generated code is fresh (CI + pre-push)
@@ -90,6 +90,13 @@ proto-fixup:
 frb:
 	flutter_rust_bridge_codegen generate
 	@echo "✅ FRB codegen complete"
+
+# ─── Drift Database ───────────────────────────────────────────────────
+
+## Regenerate Drift database code
+db:
+	dart run build_runner build --delete-conflicting-outputs
+	@echo "✅ Drift codegen complete"
 
 # ─── Rust ─────────────────────────────────────────────────────────────
 
