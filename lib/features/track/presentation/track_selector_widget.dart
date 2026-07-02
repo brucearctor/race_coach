@@ -206,8 +206,11 @@ class TrackSelectorWidget extends ConsumerWidget {
           );
         }).toList(),
         onChanged: (trackId) {
-          final track = availableTracks.firstWhere((t) => t.trackId == trackId);
-          onChanged(track);
+          if (trackId == null) return;
+          final track = availableTracks
+              .where((t) => t.trackId == trackId)
+              .firstOrNull;
+          if (track != null) onChanged(track);
         },
       ),
     );
@@ -251,10 +254,11 @@ class TrackSelectorWidget extends ConsumerWidget {
           );
         }).toList(),
         onChanged: (configId) {
-          final config = configurations.firstWhere(
-            (c) => c.configId == configId,
-          );
-          onChanged(config);
+          if (configId == null) return;
+          final config = configurations
+              .where((c) => c.configId == configId)
+              .firstOrNull;
+          if (config != null) onChanged(config);
         },
       ),
     );

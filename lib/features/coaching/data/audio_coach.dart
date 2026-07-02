@@ -12,10 +12,13 @@ import 'package:race_coach/features/coaching/domain/cue_config.dart';
 class AudioCoach {
   AudioCoach() {
     _tts = FlutterTts();
-    _init();
+    _initFuture = _init();
   }
 
   late final FlutterTts _tts;
+
+  /// Completes when TTS is fully configured.
+  late final Future<void> _initFuture;
 
   /// Whether audio coaching is enabled.
   bool _enabled = true;
@@ -49,6 +52,7 @@ class AudioCoach {
 
   /// Fetch available English voices from the TTS engine.
   Future<List<Map<String, String>>> getAvailableVoices() async {
+    await _initFuture;
     final voices = await _tts.getVoices;
     if (voices == null) return [];
 
@@ -72,6 +76,7 @@ class AudioCoach {
 
   /// Set the TTS voice. Pass null to reset to system default.
   Future<void> setVoice(Map<String, String>? voice) async {
+    await _initFuture;
     _currentVoice = voice;
     if (voice != null) {
       await _tts.setVoice(voice);
@@ -128,6 +133,7 @@ class AudioCoach {
 
   /// Apply coaching cue configuration (Dart-side audio settings).
   Future<void> applyConfig(DartCueConfig config) async {
+    await _initFuture;
     minInterval = Duration(seconds: config.minCueIntervalS);
     await setVolume(config.volume);
     await setSpeechRate(config.speechRate);
@@ -139,6 +145,7 @@ class AudioCoach {
   /// Add a coaching cue to the queue. It will be spoken when appropriate.
   Future<void> speak(CoachingCue cue) async {
     if (!_enabled) return;
+    await _initFuture;
 
     // Critical cues bypass the queue.
     if (cue.priority == CuePriority.critical) {
@@ -153,6 +160,7 @@ class AudioCoach {
   /// Interrupt any current speech and speak this message immediately.
   Future<void> speakImmediate(String message) async {
     if (!_enabled) return;
+    await _initFuture;
 
     await _tts.stop();
     _isSpeaking = true;

@@ -254,8 +254,10 @@ class _GForcePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GForcePainter oldDelegate) {
-    return lateralG != oldDelegate.lateralG ||
-        longitudinalG != oldDelegate.longitudinalG ||
-        trail.length != oldDelegate.trail.length;
+    // Trail is always a fresh List.from() copy on each build, so content
+    // comparison by length alone misses changes when the trail is full
+    // (new points replace old, length stays at maxTrailLength).
+    // Since the widget only rebuilds on telemetry updates, always repaint.
+    return true;
   }
 }
