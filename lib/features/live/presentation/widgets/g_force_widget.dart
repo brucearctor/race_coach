@@ -256,6 +256,9 @@ class _GForcePainter extends CustomPainter {
   bool shouldRepaint(covariant _GForcePainter oldDelegate) {
     return lateralG != oldDelegate.lateralG ||
         longitudinalG != oldDelegate.longitudinalG ||
-        trail.length != oldDelegate.trail.length;
+        trail.length != oldDelegate.trail.length ||
+        // Once trail is full, always repaint: oldest point was replaced
+        // but length stays constant at _maxTrailLength (20).
+        trail.length >= _GForceWidgetState._maxTrailLength;
   }
 }

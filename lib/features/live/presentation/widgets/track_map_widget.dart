@@ -25,10 +25,19 @@ class TrackPoint {
 // ── State Notifier ─────────────────────────────────────────────────────
 
 /// Accumulates GPS track points from telemetry updates.
+///
+/// Uses a ring buffer internally to avoid O(n) list copies at 10Hz.
 class TrackMapNotifier extends StateNotifier<List<TrackPoint>> {
   TrackMapNotifier() : super([]);
 
   static const int maxPoints = 5000;
+
+  final List<TrackPoint> _buffer = List<TrackPoint>.filled(
+    maxPoints,
+    TrackPoint(position: LatLng(0, 0), speedMph: 0, timestamp: DateTime(2000)),
+  );
+  int _writeIndex = 0;
+  int _count = 0;
 
   /// Add a new telemetry sample to the track.
   void addPoint(TelemetryState telemetry) {
@@ -41,18 +50,34 @@ class TrackMapNotifier extends StateNotifier<List<TrackPoint>> {
       timestamp: DateTime.now(),
     );
 
-    final newList = [...state, point];
+    _buffer[_writeIndex] = point;
+    _writeIndex = (_writeIndex + 1) % maxPoints;
+    if (_count < maxPoints) _count++;
 
-    // Trim to max points, keeping the most recent.
-    if (newList.length > maxPoints) {
-      state = newList.sublist(newList.length - maxPoints);
-    } else {
-      state = newList;
+    // Emit a new list snapshot in chronological order.
+    // Note: this allocates an O(_count) copy on every addPoint call.
+    // The ring buffer avoids the old O(n) spread-copy on insert.
+    state = _orderedSnapshot();
+  }
+
+  /// Returns points in chronological order (oldest first).
+  List<TrackPoint> _orderedSnapshot() {
+    if (_count < maxPoints) {
+      return List<TrackPoint>.unmodifiable(_buffer.sublist(0, _count));
     }
+    // Buffer is full — oldest point is at _writeIndex.
+    return List<TrackPoint>.unmodifiable([
+      ..._buffer.sublist(_writeIndex, maxPoints),
+      ..._buffer.sublist(0, _writeIndex),
+    ]);
   }
 
   /// Clear all recorded points.
-  void clear() => state = [];
+  void clear() {
+    _writeIndex = 0;
+    _count = 0;
+    state = [];
+  }
 }
 
 // ── Providers ──────────────────────────────────────────────────────────
