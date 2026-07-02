@@ -1,17 +1,52 @@
 # race_coach — development commands
 #
 # Usage:
+#   make gen         — regenerate ALL codegen outputs (proto + FRB)
+#   make gen-check   — verify all generated code is fresh
 #   make proto       — regenerate proto types (Dart + Rust)
+#   make frb         — regenerate flutter_rust_bridge bindings
 #   make rust-test   — run Rust tests
 #   make analyze     — run Flutter analyze
 #   make check       — cargo check + flutter analyze
-#   make frb         — regenerate flutter_rust_bridge bindings
 
 # Path to proto2type binary (built from ../proto2type)
 PROTO2TYPE_BIN ?= $(shell which protoc-gen-proto2type 2>/dev/null || echo "../proto2type/protoc-gen-proto2type")
 GENERATED_RS_DIR := rust/src/generated/racecoach/v1
 
-.PHONY: proto proto-rust proto-dart rust-test analyze check frb clean-proto
+# Directories containing generated code (for freshness checks)
+GENERATED_DIRS := lib/generated/ lib/src/rust/ rust/src/generated/
+
+.PHONY: gen gen-check proto proto-clean proto-gen proto-fixup frb \
+        rust-test rust-check analyze check version-check
+
+# ─── Unified codegen ──────────────────────────────────────────────────
+
+## Regenerate ALL codegen outputs in correct order
+gen: proto frb
+	@echo "✅ All codegen complete"
+
+## Verify all generated code is fresh (CI + pre-push)
+gen-check: gen
+	@if ! git diff --quiet $(GENERATED_DIRS); then \
+		echo "ERROR: Generated code is stale. Run 'make gen' and commit."; \
+		git diff --stat $(GENERATED_DIRS); \
+		git checkout -- $(GENERATED_DIRS); \
+		exit 1; \
+	fi
+	@echo "✅ All generated code is fresh"
+
+## Validate local tool versions match VERSIONS file
+version-check:
+	@echo "Checking tool versions..."
+	@. ./VERSIONS && \
+	  buf_actual=$$(buf --version 2>/dev/null) && \
+	  frb_actual=$$(flutter_rust_bridge_codegen --version 2>/dev/null | awk '{print $$NF}') && \
+	  dart_actual=$$(dart --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) && \
+	  ok=1 && \
+	  if [ "$$buf_actual" != "$$BUF_VERSION" ]; then echo "  ⚠ buf: expected $$BUF_VERSION, got $$buf_actual"; ok=0; fi && \
+	  if [ "$$frb_actual" != "$$FRB_VERSION" ]; then echo "  ⚠ FRB: expected $$FRB_VERSION, got $$frb_actual"; ok=0; fi && \
+	  if [ "$$dart_actual" != "$$DART_SDK" ]; then echo "  ⚠ Dart: expected $$DART_SDK, got $$dart_actual"; ok=0; fi && \
+	  if [ "$$ok" = "1" ]; then echo "  ✅ All versions match"; fi
 
 # ─── Proto generation ─────────────────────────────────────────────────
 
@@ -44,6 +79,13 @@ proto-fixup:
 	done
 	@echo "  ✅ fixup complete"
 
+# ─── Flutter Rust Bridge ──────────────────────────────────────────────
+
+## Regenerate flutter_rust_bridge bindings
+frb:
+	flutter_rust_bridge_codegen generate
+	@echo "✅ FRB codegen complete"
+
 # ─── Rust ─────────────────────────────────────────────────────────────
 
 ## Run Rust tests
@@ -60,17 +102,11 @@ rust-check:
 analyze:
 	flutter analyze
 
-## Regenerate flutter_rust_bridge bindings
-frb:
-	flutter_rust_bridge_codegen generate
-	@echo "✅ FRB codegen complete"
-
 # ─── Combined ────────────────────────────────────────────────────────
 
 ## Full check: cargo check + flutter analyze
 check: rust-check analyze
 	@echo "✅ All checks passed"
 
-## Full proto + FRB pipeline: regenerate protos, then FRB bindings
-proto-all: proto frb
-	@echo "✅ Proto + FRB pipeline complete"
+## Full proto + FRB pipeline (alias for gen)
+proto-all: gen

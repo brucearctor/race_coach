@@ -1,0 +1,16 @@
+# .gitattributes — generated code handling
+#
+# linguist-generated: hides from GitHub diffs/stats
+# merge=union: auto-resolve conflicts by accepting both sides (then regenerate)
+
+# Proto-generated Dart files
+lib/generated/**/*.pb.dart      linguist-generated=true merge=union
+lib/generated/**/*.pbenum.dart  linguist-generated=true merge=union
+lib/generated/**/*.pbjson.dart  linguist-generated=true merge=union
+lib/generated/**/*.pbserver.dart linguist-generated=true merge=union
+
+# Proto-generated Rust files
+rust/src/generated/**/*.type.rs linguist-generated=true merge=union
+
+# Flutter Rust Bridge generated files (regenerated via `make frb`)
+lib/src/rust/**                 linguist-generated=true merge=union

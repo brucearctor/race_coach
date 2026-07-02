@@ -1,0 +1,10 @@
+# VERSIONS — pinned tool versions for reproducible codegen
+#
+# CI and pre-push hooks should validate these match the local environment.
+# To upgrade: update this file, regenerate all outputs, commit.
+
+BUF_VERSION=1.70.0
+PROTOC_VERSION=35.0
+FRB_VERSION=2.12.0
+DART_SDK=3.11.5
+RUSTC=1.94.0
