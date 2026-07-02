@@ -1,0 +1,12 @@
+# build.yaml — scope code generators to their directories
+#
+# Drift only scans the db/ directory, preventing unnecessary scanning
+# of 100+ Dart files in lib/.
+
+targets:
+  $default:
+    builders:
+      drift_dev:
+        generate_for:
+          include:
+            - lib/features/session/data/db/**
