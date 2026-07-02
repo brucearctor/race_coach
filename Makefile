@@ -27,10 +27,11 @@ gen: proto frb
 
 ## Verify all generated code is fresh (CI + pre-push)
 gen-check: gen
-	@if ! git diff --quiet $(GENERATED_DIRS); then \
+	@if [ -n "$$(git status --porcelain -- $(GENERATED_DIRS))" ]; then \
 		echo "ERROR: Generated code is stale. Run 'make gen' and commit."; \
-		git diff --stat $(GENERATED_DIRS); \
+		git status --short -- $(GENERATED_DIRS); \
 		git checkout -- $(GENERATED_DIRS); \
+		git clean -fd -- $(GENERATED_DIRS); \
 		exit 1; \
 	fi
 	@echo "✅ All generated code is fresh"
@@ -42,10 +43,14 @@ version-check:
 	  buf_actual=$$(buf --version 2>/dev/null) && \
 	  frb_actual=$$(flutter_rust_bridge_codegen --version 2>/dev/null | awk '{print $$NF}') && \
 	  dart_actual=$$(dart --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1) && \
+	  protoc_actual=$$(protoc --version 2>/dev/null | awk '{print $$2}') && \
+	  rustc_actual=$$(rustc --version 2>/dev/null | awk '{print $$2}') && \
 	  ok=1 && \
 	  if [ "$$buf_actual" != "$$BUF_VERSION" ]; then echo "  ⚠ buf: expected $$BUF_VERSION, got $$buf_actual"; ok=0; fi && \
 	  if [ "$$frb_actual" != "$$FRB_VERSION" ]; then echo "  ⚠ FRB: expected $$FRB_VERSION, got $$frb_actual"; ok=0; fi && \
 	  if [ "$$dart_actual" != "$$DART_SDK" ]; then echo "  ⚠ Dart: expected $$DART_SDK, got $$dart_actual"; ok=0; fi && \
+	  if [ "$$protoc_actual" != "$$PROTOC_VERSION" ]; then echo "  ⚠ protoc: expected $$PROTOC_VERSION, got $$protoc_actual"; ok=0; fi && \
+	  if [ "$$rustc_actual" != "$$RUSTC" ]; then echo "  ⚠ rustc: expected $$RUSTC, got $$rustc_actual"; ok=0; fi && \
 	  if [ "$$ok" = "1" ]; then echo "  ✅ All versions match"; fi
 
 # ─── Proto generation ─────────────────────────────────────────────────
