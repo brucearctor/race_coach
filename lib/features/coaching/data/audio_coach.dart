@@ -86,10 +86,15 @@ class AudioCoach {
   }
 
   Future<void> _init() async {
-    await _tts.setLanguage('en-US');
-    await _tts.setVolume(_volume);
-    await _tts.setSpeechRate(_speechRate);
-    await _tts.setPitch(_pitch);
+    try {
+      await _tts.setLanguage('en-US');
+      await _tts.setVolume(_volume);
+      await _tts.setSpeechRate(_speechRate);
+      await _tts.setPitch(_pitch);
+    } catch (_) {
+      // Swallow init errors so _initFuture always completes.
+      // TTS calls may fall back to platform defaults.
+    }
 
     _tts.setCompletionHandler(() {
       _isSpeaking = false;
