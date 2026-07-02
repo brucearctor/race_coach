@@ -30,22 +30,22 @@ class DbMigrator {
   /// Returns true if migration was performed.
   /// Returns false if DB is already in sync.
   Future<bool> migrateIfNeeded() async {
-    final dbCount = await dao.sessionCount();
-    final diskCount = await _diskSessionCount();
+    final diskIds = await _diskSessionIds();
+    final dbIds = await _dbSessionIds();
 
-    if (dbCount == diskCount && diskCount > 0) {
-      debugPrint('[DbMigrator] Index is in sync ($dbCount sessions)');
+    if (diskIds.isEmpty && dbIds.isEmpty) {
+      debugPrint('[DbMigrator] No sessions on disk or in DB');
       return false;
     }
 
-    if (dbCount == 0 && diskCount == 0) {
-      debugPrint('[DbMigrator] No sessions on disk or in DB');
+    if (diskIds.length == dbIds.length && diskIds.difference(dbIds).isEmpty) {
+      debugPrint('[DbMigrator] Index is in sync (${dbIds.length} sessions)');
       return false;
     }
 
     debugPrint(
       '[DbMigrator] Rebuilding index: '
-      'DB has $dbCount, disk has $diskCount',
+      'DB has ${dbIds.length}, disk has ${diskIds.length}',
     );
     await rebuildIndex();
     return true;
@@ -90,16 +90,24 @@ class DbMigrator {
     debugPrint('[DbMigrator] Indexed $indexed sessions, skipped $skipped');
   }
 
-  Future<int> _diskSessionCount() async {
+  /// Get session IDs from disk (directories containing session.pb).
+  Future<Set<String>> _diskSessionIds() async {
     final appDir = await getApplicationDocumentsDirectory();
     final sessionsDir = Directory('${appDir.path}/sessions');
-    if (!sessionsDir.existsSync()) return 0;
+    if (!sessionsDir.existsSync()) return {};
 
     return sessionsDir
         .listSync()
         .whereType<Directory>()
         .where((d) => File('${d.path}/session.pb').existsSync())
-        .length;
+        .map((d) => d.path.split('/').last)
+        .toSet();
+  }
+
+  /// Get session IDs from the DB index.
+  Future<Set<String>> _dbSessionIds() async {
+    final sessions = await dao.watchAllSessions().first;
+    return sessions.map((s) => s.id).toSet();
   }
 }
 

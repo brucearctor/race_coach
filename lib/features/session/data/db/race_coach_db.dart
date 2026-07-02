@@ -30,6 +30,10 @@ class RaceCoachDb extends _$RaceCoachDb {
       // Future schema migrations go here.
       // Nuclear option: drop all tables, recreate, rebuild from protobuf.
     },
+    beforeOpen: (details) async {
+      // SQLite disables FK enforcement by default — enable it.
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
   );
 }
 

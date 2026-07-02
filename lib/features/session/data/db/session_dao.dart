@@ -17,57 +17,61 @@ class SessionDao {
 
   /// Index a session after recording stops.
   /// Call with the full [Session] proto and optional [SessionMeta].
+  ///
+  /// Wrapped in a transaction for atomicity — if any insert fails,
+  /// no partial rows are left behind.
   Future<void> indexSession(
     proto.Session session, {
     proto.SessionMeta? meta,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final bestMs = _fastestLapMs(session);
+    final validLaps = session.laps.where((l) => l.lapTimeSeconds > 0).toList();
+    final bestMs = _fastestLapMs(validLaps);
 
-    await _db
-        .into(_db.sessionIndex)
-        .insertOnConflictUpdate(
-          SessionIndexCompanion(
-            id: Value(session.sessionId),
-            trackName: Value(session.trackName),
-            dateMs: Value(
-              session.hasStartTime()
-                  ? session.startTime.toDateTime().millisecondsSinceEpoch
-                  : now,
-            ),
-            lapCount: Value(session.laps.length),
-            bestLapMs: bestMs != null ? Value(bestMs) : const Value.absent(),
-            driverName: meta != null && meta.driverName.isNotEmpty
-                ? Value(meta.driverName)
-                : const Value.absent(),
-            vehicleName: meta != null && meta.vehicle.name.isNotEmpty
-                ? Value(meta.vehicle.name)
-                : const Value.absent(),
-            sessionType: meta != null
-                ? Value(meta.sessionType.value)
-                : const Value.absent(),
-            surface: meta != null
-                ? Value(meta.conditions.surface.value)
-                : const Value.absent(),
-            notes: meta != null && meta.notes.isNotEmpty
-                ? Value(meta.notes)
-                : const Value.absent(),
-            createdAtMs: Value(now),
-            updatedAtMs: Value(now),
-          ),
-        );
-
-    // Index each completed lap (delete existing first for idempotent upsert).
-    await (_db.delete(
-      _db.lapIndex,
-    )..where((l) => l.sessionId.equals(session.sessionId))).go();
-
-    for (final lap in session.laps) {
-      if (lap.lapTimeSeconds <= 0) continue; // skip partial laps
+    await _db.transaction(() async {
       await _db
-          .into(_db.lapIndex)
-          .insert(
-            LapIndexCompanion.insert(
+          .into(_db.sessionIndex)
+          .insertOnConflictUpdate(
+            SessionIndexCompanion(
+              id: Value(session.sessionId),
+              trackName: Value(session.trackName),
+              dateMs: Value(
+                session.hasStartTime()
+                    ? session.startTime.toDateTime().millisecondsSinceEpoch
+                    : now,
+              ),
+              lapCount: Value(validLaps.length),
+              bestLapMs: Value(bestMs), // null clears stale value on re-index
+              driverName: meta != null && meta.driverName.isNotEmpty
+                  ? Value(meta.driverName)
+                  : const Value.absent(),
+              vehicleName: meta != null && meta.vehicle.name.isNotEmpty
+                  ? Value(meta.vehicle.name)
+                  : const Value.absent(),
+              sessionType: meta != null
+                  ? Value(meta.sessionType.value)
+                  : const Value.absent(),
+              surface: meta != null
+                  ? Value(meta.conditions.surface.value)
+                  : const Value.absent(),
+              notes: meta != null && meta.notes.isNotEmpty
+                  ? Value(meta.notes)
+                  : const Value.absent(),
+              createdAtMs: Value(now),
+              updatedAtMs: Value(now),
+            ),
+          );
+
+      // Delete existing laps then batch-insert (idempotent upsert).
+      await (_db.delete(
+        _db.lapIndex,
+      )..where((l) => l.sessionId.equals(session.sessionId))).go();
+
+      await _db.batch((batch) {
+        batch.insertAll(
+          _db.lapIndex,
+          validLaps.map(
+            (lap) => LapIndexCompanion.insert(
               sessionId: session.sessionId,
               lapNumber: lap.lapNumber,
               lapTimeMs: (lap.lapTimeSeconds * 1000).round(),
@@ -81,8 +85,10 @@ class SessionDao {
                   ? Value((lap.sectorTimesSeconds[2] * 1000).round())
                   : const Value.absent(),
             ),
-          );
-    }
+          ),
+        );
+      });
+    });
   }
 
   /// Update metadata fields (after editing driver, vehicle, notes, etc).
@@ -160,11 +166,10 @@ class SessionDao {
 
   // ── Helpers ─────────────────────────────────────────────────────────
 
-  /// Find fastest completed lap in a session (ms), or null.
-  static int? _fastestLapMs(proto.Session session) {
+  /// Find fastest lap in a list of valid laps (ms), or null.
+  static int? _fastestLapMs(List<proto.Lap> laps) {
     int? best;
-    for (final lap in session.laps) {
-      if (lap.lapTimeSeconds <= 0) continue;
+    for (final lap in laps) {
       final ms = (lap.lapTimeSeconds * 1000).round();
       if (best == null || ms < best) best = ms;
     }

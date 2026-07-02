@@ -24,7 +24,7 @@ CREATE TABLE session_index (
 -- One row per completed lap (partial laps excluded).
 CREATE TABLE lap_index (
   id             INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  session_id     TEXT    NOT NULL,
+  session_id     TEXT    NOT NULL REFERENCES session_index(id) ON DELETE CASCADE,
   lap_number     INT     NOT NULL,
   lap_time_ms    INT     NOT NULL,
   sector_1_ms    INT,

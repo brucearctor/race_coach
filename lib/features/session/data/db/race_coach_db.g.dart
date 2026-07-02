@@ -801,7 +801,8 @@ class LapIndex extends Table with TableInfo<LapIndex, LapEntry> {
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
-    $customConstraints: 'NOT NULL',
+    $customConstraints:
+        'NOT NULL REFERENCES session_index(id)ON DELETE CASCADE',
   );
   static const VerificationMeta _lapNumberMeta = const VerificationMeta(
     'lapNumber',
@@ -1373,6 +1374,16 @@ abstract class _$RaceCoachDb extends GeneratedDatabase {
     lapIndex,
     idxSessionDate,
   ];
+  @override
+  StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'session_index',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('lap_index', kind: UpdateKind.delete)],
+    ),
+  ]);
 }
 
 typedef $SessionIndexCreateCompanionBuilder =
@@ -1409,6 +1420,30 @@ typedef $SessionIndexUpdateCompanionBuilder =
       Value<int> updatedAtMs,
       Value<int> rowid,
     });
+
+final class $SessionIndexReferences
+    extends BaseReferences<_$RaceCoachDb, SessionIndex, SessionEntry> {
+  $SessionIndexReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<LapIndex, List<LapEntry>> _lapIndexRefsTable(
+    _$RaceCoachDb db,
+  ) => MultiTypedResultKey.fromTable(
+    db.lapIndex,
+    aliasName: $_aliasNameGenerator(db.sessionIndex.id, db.lapIndex.sessionId),
+  );
+
+  $LapIndexProcessedTableManager get lapIndexRefs {
+    final manager = $LapIndexTableManager(
+      $_db,
+      $_db.lapIndex,
+    ).filter((f) => f.sessionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_lapIndexRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
 
 class $SessionIndexFilterComposer
     extends Composer<_$RaceCoachDb, SessionIndex> {
@@ -1483,6 +1518,31 @@ class $SessionIndexFilterComposer
     column: $table.updatedAtMs,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> lapIndexRefs(
+    Expression<bool> Function($LapIndexFilterComposer f) f,
+  ) {
+    final $LapIndexFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lapIndex,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $LapIndexFilterComposer(
+            $db: $db,
+            $table: $db.lapIndex,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $SessionIndexOrderingComposer
@@ -1617,6 +1677,31 @@ class $SessionIndexAnnotationComposer
     column: $table.updatedAtMs,
     builder: (column) => column,
   );
+
+  Expression<T> lapIndexRefs<T extends Object>(
+    Expression<T> Function($LapIndexAnnotationComposer a) f,
+  ) {
+    final $LapIndexAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lapIndex,
+      getReferencedColumn: (t) => t.sessionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $LapIndexAnnotationComposer(
+            $db: $db,
+            $table: $db.lapIndex,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $SessionIndexTableManager
@@ -1630,12 +1715,9 @@ class $SessionIndexTableManager
           $SessionIndexAnnotationComposer,
           $SessionIndexCreateCompanionBuilder,
           $SessionIndexUpdateCompanionBuilder,
-          (
-            SessionEntry,
-            BaseReferences<_$RaceCoachDb, SessionIndex, SessionEntry>,
-          ),
+          (SessionEntry, $SessionIndexReferences),
           SessionEntry,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool lapIndexRefs})
         > {
   $SessionIndexTableManager(_$RaceCoachDb db, SessionIndex table)
     : super(
@@ -1713,9 +1795,37 @@ class $SessionIndexTableManager
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) =>
+                    (e.readTable(table), $SessionIndexReferences(db, table, e)),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({lapIndexRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [if (lapIndexRefs) db.lapIndex],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (lapIndexRefs)
+                    await $_getPrefetchedData<
+                      SessionEntry,
+                      SessionIndex,
+                      LapEntry
+                    >(
+                      currentTable: table,
+                      referencedTable: $SessionIndexReferences
+                          ._lapIndexRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $SessionIndexReferences(db, table, p0).lapIndexRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.sessionId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
         ),
       );
 }
@@ -1730,9 +1840,9 @@ typedef $SessionIndexProcessedTableManager =
       $SessionIndexAnnotationComposer,
       $SessionIndexCreateCompanionBuilder,
       $SessionIndexUpdateCompanionBuilder,
-      (SessionEntry, BaseReferences<_$RaceCoachDb, SessionIndex, SessionEntry>),
+      (SessionEntry, $SessionIndexReferences),
       SessionEntry,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool lapIndexRefs})
     >;
 typedef $LapIndexCreateCompanionBuilder =
     LapIndexCompanion Function({
@@ -1757,6 +1867,30 @@ typedef $LapIndexUpdateCompanionBuilder =
       Value<int> isReference,
     });
 
+final class $LapIndexReferences
+    extends BaseReferences<_$RaceCoachDb, LapIndex, LapEntry> {
+  $LapIndexReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static SessionIndex _sessionIdTable(_$RaceCoachDb db) =>
+      db.sessionIndex.createAlias(
+        $_aliasNameGenerator(db.lapIndex.sessionId, db.sessionIndex.id),
+      );
+
+  $SessionIndexProcessedTableManager get sessionId {
+    final $_column = $_itemColumn<String>('session_id')!;
+
+    final manager = $SessionIndexTableManager(
+      $_db,
+      $_db.sessionIndex,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_sessionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
 class $LapIndexFilterComposer extends Composer<_$RaceCoachDb, LapIndex> {
   $LapIndexFilterComposer({
     required super.$db,
@@ -1767,11 +1901,6 @@ class $LapIndexFilterComposer extends Composer<_$RaceCoachDb, LapIndex> {
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get sessionId => $composableBuilder(
-    column: $table.sessionId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1804,6 +1933,29 @@ class $LapIndexFilterComposer extends Composer<_$RaceCoachDb, LapIndex> {
     column: $table.isReference,
     builder: (column) => ColumnFilters(column),
   );
+
+  $SessionIndexFilterComposer get sessionId {
+    final $SessionIndexFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessionIndex,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SessionIndexFilterComposer(
+            $db: $db,
+            $table: $db.sessionIndex,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $LapIndexOrderingComposer extends Composer<_$RaceCoachDb, LapIndex> {
@@ -1816,11 +1968,6 @@ class $LapIndexOrderingComposer extends Composer<_$RaceCoachDb, LapIndex> {
   });
   ColumnOrderings<int> get id => $composableBuilder(
     column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get sessionId => $composableBuilder(
-    column: $table.sessionId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1853,6 +2000,29 @@ class $LapIndexOrderingComposer extends Composer<_$RaceCoachDb, LapIndex> {
     column: $table.isReference,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $SessionIndexOrderingComposer get sessionId {
+    final $SessionIndexOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessionIndex,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SessionIndexOrderingComposer(
+            $db: $db,
+            $table: $db.sessionIndex,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $LapIndexAnnotationComposer extends Composer<_$RaceCoachDb, LapIndex> {
@@ -1865,9 +2035,6 @@ class $LapIndexAnnotationComposer extends Composer<_$RaceCoachDb, LapIndex> {
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get sessionId =>
-      $composableBuilder(column: $table.sessionId, builder: (column) => column);
 
   GeneratedColumn<int> get lapNumber =>
       $composableBuilder(column: $table.lapNumber, builder: (column) => column);
@@ -1888,6 +2055,29 @@ class $LapIndexAnnotationComposer extends Composer<_$RaceCoachDb, LapIndex> {
     column: $table.isReference,
     builder: (column) => column,
   );
+
+  $SessionIndexAnnotationComposer get sessionId {
+    final $SessionIndexAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.sessionId,
+      referencedTable: $db.sessionIndex,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $SessionIndexAnnotationComposer(
+            $db: $db,
+            $table: $db.sessionIndex,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $LapIndexTableManager
@@ -1901,9 +2091,9 @@ class $LapIndexTableManager
           $LapIndexAnnotationComposer,
           $LapIndexCreateCompanionBuilder,
           $LapIndexUpdateCompanionBuilder,
-          (LapEntry, BaseReferences<_$RaceCoachDb, LapIndex, LapEntry>),
+          (LapEntry, $LapIndexReferences),
           LapEntry,
-          PrefetchHooks Function()
+          PrefetchHooks Function({bool sessionId})
         > {
   $LapIndexTableManager(_$RaceCoachDb db, LapIndex table)
     : super(
@@ -1957,9 +2147,51 @@ class $LapIndexTableManager
                 isReference: isReference,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (e.readTable(table), $LapIndexReferences(db, table, e)),
+              )
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({sessionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (sessionId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.sessionId,
+                                referencedTable: $LapIndexReferences
+                                    ._sessionIdTable(db),
+                                referencedColumn: $LapIndexReferences
+                                    ._sessionIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
         ),
       );
 }
@@ -1974,9 +2206,9 @@ typedef $LapIndexProcessedTableManager =
       $LapIndexAnnotationComposer,
       $LapIndexCreateCompanionBuilder,
       $LapIndexUpdateCompanionBuilder,
-      (LapEntry, BaseReferences<_$RaceCoachDb, LapIndex, LapEntry>),
+      (LapEntry, $LapIndexReferences),
       LapEntry,
-      PrefetchHooks Function()
+      PrefetchHooks Function({bool sessionId})
     >;
 
 class $RaceCoachDbManager {
