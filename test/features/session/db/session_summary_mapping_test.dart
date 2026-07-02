@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:protobuf/well_known_types/google/protobuf/timestamp.pb.dart'
@@ -9,13 +10,11 @@ import 'package:race_coach/features/session/data/db/session_dao.dart';
 import 'package:race_coach/features/session/data/session_storage.dart';
 import 'package:race_coach/generated/racecoach/v1/session.pb.dart' as proto;
 
-/// Tests that the DB → SessionSummary mapping (via sessionStreamProvider's
-/// _summaryFromEntry) correctly normalizes metadata fields to match the
-/// filesystem-backed _summaryFromSession semantics.
+/// Tests the full DB → SessionSummary mapping path.
 ///
-/// We test this by indexing sessions through the DAO and verifying the
-/// raw SessionEntry fields, since _summaryFromEntry is private.
-/// The normalization helpers are exercised through the DAO → stream path.
+/// Group 1 verifies raw DB storage (what the DAO writes).
+/// Group 2 verifies the _summaryFromEntry normalization by driving the
+/// public sessionStreamProvider with a ProviderContainer override.
 void main() {
   late RaceCoachDb db;
   late SessionDao dao;
@@ -56,8 +55,23 @@ void main() {
       ..lapTimeSeconds = timeSecs;
   }
 
-  group('DB → SessionSummary null normalization', () {
-    test('empty driver/vehicle strings stored as-is in DB', () async {
+  /// Create a ProviderContainer that overrides the DAO and DB providers
+  /// to use our in-memory test database.
+  ProviderContainer makeContainer() {
+    final container = ProviderContainer(
+      overrides: [
+        dbProvider.overrideWithValue(db),
+        sessionDaoProvider.overrideWithValue(dao),
+      ],
+    );
+    addTearDown(container.dispose);
+    return container;
+  }
+
+  // ── Group 1: Raw DB storage ────────────────────────────────────
+
+  group('DB raw storage', () {
+    test('empty driver/vehicle strings stored as null in DB', () async {
       final meta = proto.SessionMeta()
         ..driverName = ''
         ..vehicle = (proto.Vehicle()..name = '');
@@ -67,7 +81,6 @@ void main() {
       final entries = await dao.watchAllSessions().first;
       expect(entries, hasLength(1));
 
-      // DAO stores Value.absent() for empty strings → null in DB
       final entry = entries.first;
       expect(
         entry.driverName,
@@ -81,7 +94,7 @@ void main() {
       );
     });
 
-    test('unspecified enum values stored as DB int', () async {
+    test('unspecified enum values stored as int 0 in DB', () async {
       final meta = proto.SessionMeta()
         ..sessionType = proto.SessionType.SESSION_TYPE_UNSPECIFIED
         ..conditions = (proto.Conditions()
@@ -92,9 +105,6 @@ void main() {
       final entries = await dao.watchAllSessions().first;
       final entry = entries.first;
 
-      // Unspecified enum value (0) is stored in DB.
-      // The _summaryFromEntry mapping must normalize it to null.
-      // We verify the DB stores the raw value.
       expect(entry.sessionType, equals(0));
       expect(entry.surface, equals(0));
     });
@@ -154,8 +164,8 @@ void main() {
           makeSession(
             id: 'partial-only',
             laps: [
-              makeLap(number: 1, timeSecs: 0), // partial
-              makeLap(number: 2, timeSecs: -1), // invalid
+              makeLap(number: 1, timeSecs: 0),
+              makeLap(number: 2, timeSecs: -1),
             ],
           ),
         );
@@ -169,35 +179,121 @@ void main() {
     );
   });
 
-  group('SessionSummary conversion via _summaryFromEntry', () {
-    // These tests exercise the full path: DAO → DB → SessionEntry
-    // The _summaryFromEntry function is private but we can verify
-    // its behavior by checking that SessionSummary created from
-    // the SessionStorage module matches expected null semantics.
+  // ── Group 2: End-to-end through _summaryFromEntry ──────────────
 
-    test('SessionSummary construction from SessionEntry data', () {
-      // Simulate what _summaryFromEntry does with raw entry data.
-      // We test the SessionSummary constructor directly.
-      final summary = SessionSummary(
-        sessionId: 'test-001',
-        trackName: 'Thunderhill',
-        date: DateTime(2026, 7, 1),
-        lapCount: 3,
-        bestLap: const Duration(milliseconds: 95500),
-        driverName: 'Bruce',
-        vehicleName: null, // normalized empty string
-        surface: null, // normalized unspecified
-        sessionType: proto.SessionType.SESSION_TYPE_PRACTICE,
+  group('sessionStreamProvider mapping (exercises _summaryFromEntry)', () {
+    test('normalizes empty strings to null in SessionSummary', () async {
+      final meta = proto.SessionMeta()
+        ..driverName = ''
+        ..vehicle = (proto.Vehicle()..name = '');
+
+      await dao.indexSession(makeSession(id: 'e2e-empty'), meta: meta);
+
+      final container = makeContainer();
+      final summaries = await container.read(sessionStreamProvider.future);
+      final summary = summaries.single;
+
+      expect(
+        summary.driverName,
+        isNull,
+        reason: '_summaryFromEntry should normalize empty string to null',
+      );
+      expect(
+        summary.vehicleName,
+        isNull,
+        reason: '_summaryFromEntry should normalize empty string to null',
+      );
+    });
+
+    test('normalizes unspecified enums to null in SessionSummary', () async {
+      final meta = proto.SessionMeta()
+        ..sessionType = proto.SessionType.SESSION_TYPE_UNSPECIFIED
+        ..conditions = (proto.Conditions()
+          ..surface = proto.SurfaceCondition.SURFACE_CONDITION_UNSPECIFIED);
+
+      await dao.indexSession(makeSession(id: 'e2e-unspec'), meta: meta);
+
+      final container = makeContainer();
+      final summaries = await container.read(sessionStreamProvider.future);
+      final summary = summaries.single;
+
+      expect(
+        summary.sessionType,
+        isNull,
+        reason: '_summaryFromEntry should normalize UNSPECIFIED to null',
+      );
+      expect(
+        summary.surface,
+        isNull,
+        reason: '_summaryFromEntry should normalize UNSPECIFIED to null',
+      );
+    });
+
+    test('preserves valid metadata in SessionSummary', () async {
+      final meta = proto.SessionMeta()
+        ..driverName = 'Bruce'
+        ..vehicle = (proto.Vehicle()..name = 'Miata')
+        ..sessionType = proto.SessionType.SESSION_TYPE_PRACTICE
+        ..conditions = (proto.Conditions()
+          ..surface = proto.SurfaceCondition.SURFACE_CONDITION_DRY);
+
+      await dao.indexSession(
+        makeSession(
+          id: 'e2e-valid',
+          laps: [makeLap(number: 1, timeSecs: 95.5)],
+        ),
+        meta: meta,
       );
 
-      expect(summary.sessionId, 'test-001');
-      expect(summary.trackName, 'Thunderhill');
-      expect(summary.lapCount, 3);
-      expect(summary.bestLap, const Duration(milliseconds: 95500));
-      expect(summary.driverName, 'Bruce');
+      final container = makeContainer();
+      final summaries = await container.read(sessionStreamProvider.future);
+      final summary = summaries.single;
+
+      expect(summary.driverName, equals('Bruce'));
+      expect(summary.vehicleName, equals('Miata'));
+      expect(
+        summary.sessionType,
+        equals(proto.SessionType.SESSION_TYPE_PRACTICE),
+      );
+      expect(
+        summary.surface,
+        equals(proto.SurfaceCondition.SURFACE_CONDITION_DRY),
+      );
+      expect(summary.lapCount, equals(1));
+      expect(summary.bestLap, equals(const Duration(milliseconds: 95500)));
+    });
+
+    test('null meta → all metadata fields null in SessionSummary', () async {
+      await dao.indexSession(makeSession(id: 'e2e-nometa'));
+
+      final container = makeContainer();
+      final summaries = await container.read(sessionStreamProvider.future);
+      final summary = summaries.single;
+
+      expect(summary.driverName, isNull);
       expect(summary.vehicleName, isNull);
+      expect(summary.sessionType, isNull);
       expect(summary.surface, isNull);
-      expect(summary.sessionType, proto.SessionType.SESSION_TYPE_PRACTICE);
+      expect(summary.bestLap, isNull);
+    });
+
+    test('partial-only laps → lapCount 0, bestLap null', () async {
+      await dao.indexSession(
+        makeSession(
+          id: 'e2e-partial',
+          laps: [
+            makeLap(number: 1, timeSecs: 0),
+            makeLap(number: 2, timeSecs: -1),
+          ],
+        ),
+      );
+
+      final container = makeContainer();
+      final summaries = await container.read(sessionStreamProvider.future);
+      final summary = summaries.single;
+
+      expect(summary.lapCount, equals(0));
+      expect(summary.bestLap, isNull);
     });
   });
 }
